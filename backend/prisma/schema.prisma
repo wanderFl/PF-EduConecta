@@ -4,12 +4,132 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// backend/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DIRECTIVO
+  DOCENTE
+  FAMILIA
+}
+
+// USERS: login + roles
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password_hash  String
+  role           Role
+  external_id    String?      // id del sistema externo (docente/directivo), opcional
+  parent_id      String?  @unique
+  parent         Parent?  @relation(fields: [parent_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  is_active      Boolean  @default(true)
+  is_verified    Boolean  @default(false)
+
+  @@map("users")
+  @@index([role])
+  @@index([external_id])
+}
+
+// PARENTS: perfil del padre/representante
+model Parent {
+  id                String  @id @default(uuid())
+  full_name         String
+  cedula            String? @unique
+  home_address      String?
+  work_place        String?
+  security_pin_hash String  // hash del PIN
+
+  student_links     ParentStudentLink[]
+
+  // Relación inversa (opcional): un Parent puede tener 0 o 1 User asociado
+  user              User?
+
+  @@map("parents")
+}
+
+// Vínculo Padre ↔ Estudiante externo
+model ParentStudentLink {
+  parent_id           String
+  student_external_id String
+
+  parent              Parent @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([parent_id, student_external_id])
+  @@index([student_external_id])
+  @@map("parent_student_links")
+}
+
+/// Tareas asignadas por docente/curso (referencias externas)
+model Task {
+  id                 String   @id @default(uuid())
+  title              String
+  due_date           DateTime
+  teacher_external_id Int
+  course_external_id  Int
+
+  submissions        SubmissionGrade[]
+
+  @@index([teacher_external_id])
+  @@index([course_external_id])
+  @@map("tasks")
+}
+
+/// Entregas y notas de tareas
+model SubmissionGrade {
+  id                  String  @id @default(uuid())
+  task_id             String
+  student_external_id Int
+  grade               Decimal? @db.Decimal(5,2)
+  file_reference      String?
+
+  task                Task    @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([student_external_id])
+  @@map("submissions_grades")
+}
+
+/// Asistencia por estudiante/fecha
+model AttendanceRecord {
+  id                          String  @id @default(uuid())
+  student_external_id         Int
+  date                        DateTime @db.Date
+  status                      String
+  justification_file_reference String?
+
+  @@index([student_external_id, date])
+  @@map("attendance_records")
+}
+
+/// Conversaciones formales (pueden ser notas de comportamiento)
+model Communication {
+  id                         String   @id @default(uuid())
+  subject                    String
+  is_behavioral_note         Boolean  @default(false)
+  author_teacher_external_id Int
+
+  messages                   Message[]
+
+  @@index([author_teacher_external_id])
+  @@map("communications")
+}
+
+/// Mensajes dentro de una conversación
+model Message {
+  id               String  @id @default(uuid())
+  communication_id String
+  body             String
+
+  communication    Communication @relation(fields: [communication_id], references: [id], onDelete: Cascade)
+
+  @@map("messages")
 }
