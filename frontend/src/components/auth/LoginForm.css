@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Merriweather:wght@400;700&display=swap');
+
+.login-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden; /* Previene scroll horizontal */
+}
+
+.login-left {
+    flex: 6;
+    background-color: #2F6FB6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    min-width: 600px; /* Asegura un ancho mínimo */
+}
+
+.login-right {
+    flex: 4;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    min-width: 400px; /* Asegura un ancho mínimo */
+}
+
+.login-card {
+    background-color: rgba(198,217,243,0.9);
+    border-radius: 12px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+.login-logo {
+    width: 100px; /* Logo más grande */
+    height: auto;
+    margin: 0 auto 1.5rem;
+    display: block;
+}
+
+.login-title {
+    color: #B7891D;
+    font-family: 'Merriweather', serif;
+    text-align: center;
+    font-size: 2rem; /* Título más grande */
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    color: #234f8a;
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+    font-size: 1.4rem;
+    margin-bottom: 2.5rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.form-group label {
+    font-family: 'Montserrat', sans-serif;
+    color: #234f8a;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.form-group input {
+    padding: 1rem 1.2rem;
+    border: 2px solid #c0d4f0;
+    border-radius: 25px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2F6FB6;
+    box-shadow: 0 0 0 3px rgba(47,111,182,0.1);
+}
+
+.password-input {
+    position: relative;
+}
+
+.form-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -0.5rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #234f8a;
+    font-size: 1.2rem;
+}
+
+.forgot-password, .register-link {
+    color: #234f8a;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.forgot-password:hover, .register-link:hover {
+    color: #B7891D;
+    text-decoration: underline;
+}
+
+.submit-button {
+    background-color: #A97D14;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 25px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(169,125,20,0.2);
+    margin-top: 1rem;
+}
+
+.submit-button:hover {
+    background-color: #8f640f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(169,125,20,0.3);
+}
+
+.submit-button:active {
+    transform: translateY(1px);
+}
+
+.submit-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.error-message {
+    color: #dc2626;
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 0.8rem;
+    background-color: rgba(220,38,38,0.1);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.ceiaf-logo {
+    max-width: 280px; /* Logo más grande */
+    height: auto;
+    margin-bottom: 2.5rem;
+}
+
+.ceiaf-slogan {
+    font-family: 'Merriweather', serif;
+    color: #B7891D;
+    text-align: center;
+    font-size: 1.4rem;
+    line-height: 1.6;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Media query para pantallas grandes */
+@media (min-width: 1400px) {
+    .login-card {
+        max-width: 520px;
+        padding: 3rem;
+    }
+
+    .login-logo {
+        width: 120px;
+    }
+
+    .login-title {
+        font-size: 2.2rem;
+    }
+
+    .ceiaf-logo {
+        max-width: 320px;
+    }
+}
+
+/* Media query para pantallas medianas */
+@media (max-width: 1200px) {
+    .login-left {
+        min-width: 500px;
+    }
+
+    .login-right {
+        min-width: 350px;
+    }
+}
+
+/* Solo aplicar diseño móvil en pantallas muy pequeñas */
+@media (max-width: 900px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-left, .login-right {
+        flex: none;
+        width: 100%;
+        min-width: unset;
+    }
+
+    .login-right {
+        order: -1;
+        padding: 2rem 1rem;
+    }
+
+    .login-card {
+        margin: 1rem;
+        max-width: 100%;
+    }
+}
+
+/* Mejoras de accesibilidad */
+:focus {
+    outline: 3px solid #2F6FB6;
+    outline-offset: 2px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+}

@@ -147,3 +147,108 @@ export const register = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const registerParent = async (req: Request, res: Response) => {
+  try {
+    const { 
+      full_name, 
+      email, 
+      cedula, 
+      home_address, 
+      work_place, 
+      security_pin, 
+      password 
+    } = req.body;
+
+    // Validate required fields
+    if (!full_name || !email || !cedula || !security_pin || !password) {
+      return res.status(400).json({
+        message: 'Nombre completo, correo electrónico, cédula, PIN de seguridad y contraseña son requeridos'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'Ya existe un usuario con este correo electrónico'
+      });
+    }
+
+    // Check if parent with cedula already exists
+    const existingParent = await prisma.parent.findUnique({
+      where: { cedula }
+    });
+
+    if (existingParent) {
+      return res.status(400).json({
+        message: 'Ya existe un registro con esta cédula'
+      });
+    }
+
+    // Hash password and pin
+    const password_hash = await hashPassword(password);
+    const pin_hash = await hashPassword(security_pin);
+
+    // Create user and parent in a transaction
+    const result = await prisma.$transaction(async (prisma) => {
+      // Create parent first
+      const parent = await prisma.parent.create({
+        data: {
+          full_name,
+          cedula,
+          home_address,
+          work_place,
+          security_pin_hash: pin_hash
+        }
+      });
+
+      // Then create user with parent reference
+      const user = await prisma.user.create({
+        data: {
+          email,
+          password_hash,
+          role: 'FAMILIA',
+          is_verified: true, // Since we have cedula verification
+          is_active: true,
+          parent_id: parent.id
+        }
+      });
+
+      return { user, parent };
+    });
+
+    // Generate JWT token
+    const token = generateToken({
+      userId: result.user.id,
+      email: result.user.email,
+      role: result.user.role
+    });
+
+    // Return user info and token
+    res.status(201).json({
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        role: result.user.role
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('Parent registration error:', error);
+    
+    // Provide more detailed error message for debugging
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Unknown error occurred';
+      
+    res.status(500).json({
+      message: 'Ocurrió un error durante el registro',
+      error: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    });
+  }
+};
