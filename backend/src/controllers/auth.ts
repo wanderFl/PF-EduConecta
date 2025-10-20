@@ -1,13 +1,20 @@
 import { Request, Response } from 'express';
 import { PrismaClient, Role } from '@prisma/client';
 import { hashPassword, verifyPassword, generateToken } from '../utils/auth';
+import { 
+  isValidEcuadorianCedula, 
+  passwordsMatch, 
+  normalizeEmail, 
+  isValidPin 
+} from '../utils/validators';
 
 const prisma = new PrismaClient();
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
 
+    email = normalizeEmail(email);
     if (!email || !password) {
       return res.status(400).json({ 
         message: 'Email and password are required' 
@@ -23,13 +30,6 @@ export const login = async (req: Request, res: Response) => {
         message: 'Invalid credentials' 
       });
     }
-
-    // Verify password
-    console.log('Attempting password verification for user:', {
-      email: user.email,
-      providedPassword: password,
-      storedHash: user.password_hash
-    });
 
     const isValidPassword = await verifyPassword(
       password, 
@@ -148,50 +148,63 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
+
 export const registerParent = async (req: Request, res: Response) => {
   try {
-    const { 
+    let { 
       full_name, 
       email, 
       cedula, 
       home_address, 
       work_place, 
       security_pin, 
-      password 
+      password,
+      confirm_password
     } = req.body;
 
-    // Validate required fields
-    if (!full_name || !email || !cedula || !security_pin || !password) {
+    // Normaliza email
+    email = normalizeEmail(email);
+
+    // ✅ Validaciones de campos requeridos
+    if (!full_name || !email || !cedula || !security_pin || !password || !confirm_password) {
       return res.status(400).json({
-        message: 'Nombre completo, correo electrónico, cédula, PIN de seguridad y contraseña son requeridos'
+        message: 'Nombre, correo, cédula, PIN, contraseña y confirmación son requeridos'
       });
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
+    // ✅ Validación de cédula ecuatoriana
+    if (!isValidEcuadorianCedula(cedula)) {
+      return res.status(400).json({ message: 'Cédula ecuatoriana inválida' });
+    }
+
+    // ✅ Passwords iguales
+    if (!passwordsMatch(password, confirm_password)) {
+      return res.status(400).json({ message: 'Las contraseñas no coinciden' });
+    }
+
+    // ✅ PIN numérico 4–6 dígitos
+    if (!isValidPin(security_pin)) {
+      return res.status(400).json({ message: 'PIN inválido (debe ser numérico de 4 a 6 dígitos)' });
+    }
+
+    // ✅ Unicidad: email y cédula
+    const [existingUser, existingParent] = await Promise.all([
+      prisma.user.findUnique({ where: { email } }),
+      prisma.parent.findUnique({ where: { cedula } }),
+    ]);
 
     if (existingUser) {
-      return res.status(400).json({
-        message: 'Ya existe un usuario con este correo electrónico'
-      });
+      return res.status(400).json({ message: 'Ya existe un usuario con este correo electrónico' });
     }
-
-    // Check if parent with cedula already exists
-    const existingParent = await prisma.parent.findUnique({
-      where: { cedula }
-    });
-
     if (existingParent) {
-      return res.status(400).json({
-        message: 'Ya existe un registro con esta cédula'
-      });
+      return res.status(400).json({ message: 'Ya existe un registro con esta cédula' });
     }
 
-    // Hash password and pin
-    const password_hash = await hashPassword(password);
-    const pin_hash = await hashPassword(security_pin);
+    // Hashes
+    const [password_hash, pin_hash] = await Promise.all([
+      hashPassword(password),
+      hashPassword(security_pin),
+    ]);
 
     // Create user and parent in a transaction
     const result = await prisma.$transaction(async (prisma) => {
@@ -211,7 +224,7 @@ export const registerParent = async (req: Request, res: Response) => {
         data: {
           email,
           password_hash,
-          role: 'FAMILIA',
+          role: Role.FAMILIA,
           is_verified: true, // Since we have cedula verification
           is_active: true,
           parent_id: parent.id
