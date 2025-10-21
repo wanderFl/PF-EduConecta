@@ -14,7 +14,6 @@ export interface TokenPayload {
 export const hashPassword = async (password: string): Promise<string> => {
   try {
     const hashedPassword = await hash(password, SALT_ROUNDS);
-    console.log('Password hashed:', { originalPassword: password, hashedPassword });
     return hashedPassword;
   } catch (error) {
     console.error('Error hashing password:', error);
@@ -24,13 +23,9 @@ export const hashPassword = async (password: string): Promise<string> => {
 
 export const verifyPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
   try {
-    console.log('Attempting to verify password:', {
-      providedPassword: password,
-      storedHash: hashedPassword
-    });
+
     
     const isValid = await compare(password, hashedPassword);
-    console.log('Password verification result:', isValid);
     
     return isValid;
   } catch (error) {

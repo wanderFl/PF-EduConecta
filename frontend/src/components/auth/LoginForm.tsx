@@ -105,7 +105,7 @@ export const LoginForm: React.FC = () => {
                         )}
 
                         <div className="form-links">
-                            <a href="#" className="forgot-password">
+                            <a href="/forgot-password" className="forgot-password">
                                 ¿Olvidaste tu contraseña?
                             </a>
                             <a href="/register" className="register-link">

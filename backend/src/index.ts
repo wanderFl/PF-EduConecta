@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth';
 import protectedRoutes from './routes/protected';
+import { verifySmtpConnection } from './utils/email';
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
@@ -14,6 +15,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const app = express();
+verifySmtpConnection(); // no bloquea el server, solo loguea el estado
 
 // Middleware
 app.use(cors());

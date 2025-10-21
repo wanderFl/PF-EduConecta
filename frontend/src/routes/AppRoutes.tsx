@@ -7,12 +7,16 @@ import { DashboardDirectivo } from "../pages/DashboardDirectivo";
 import { DashboardDocente } from "../pages/DashboardDocente";
 import { DashboardFamilia } from "../pages/DashboardFamilia";
 import { ProtectedRoute } from "./ProtectedRoute";
+import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
+import ResetPasswordForm from '../components/auth/ResetPasswordForm';
 
 export const AppRoutes: React.FC = () => (
     <BrowserRouter>
         <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+            <Route path="/reset-password" element={<ResetPasswordForm />} />
             <Route
                 path="/directivo"
                 element={
@@ -36,7 +40,7 @@ export const AppRoutes: React.FC = () => (
                         <DashboardFamilia />
                     </ProtectedRoute>
                 }
-            />
+            />           
             <Route path="*" element={<LoginPage />} />
         </Routes>
     </BrowserRouter>
