@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import type { ParentRegistration } from '../../types';
 import './LoginForm.css'; // Reusing login form styles
+import { isValidEcuadorianCedula } from '../../utils/ecuador';
+import { isAxiosError } from 'axios';
+
 
 const ParentRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
@@ -20,12 +23,13 @@ const ParentRegistrationForm: React.FC = () => {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const { name, value } = e.target;
+  setFormData(prev => ({
+    ...prev,
+    [name]: name === "email" ? value.trim().toLowerCase() : value
+  }));
+};
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,15 +40,25 @@ const ParentRegistrationForm: React.FC = () => {
       return;
     }
 
+    if (!isValidEcuadorianCedula(formData.cedula)) {
+    setError('Cédula ecuatoriana inválida');
+    return;
+  }
+
     try {
       await register(formData);
-      navigate('/dashboard/familia');
-    } catch (err) {
-      if (err instanceof Error) {
+      navigate('/familia', { replace: true });
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        // Log útil en consola del navegador
+        console.error('register error →', err.response?.status, err.response?.data);
+        // Si tu backend devuelve { message: string }
+        const apiMsg =
+          (err.response?.data as { message?: string })?.message ||
+          'Error en el registro';
+        setError(apiMsg);
+      } else if (err instanceof Error) {
         setError(err.message);
-      } else if (typeof err === 'object' && err && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string } } };
-        setError(axiosError.response?.data?.message || 'Error en el registro');
       } else {
         setError('Error en el registro');
       }
@@ -86,6 +100,9 @@ const ParentRegistrationForm: React.FC = () => {
             onChange={handleChange}
             placeholder="Cédula"
             required
+            inputMode="numeric"
+            pattern="[0-9]{10}"
+            maxLength={10}
           />
         </div>
 
@@ -115,10 +132,10 @@ const ParentRegistrationForm: React.FC = () => {
             name="security_pin"
             value={formData.security_pin}
             onChange={handleChange}
-            placeholder="PIN de seguridad"
+            placeholder="PIN de seguridad (4–6 dígitos)"
             required
-            maxLength={4}
-            pattern="[0-9]{4}"
+            maxLength={6}
+            pattern="[0-9]{4,6}"
           />
         </div>
 

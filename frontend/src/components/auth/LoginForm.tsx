@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import type { Credentials, ApiError } from "../../types";
 import "./LoginForm.css";
+import { useNavigate } from "react-router-dom";
 
 export const LoginForm: React.FC = () => {
+    const navigate = useNavigate();
     const { login } = useAuth();
     const [values, setValues] = useState<Credentials>({ email: "", password: "" });
     const [error, setError] = useState<string | null>(null);
@@ -11,21 +13,40 @@ export const LoginForm: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setValues((v) => ({ ...v, [e.target.name]: e.target.value }));
+  setValues((v) => ({
+    ...v,
+    [e.target.name]: e.target.name === "email"
+      ? e.target.value.trim().toLowerCase()
+      : e.target.value
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-            await login(values);
-        } catch (err) {
-            const apiError = err as { response?: { data?: ApiError } };
-            setError(apiError.response?.data?.message || "Error al iniciar sesión");
-        } finally {
-            setLoading(false);
-        }
-    };
+  e.preventDefault();
+  setError(null);
+  setLoading(true);
+  try {
+    await login(values);
+
+    //redirigir por rol
+    const stored = localStorage.getItem("edu_user");
+    if (stored) {
+      const user = JSON.parse(stored) as { role: "DIRECTIVO" | "DOCENTE" | "FAMILIA" };
+      const path =
+        user.role === "DIRECTIVO" ? "/directivo" :
+        user.role === "DOCENTE"   ? "/docente"   :
+                                    "/familia";
+      navigate(path, { replace: true });
+    } else {
+      navigate("/login", { replace: true });
+    }
+
+  } catch (err) {
+    const apiError = err as { response?: { data?: ApiError } };
+    setError(apiError.response?.data?.message || "Error al iniciar sesión");
+  } finally {
+    setLoading(false);
+  }
+};
 
     const togglePassword = () => setShowPassword(!showPassword);
 

@@ -36,8 +36,6 @@ export const login = async (req: Request, res: Response) => {
       user.password_hash
     );
     
-    console.log('Password verification result:', isValidPassword);
-
     if (!isValidPassword) {
       return res.status(401).json({ 
         message: 'Invalid credentials' 
@@ -167,6 +165,7 @@ export const registerParent = async (req: Request, res: Response) => {
 
     // ✅ Validaciones de campos requeridos
     if (!full_name || !email || !cedula || !security_pin || !password || !confirm_password) {
+      console.log('error de validacion de campos');
       return res.status(400).json({
         message: 'Nombre, correo, cédula, PIN, contraseña y confirmación son requeridos'
       });
