@@ -1,0 +1,19 @@
+// src/pages/DashboardFamilia.tsx
+import React from "react";
+import { useAuth } from "../hooks/useAuth";
+
+export const DashboardFamilia: React.FC = () => {
+    const { user, logout } = useAuth();
+    return (
+        <div className="p-4">
+            <h2 className="text-2xl font-bold mb-4">Panel Familia</h2>
+            <div className="mb-4">Bienvenido/a {user?.email}</div>
+            <button
+                onClick={logout}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+                Cerrar sesión
+            </button>
+        </div>
+    );
+};

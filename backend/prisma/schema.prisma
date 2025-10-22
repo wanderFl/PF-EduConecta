@@ -35,6 +35,9 @@ model User {
   is_active      Boolean  @default(true)
   is_verified    Boolean  @default(false)
 
+  // 👇 lado inverso de la relación con PasswordReset
+  passwordResets PasswordReset[]
+  
   @@map("users")
   @@index([role])
   @@index([external_id])
@@ -132,4 +135,18 @@ model Message {
   communication    Communication @relation(fields: [communication_id], references: [id], onDelete: Cascade)
 
   @@map("messages")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   // hash del token
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_resets")
 }
