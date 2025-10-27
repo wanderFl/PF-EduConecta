@@ -1,0 +1,356 @@
+/* ===== Layout general ===== */
+html, body, #root, .fam-layout {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: #111827; /* texto base oscuro */
+  background: #f7f8fb;
+}
+
+.fam-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ===== Header ===== */
+.fam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #1e4db7;
+  color: #fff;
+}
+/* fuerza texto blanco solo en el header */
+.fam-header, .fam-header * { color: #fff; }
+
+.fam-header-left { display: flex; align-items: center; gap: 10px; }
+.avatar-initials {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: #fff; color: #1e4db7; display: flex;
+  align-items: center; justify-content: center; font-weight: 700;
+}
+.parent-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+
+.fam-header-center { display: flex; align-items: center; gap: 8px; }
+
+.student-select {
+  min-width: 280px; padding: 8px; border-radius: 8px;
+  border: 1px solid #d7e3ff; /* contorno azul */
+  background: #fff;
+  color: #111827; /* asegura texto oscuro */
+}
+
+.add-child-btn {
+  background: #fff; color: #1e4db7;
+  border: 1px solid #d7e3ff;
+  padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 700;
+}
+.add-child-btn:hover { background: #f3f7ff; border-color: #1e4db7; }
+
+.fam-body {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  gap: 18px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+.fam-main { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.fam-sidebar { width: 320px; }
+
+/* ===== Student info card ===== */
+.student-info-card {
+  background: #fff;
+  border: 1px solid #1e4db7;            /* contorno azul suave */
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 1px 0 rgba(30,77,183,0.08);
+  color: #111827;                        /* texto oscuro */
+}
+.sic-title { font-weight: 700; margin-bottom: 8px; color: #1e4db7; }
+.sic-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eef2f7; }
+.sic-row:last-child { border-bottom: none; }
+.sic-row span { color: #6b7280; }
+.sic-row b { color: #111827; }
+
+/* ===== Acciones (tiles) ===== */
+.action-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 12px; }
+.action-tile {
+  background: #fff;
+  border: 1px solid #bd971b;            /* contorno azul */
+  border-radius: 12px;
+  padding: 24px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  color: #111827;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.action-tile:hover {
+  background: #f3f7ff;                  /* hover azul claro */
+  border-color: #1e4db7;
+  box-shadow: 0 4px 14px rgba(30,77,183,0.12);
+}
+.tile-icon { font-size: 28px; }
+.tile-label { font-weight: 700; font-size: 16px; color: #111827; }
+
+/* ===== Panel derecho (tareas pendientes) ===== */
+.pending-panel {
+  background: #fff;
+  border: 1px solid #d7e3ff;            /* contorno azul */
+  border-radius: 12px;
+  padding: 14px;
+  position: sticky; top: 16px;
+  color: #111827;
+}
+.pending-panel h3 { margin: 0 0 8px 0; color: #1e4db7; }
+.pending-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.pending-item { padding: 10px; border: 1px solid #eef2f7; border-radius: 10px; background: #fafbff; }
+.pt-title { font-weight: 600; }
+.pt-meta { color: #6b7280; display: flex; gap: 8px; font-size: 12px; }
+.see-more { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #eaf1ff; color: #1e4db7; border: none; }
+
+/* ===== Helpers ===== */
+.muted { color: #6b7280; }
+.empty { padding: 14px; color: #6b7280; }
+
+/* ===== Modal simple ===== */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.28); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.modal-card { background: #fff; width: 100%; max-width: 520px; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: #f3f4f6; }
+.modal-body { padding: 14px; display: flex; gap: 8px; }
+.modal-section { padding: 14px; border-top: 1px solid #f1f5f9; }
+.student-card { background: #f9fbff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; }
+.clickable { cursor: pointer; }
+
+/* ===== Botón logout ===== */
+.logout-btn {
+  background: #fff;
+  color: #1e4db7;
+  border: 1px solid #d7e3ff;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.logout-btn:hover { background: #f3f7ff; border-color: #1e4db7; }
+
+/* ===== Inputs básicos con texto oscuro (por si heredan) ===== */
+input, select, button { color: #111827; }
+
+/* ===== Calendario semanal ===== */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+.calendar-day {
+  background: #fff;
+  border: 1px solid #d7e3ff;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+}
+
+.calendar-day-header {
+  font-weight: 700;
+  color: #1e4db7;
+  margin-bottom: 8px;
+}
+
+.calendar-day-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calendar-task {
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fafbff;
+}
+
+.calendar-task.pending { border-color: #ffcc80; background: #fff7e6; }
+.calendar-task.submitted { border-color: #a7f3d0; background: #ecfdf5; }
+
+.ct-title { font-weight: 600; }
+.ct-meta { font-size: 12px; color: #6b7280; }
+
+/* Botones nav semana */
+.nav-btn {
+  background: #fff;
+  color: #1e4db7;
+  border: 1px solid #d7e3ff;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  line-height: 1;
+  font-weight: 700;
+}
+.nav-btn:hover { background: #f3f7ff; border-color: #1e4db7; }
+/* Breadcrumb navigation */
+.fam-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #4b5563;
+  user-select: none;
+}
+
+.crumb-link {
+  color: #1e4db7;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.crumb-link:hover {
+  color: #163b8f;
+  text-decoration: underline;
+}
+
+.crumb-sep {
+  color: #9ca3af;
+}
+
+.crumb-current {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* ===== Modal de entrega de tarea ===== */
+.ts-modal { max-width: 640px; }
+
+.ts-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; background: #1e4db7; color: #fff;
+}
+.ts-modal-title { font-weight: 700; }
+.ts-close {
+  background: transparent; border: none; color: #fff; cursor: pointer;
+  font-size: 18px; line-height: 1;
+}
+
+.ts-modal-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.ts-field { display: flex; flex-direction: column; gap: 6px; }
+.ts-label { font-weight: 700; color: #111827; }
+.ts-required { color: #b45309; margin-left: 4px; }
+.ts-text { color: #111827; }
+.ts-file-name { font-size: 13px; color: #1e40af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.ts-input-file {
+  display: block; width: 100%;
+}
+
+.ts-textarea {
+  width: 100%; border-radius: 8px; border: 1px solid #d7e3ff;
+  background: #fff; color: #111827; padding: 8px;
+}
+
+.ts-modal-footer {
+  padding: 12px 14px; display: flex; justify-content: flex-end; gap: 8px;
+  border-top: 1px solid #eef2f7;
+}
+
+.ts-btn {
+  border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; border: 1px solid transparent;
+}
+.ts-btn.primary {
+  background: #b0892f; color: #fff; border-color: #b0892f;
+}
+.ts-btn.primary:disabled {
+  opacity: .6; cursor: not-allowed;
+}
+.ts-btn.light {
+  background: #fff; color: #1e4db7; border-color: #d7e3ff;
+}
+.ts-btn.light:hover { background: #f3f7ff; border-color: #1e4db7; }
+
+/* Calendar task como botón */
+.calendar-task { text-align: left; }
+.calendar-task.pending { border-color: #ffcc80; background: #fff7e6; }
+.calendar-task.submitted { border-color: #a7f3d0; background: #ecfdf5; }
+/* Navegación de mes */
+.nav-arrow {
+  background:#eaf1ff; border:1px solid #d7e3ff; border-radius:8px; padding:2px 8px; cursor:pointer; font-weight:800; color:#1e4db7;
+}
+.nav-arrow:hover { background:#dfeaff; }
+
+/* Leyenda */
+.legend { display:flex; align-items:center; gap:16px; padding:8px 0; color:#4b5563; }
+.legend-dot { width:12px; height:12px; display:inline-block; border-radius:3px; border:1px solid #d1d5db; }
+
+/* Grid mensual */
+.month-grid { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:10px; }
+.week-header { display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; margin-bottom:6px; }
+.wh-cell { text-align:center; font-weight:700; color:#6b7280; font-size:13px; }
+.week-rows { display:flex; flex-direction:column; gap:4px; }
+.week-row { display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; }
+.day-cell { position:relative; min-height:64px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; }
+.day-cell.empty { background:transparent; border:none; }
+.day-num { position:absolute; top:6px; right:8px; font-size:12px; color:#6b7280; }
+
+/* === Estados de asistencia === */
+.att-present {
+  background-color: #16a34a;   /* verde intenso */
+  border: 1px solid #15803d;
+  color: #fff;
+}
+
+.att-absent {
+  background-color: #dc2626;   /* rojo fuerte */
+  border: 1px solid #b91c1c;
+  color: #fff;
+}
+
+.att-pending {
+  background-color: #f59e0b;   /* amarillo fuerte */
+  border: 1px solid #d97706;
+  color: #fff;
+}
+
+.att-none {
+  background-color: #f9fafb;   /* gris claro */
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+/* Día */
+.day-cell {
+  position: relative;
+  min-height: 80px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 6px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.day-cell:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.day-num {
+  font-weight: 700;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Leyenda con colores más visibles */
+.legend-dot.att-present { background-color: #16a34a; border-color: #15803d; }
+.legend-dot.att-absent  { background-color: #dc2626; border-color: #b91c1c; }
+.legend-dot.att-pending { background-color: #f59e0b; border-color: #d97706; }
+.legend-dot.att-none    { background-color: #f9fafb; border-color: #e5e7eb; }
+
