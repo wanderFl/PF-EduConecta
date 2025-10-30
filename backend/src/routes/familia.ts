@@ -6,6 +6,7 @@ import { getStudentTasks } from '../controllers/tasks';
 import { submitTask } from '../controllers/submissions';
 import { createSignedUploadUrl } from "../controllers/uploads";
 import { getMonthlyAttendance, createJustificationUploadUrl, submitJustification } from "../controllers/attendance";
+import { listStudentGrades } from "../controllers/familia";
 
 
 const router = Router();
@@ -24,4 +25,5 @@ router.post('/asistencia', getMonthlyAttendance);
 router.post('/asistencia/upload-url', createJustificationUploadUrl);
 router.post('/asistencia/justificar', submitJustification);
 router.post('/verify-pin', verifyParentPin);
+router.post('/calificaciones', listStudentGrades);
 export default router;

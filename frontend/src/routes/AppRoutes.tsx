@@ -14,6 +14,7 @@ import WeeklyTasksPage from "../pages/WeeklyTasksPage"; // 👈 nuevo
 import MonthlyAttendancePage from "../pages/MonthlyAttendancePage";
 import PinGate from "./PinGate";
 import CommunicationsPage from "../pages/CommunicationsPage";
+import GradesPage from "../pages/GradesPage";
 
 const FamiliaLayout: React.FC = () => (
   <ProtectedRoute roles={["FAMILIA"]}>
@@ -56,6 +57,7 @@ export const AppRoutes: React.FC = () => (
                 <Route element={<PinGate />}>
                     <Route path="comunicados" element={<CommunicationsPage />} />
                 </Route> 
+                <Route path="calificaciones" element={<GradesPage />} />
             </Route>      
             <Route path="*" element={<LoginPage />} />
         </Routes>

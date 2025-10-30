@@ -152,6 +152,7 @@ export const linkStudentToParent = async (req: Request, res: Response) => {
   }
 };
 
+// POST /api/familia/verificar-pin { pin }
 export const verifyParentPin = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -176,5 +177,55 @@ export const verifyParentPin = async (req: Request, res: Response) => {
   } catch (e) {
     console.error('verifyParentPin error', e);
     return res.status(500).json({ message: 'Error verificando PIN' });
+  }
+};
+
+// POST /api/familia/calificaciones  { student_external_id }
+export const listStudentGrades = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { student_external_id } = req.body as { student_external_id?: number };
+
+    if (!userId || !student_external_id) {
+      return res.status(400).json({ message: "Faltan datos requeridos" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.parent_id) {
+      return res.status(400).json({ message: "Tu usuario no está asociado a un perfil de padre" });
+    }
+
+    // Verificar vínculo padre-estudiante
+    const link = await prisma.parentStudentLink.findUnique({
+      where: {
+        parent_id_student_external_id: {
+          parent_id: user.parent_id,
+          student_external_id: String(student_external_id),
+        },
+      },
+    });
+    if (!link) {
+      return res.status(403).json({ message: "No tienes acceso a este estudiante" });
+    }
+
+    // 🔹 Leer de submissions_grades y traer título de la tarea
+    const grades = await prisma.submissionGrade.findMany({
+      where: { student_external_id },
+      include: { task: { select: { title: true } } },
+      orderBy: [{ task_id: "asc" }],
+    });
+
+    const rows = grades.map(g => ({
+      id: g.id,
+      task_title: g.task?.title ?? "(Tarea)",
+      // Prisma.Decimal -> number
+      grade: g.grade === null ? null : (g.grade as unknown as Prisma.Decimal).toNumber(),
+      comments: g.student_comment ?? "",          // muestra vacío si no hay
+    }));
+
+    return res.json(rows);
+  } catch (err) {
+    console.error("POST /familia/calificaciones error:", err);
+    return res.status(500).json({ message: "Error interno del servidor" });
   }
 };

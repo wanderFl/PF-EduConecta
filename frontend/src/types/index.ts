@@ -120,3 +120,11 @@ export interface PaginatedMessages {
   messages: ConversationMessage[];
   nextCursor?: string | null;
 }
+
+export interface GradeRow {
+  id: string;
+  task_title: string;
+  grade: number | null;  // viene de Decimal -> number
+  comments: string;      // usamos student_comment; vacío si null
+}
+

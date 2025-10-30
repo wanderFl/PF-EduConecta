@@ -1,5 +1,5 @@
 import api from "./api";
-import type { CeiafStudent, PendingTask, AttendanceMonthResp } from "../types";
+import type { CeiafStudent, PendingTask, AttendanceMonthResp, GradeRow } from "../types";
 
 // Obtener hijos vinculados al padre
 export const getLinkedChildren = async (): Promise<CeiafStudent[]> => {
@@ -116,3 +116,11 @@ export const verifyParentPin = async (pin: string): Promise<boolean> => {
   const { data } = await api.post('/familia/verify-pin', { pin });
   return !!data?.ok;
 };
+
+// Obtener calificaciones del estudiante
+export async function getStudentGrades(studentExternalId: number): Promise<GradeRow[]> {
+  const { data } = await api.post("/familia/calificaciones", {
+    student_external_id: studentExternalId,
+  });
+  return Array.isArray(data) ? (data as GradeRow[]) : [];
+}

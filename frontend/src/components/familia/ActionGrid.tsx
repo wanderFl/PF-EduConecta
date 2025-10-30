@@ -15,6 +15,7 @@ const ActionGrid: React.FC = () => {
     if (key === "tareas") return navigate("/familia/tareas");
     if (key === "asistencia") return navigate("/familia/asistencia");
     if (key === "comunicados") return navigate("/familia/comunicados");
+    if (key === "calificaciones") return navigate("/familia/calificaciones");
     // Otros: implementar pronto…
   };
 
