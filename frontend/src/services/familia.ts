@@ -1,20 +1,25 @@
 import api from "./api";
 import type { CeiafStudent, PendingTask, AttendanceMonthResp } from "../types";
 
+// Obtener hijos vinculados al padre
 export const getLinkedChildren = async (): Promise<CeiafStudent[]> => {
   const { data } = await api.get("/familia/hijos");
   return data as CeiafStudent[];
 };
 
+// Buscar estudiante por cédula
 export const findStudentByCedula = async (cedula: string): Promise<CeiafStudent> => {
   const { data } = await api.post("/familia/buscar-estudiante", { cedula });
   return data as CeiafStudent;
 };
 
+// Vincular estudiante al padre
 export const linkStudentToParent = async (student_external_id: number | string): Promise<{ message: string }> => {
   const { data } = await api.post("/familia/agregar-hijo", { student_external_id });
   return data as { message: string };
 };
+
+
 /**
  * Obtiene las tareas del estudiante (puede incluir filtros por fecha).
  * 
@@ -23,6 +28,8 @@ export const linkStudentToParent = async (student_external_id: number | string):
  * @param to Fecha final opcional (YYYY-MM-DD)
  * @returns Lista de tareas (pendientes o entregadas)
  */
+
+// NUEVO: obtener tareas del estudiante
 export const getStudentTasks = async (
   studentId: number,
   from?: string,
@@ -50,6 +57,7 @@ export const getPendingTasks = async (
   return tasks.filter(t => t.status === "PENDING");
 };
 
+// NUEVO: obtener URL firmada para subir archivo de tarea
 export const getSignedUploadUrl = async (params: {
   studentId: number;
   taskId: string;
@@ -71,6 +79,7 @@ export const submitTaskDelivery = async (payload: {
   return data as { message: string };
 };
 
+// Obtener asistencia mensual
 export const getMonthlyAttendance = async (payload: {
   studentId: number;
   year: number;
@@ -100,4 +109,10 @@ export const submitJustification = async (payload: {
 }) => {
   const { data } = await api.post("/familia/asistencia/justificar", payload);
   return data as { message: string };
+};
+
+// Verificar PIN de padre
+export const verifyParentPin = async (pin: string): Promise<boolean> => {
+  const { data } = await api.post('/familia/verify-pin', { pin });
+  return !!data?.ok;
 };

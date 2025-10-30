@@ -12,6 +12,8 @@ import ResetPasswordForm from '../components/auth/ResetPasswordForm';
 import  FamilyProvider  from "../contexts/FamilyProvider";
 import WeeklyTasksPage from "../pages/WeeklyTasksPage"; // 👈 nuevo
 import MonthlyAttendancePage from "../pages/MonthlyAttendancePage";
+import PinGate from "./PinGate";
+import CommunicationsPage from "../pages/CommunicationsPage";
 
 const FamiliaLayout: React.FC = () => (
   <ProtectedRoute roles={["FAMILIA"]}>
@@ -48,7 +50,12 @@ export const AppRoutes: React.FC = () => (
             <Route path="/familia" element={<FamiliaLayout />}>
                 <Route index element={<DashboardFamilia />} />
                 <Route path="tareas" element={<WeeklyTasksPage />} />
-                <Route path="/familia/asistencia" element={<MonthlyAttendancePage />} />
+                <Route element={<PinGate />}>
+                    <Route path="asistencia" element={<MonthlyAttendancePage />} />
+                </Route>
+                <Route element={<PinGate />}>
+                    <Route path="comunicados" element={<CommunicationsPage />} />
+                </Route> 
             </Route>      
             <Route path="*" element={<LoginPage />} />
         </Routes>

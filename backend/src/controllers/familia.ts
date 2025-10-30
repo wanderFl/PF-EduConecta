@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ceiafPool } from '../ext/ceiafDb';
 import { isValidEcuadorianCedula } from '../utils/validators';
+import { verifyPassword } from '../utils/auth'; // ya lo tienes
 
 const prisma = new PrismaClient();
 
@@ -148,5 +149,32 @@ export const linkStudentToParent = async (req: Request, res: Response) => {
     }
 
     return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+export const verifyParentPin = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { pin } = req.body as { pin?: string };
+
+    if (!userId) return res.status(401).json({ message: 'No autorizado' });
+    if (!pin) return res.status(400).json({ message: 'PIN requerido' });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { parent: true },
+    });
+
+    if (!user?.parent || !user.parent.security_pin_hash) {
+      return res.status(403).json({ message: 'No tienes PIN configurado' });
+    }
+
+    const ok = await verifyPassword(pin, user.parent.security_pin_hash);
+    if (!ok) return res.status(401).json({ message: 'PIN incorrecto' });
+
+    return res.status(200).json({ ok: true });
+  } catch (e) {
+    console.error('verifyParentPin error', e);
+    return res.status(500).json({ message: 'Error verificando PIN' });
   }
 };

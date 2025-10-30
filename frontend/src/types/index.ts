@@ -76,3 +76,47 @@ export interface AttendanceMonthResp {
   to: string;             // YYYY-MM-DD
   days: AttendanceDay[];  // solo días con registro
 }
+
+// --- Comunicados ---
+export type ConversationKind = "THREAD" | "NOTICE";
+export type MessageSender = "PARENT" | "TEACHER";
+
+export interface Conversation {
+  id: string;
+  kind: ConversationKind;
+  student_external_id: number;
+  teacher_external_id: number;
+  parent_id: string;
+  is_behavioral_note: boolean;
+  status: "OPEN" | "CLOSED";
+  archived_by_parent: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string | null;
+  subject?: string | null;              // 👈 opcional
+  lastMessagePreview?: string | null;   // 👈 opcional
+  // opcionalmente: count mensajes/preview si el backend lo expone
+  /** añadidos desde backend */
+  student_name?: string;
+  teacher_name?: string;
+}
+
+export interface Attachment {
+  url: string;
+  file_name?: string | null;
+  mime_type?: string | null;
+  size_bytes?: number | null;
+}
+
+export interface ConversationMessage {
+  id: string;
+  body: string;
+  sender_role: MessageSender;
+  createdAt: string;
+  attachments?: Attachment[];
+}
+
+export interface PaginatedMessages {
+  messages: ConversationMessage[];
+  nextCursor?: string | null;
+}

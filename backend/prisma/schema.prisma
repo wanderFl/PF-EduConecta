@@ -129,28 +129,78 @@ model AttendanceRecord {
   @@map("attendance_records")
 }
 
-/// Conversaciones formales (pueden ser notas de comportamiento)
+enum CommunicationKind {
+  THREAD // chat tipo WhatsApp
+  NOTICE // comunicado formal (con asunto)
+}
+
+enum SenderRole {
+  PARENT
+  TEACHER
+}
+
+enum CommunicationStatus {
+  OPEN
+  CLOSED
+}
+
 model Communication {
-  id                         String  @id @default(uuid())
-  subject                    String
-  is_behavioral_note         Boolean @default(false)
-  author_teacher_external_id Int
+  id                  String            @id @default(uuid())
+  kind                CommunicationKind @default(THREAD)
+  subject             String? // solo se usa si kind = NOTICE
+  student_external_id Int
+  teacher_external_id Int
+  parent_id           String
+  is_behavioral_note  Boolean           @default(false)
+
+  status        CommunicationStatus @default(OPEN) // o enum si prefieres
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  lastMessageAt DateTime            @default(now())
+
+  archived_by_parent  Boolean @default(false)
+  archived_by_teacher Boolean @default(false)
 
   messages Message[]
 
-  @@index([author_teacher_external_id])
-  @@map("communications")
+  @@index([student_external_id])
+  @@index([teacher_external_id])
+  @@index([parent_id])
 }
 
-/// Mensajes dentro de una conversación
 model Message {
-  id               String @id @default(uuid())
-  communication_id String
-  body             String
+  id                         String     @id @default(uuid())
+  communication_id           String
+  body                       String
+  sender_role                SenderRole
+  sender_parent_id           String? // si sender_role = PARENT
+  sender_teacher_external_id Int? // si sender_role = TEACHER
+  createdAt                  DateTime   @default(now())
+  editedAt                   DateTime?
+  deletedAt                  DateTime?
+
+  // Opcional: respuesta a otro mensaje
+  reply_to_id String?
+
+  // Opcional: adjuntos
+  attachments MessageAttachment[]
 
   communication Communication @relation(fields: [communication_id], references: [id], onDelete: Cascade)
 
-  @@map("messages")
+  @@index([communication_id])
+}
+
+model MessageAttachment {
+  id         String  @id @default(uuid())
+  message_id String
+  url        String // S3/GCS
+  file_name  String
+  mime_type  String?
+  size_bytes Int?
+
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
+
+  @@index([message_id])
 }
 
 model PasswordReset {
