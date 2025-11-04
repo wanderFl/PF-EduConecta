@@ -1,6 +1,6 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
-import { Role } from '@prisma/client';
+import { Role } from '../../generated/prisma';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 const SALT_ROUNDS = 10;

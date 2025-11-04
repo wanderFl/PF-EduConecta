@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Role } from '@prisma/client';
+import { Role } from '../../generated/prisma';
 import { verifyToken, TokenPayload } from '../utils/auth';
 
 // Extend Express Request type to include user

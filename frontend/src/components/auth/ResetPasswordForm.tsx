@@ -22,7 +22,7 @@ const ResetPasswordForm: React.FC = () => {
       setErr('Las contraseñas no coinciden'); setLoading(false); return;
     }
     try {
-      const res = await performPasswordReset({ email, token, password, confirmPassword });
+      const res = await performPasswordReset(token, password);
       setMsg(res.message);
       setTimeout(()=> navigate('/login', { replace: true }), 1200);
     } catch  {

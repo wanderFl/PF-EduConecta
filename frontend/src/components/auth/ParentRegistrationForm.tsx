@@ -24,7 +24,7 @@ const ParentRegistrationForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const { name, value } = e.target;
-  setFormData(prev => ({
+  setFormData((prev: ParentRegistration) => ({
     ...prev,
     [name]: name === "email" ? value.trim().toLowerCase() : value
   }));

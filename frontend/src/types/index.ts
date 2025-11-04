@@ -17,17 +17,24 @@ export interface Credentials {
     password: string;
 }
 
-export interface ApiError {
-    message: string;
-}
-
 export interface ParentRegistration {
     full_name: string;
     email: string;
     cedula: string;
-    home_address?: string;
-    work_place?: string;
+    home_address: string;
+    work_place: string;
     security_pin: string;
     password: string;
     confirmPassword: string;
+}
+
+export interface Course {
+    id: string;
+    name: string;
+    description: string;
+    color: string;
+}
+
+export interface ApiError {
+    message: string;
 }

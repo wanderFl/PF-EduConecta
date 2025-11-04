@@ -1,11 +1,57 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Merriweather:wght@400;600;700&display=swap');
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+:root {
+  /* Typography */
+  --font-primary: 'Montserrat', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-heading: 'Merriweather', serif;
+  
+  /* Colors - EduConecta Brand */
+  --color-primary-blue: #2F6FB6;
+  --color-primary-dark: #234f8a;
+  --color-accent-gold: #B7891D;
+  --color-accent-yellow: #A97D14;
+  --color-bg-light: #C6D9F3;
+  --color-bg-lighter: rgba(198,217,243,0.1);
+  --color-white: #ffffff;
+  --color-text-dark: #1a1a1a;
+  --color-text-medium: #4a4a4a;
+  --color-text-light: #6b7280;
+  --color-border: #e5e7eb;
+  --color-error: #dc2626;
+  --color-success: #16a34a;
+  
+  /* Spacing - Web-optimized */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  
+  /* Typography Scale - Desktop optimized */
+  --text-xs: 0.875rem;
+  --text-sm: 1rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+  --text-4xl: 3rem;
+  
+  /* Layout */
+  --container-max-width: 1400px;
+  --sidebar-width: 350px;
+  --border-radius: 12px;
+  --border-radius-lg: 16px;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease-out;
+  --transition-normal: 0.25s ease-out;
+  --transition-slow: 0.35s ease-out;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,56 +59,265 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+* {
+  box-sizing: border-box;
 }
-a:hover {
-  color: #535bf2;
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  padding: 0;
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--color-text-dark);
+  background-color: var(--color-white);
   min-height: 100vh;
 }
 
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--color-primary-dark);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: var(--text-4xl);
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+h2 {
+  font-size: var(--text-3xl);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+}
+
+h4 {
+  font-size: var(--text-xl);
+}
+
+h5 {
+  font-size: var(--text-lg);
+}
+
+h6 {
+  font-size: var(--text-base);
+}
+
+p {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text-medium);
+}
+
+/* Links */
+a {
+  color: var(--color-primary-blue);
+  text-decoration: none;
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: color var(--transition-normal);
 }
 
-@media (prefers-color-scheme: light) {
+a:hover {
+  color: var(--color-accent-gold);
+  text-decoration: underline;
+}
+
+/* Buttons - Web optimized */
+button {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md) var(--spacing-xl);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary button */
+.btn-primary {
+  background-color: var(--color-accent-yellow);
+  color: var(--color-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-accent-gold);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Secondary button */
+.btn-secondary {
+  background-color: var(--color-primary-blue);
+  color: var(--color-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Form elements */
+input, textarea, select {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-normal);
+  min-height: 48px;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-primary-blue);
+  box-shadow: 0 0 0 3px rgba(47, 111, 182, 0.1);
+}
+
+/* Layout utilities */
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-xl);
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Card component */
+.card {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-2xl);
+  transition: box-shadow var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Responsive design - Web first approach */
+@media (max-width: 1200px) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    --container-max-width: 1200px;
+    --sidebar-width: 320px;
+    --spacing-2xl: 2.5rem;
+    --text-3xl: 2.25rem;
+    --text-4xl: 2.75rem;
   }
-  a:hover {
-    color: #747bff;
+  
+  .container {
+    padding: 0 var(--spacing-lg);
   }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 280px;
+    --spacing-2xl: 2rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.75rem;
+    --text-3xl: 2rem;
+    --text-4xl: 2.25rem;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+  
   button {
-    background-color: #f9f9f9;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  html {
+    font-size: 14px;
+  }
+  
+  :root {
+    --spacing-xl: 1.5rem;
+    --spacing-2xl: 1.5rem;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .card {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 3px solid var(--color-primary-blue);
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
   }
 }
