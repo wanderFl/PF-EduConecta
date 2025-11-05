@@ -47,16 +47,13 @@ const CourseSelection: React.FC = () => {
     ];
 
     const handleCourseSelect = (courseId: string) => {
-        console.log('Curso seleccionado - ID:', courseId);
-        
         localStorage.setItem('selectedCourse', courseId);
         const selectedCourseData = courses.find(c => c.id === courseId);
-        console.log('Datos del curso encontrado:', selectedCourseData);
         
         if (selectedCourseData) {
             localStorage.setItem('selectedCourseData', JSON.stringify(selectedCourseData));
-            console.log('Datos guardados en localStorage:', JSON.stringify(selectedCourseData));
         }
+        
         navigate('/docente/dashboard');
     };
 

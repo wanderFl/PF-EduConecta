@@ -7,6 +7,7 @@
 // backend/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -35,9 +36,26 @@ model User {
   is_active      Boolean  @default(true)
   is_verified    Boolean  @default(false)
 
+  passwordResets PasswordReset[]
+
   @@map("users")
   @@index([role])
   @@index([external_id])
+}
+
+// PASSWORD RESET: tokens para reset de contraseña
+model PasswordReset {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @map("token_hash")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_resets")
 }
 
 // PARENTS: perfil del padre/representante
@@ -108,11 +126,13 @@ model SubmissionGrade {
 model AttendanceRecord {
   id                          String  @id @default(uuid())
   student_external_id         Int
+  course_external_id          Int?    // ID del curso para identificar la clase (opcional por migración)
   date                        DateTime @db.Date
   status                      String
   justification_file_reference String?
 
   @@index([student_external_id, date])
+  @@index([course_external_id, date])
   @@map("attendance_records")
 }
 
