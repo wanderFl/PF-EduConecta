@@ -20,27 +20,34 @@ enum Role {
   FAMILIA
 }
 
+enum AttendanceStatus {
+  PRESENT // asistió
+  ABSENT_UNJUSTIFIED // falta injustificada
+  ABSENT_JUSTIFIED_PENDING // justificó, pendiente revisión
+  ABSENT_JUSTIFIED_ACCEPTED // justificó, aceptada
+}
+
 // USERS: login + roles
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  password_hash  String
-  role           Role
-  external_id    String?      // id del sistema externo (docente/directivo), opcional
-  parent_id      String?  @unique
-  parent         Parent?  @relation(fields: [parent_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  id            String  @id @default(uuid())
+  email         String  @unique
+  password_hash String
+  role          Role
+  external_id   String? // id del sistema externo (docente/directivo), opcional
+  parent_id     String? @unique
+  parent        Parent? @relation(fields: [parent_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  is_active      Boolean  @default(true)
-  is_verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  is_active   Boolean  @default(true)
+  is_verified Boolean  @default(false)
 
   // 👇 lado inverso de la relación con PasswordReset
   passwordResets PasswordReset[]
-  
-  @@map("users")
+
   @@index([role])
   @@index([external_id])
+  @@map("users")
 }
 
 // PARENTS: perfil del padre/representante
@@ -50,12 +57,12 @@ model Parent {
   cedula            String? @unique
   home_address      String?
   work_place        String?
-  security_pin_hash String  // hash del PIN
+  security_pin_hash String // hash del PIN
 
-  student_links     ParentStudentLink[]
+  student_links ParentStudentLink[]
 
   // Relación inversa (opcional): un Parent puede tener 0 o 1 User asociado
-  user              User?
+  user User?
 
   @@map("parents")
 }
@@ -65,7 +72,7 @@ model ParentStudentLink {
   parent_id           String
   student_external_id String
 
-  parent              Parent @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent Parent @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([parent_id, student_external_id])
   @@index([student_external_id])
@@ -74,13 +81,16 @@ model ParentStudentLink {
 
 /// Tareas asignadas por docente/curso (referencias externas)
 model Task {
-  id                 String   @id @default(uuid())
-  title              String
-  due_date           DateTime
+  id                  String   @id @default(uuid())
+  title               String
+  due_date            DateTime
   teacher_external_id Int
   course_external_id  Int
 
-  submissions        SubmissionGrade[]
+  // NUEVO: instrucciones visibles al alumno
+  instructions String? // texto libre opcional
+
+  submissions SubmissionGrade[]
 
   @@index([teacher_external_id])
   @@index([course_external_id])
@@ -89,62 +99,118 @@ model Task {
 
 /// Entregas y notas de tareas
 model SubmissionGrade {
-  id                  String  @id @default(uuid())
+  id                  String   @id @default(uuid())
   task_id             String
   student_external_id Int
-  grade               Decimal? @db.Decimal(5,2)
+  grade               Decimal? @db.Decimal(5, 2)
   file_reference      String?
 
-  task                Task    @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  // NUEVO: comentario opcional del estudiante al enviar
+  student_comment String?
 
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@unique([task_id, student_external_id])
   @@index([student_external_id])
   @@map("submissions_grades")
 }
 
 /// Asistencia por estudiante/fecha
 model AttendanceRecord {
-  id                          String  @id @default(uuid())
-  student_external_id         Int
-  date                        DateTime @db.Date
-  status                      String
+  id                           String           @id @default(uuid())
+  student_external_id          Int
+  date                         DateTime         @db.Date
+  status                       AttendanceStatus
   justification_file_reference String?
+  justification_reason         String?
 
+  @@unique([student_external_id, date], name: "student_external_id_date")
   @@index([student_external_id, date])
   @@map("attendance_records")
 }
 
-/// Conversaciones formales (pueden ser notas de comportamiento)
-model Communication {
-  id                         String   @id @default(uuid())
-  subject                    String
-  is_behavioral_note         Boolean  @default(false)
-  author_teacher_external_id Int
-
-  messages                   Message[]
-
-  @@index([author_teacher_external_id])
-  @@map("communications")
+enum CommunicationKind {
+  THREAD // chat tipo WhatsApp
+  NOTICE // comunicado formal (con asunto)
 }
 
-/// Mensajes dentro de una conversación
+enum SenderRole {
+  PARENT
+  TEACHER
+}
+
+enum CommunicationStatus {
+  OPEN
+  CLOSED
+}
+
+model Communication {
+  id                  String            @id @default(uuid())
+  kind                CommunicationKind @default(THREAD)
+  subject             String? // solo se usa si kind = NOTICE
+  student_external_id Int
+  teacher_external_id Int
+  parent_id           String
+  is_behavioral_note  Boolean           @default(false)
+
+  status        CommunicationStatus @default(OPEN) // o enum si prefieres
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  lastMessageAt DateTime            @default(now())
+
+  archived_by_parent  Boolean @default(false)
+  archived_by_teacher Boolean @default(false)
+
+  messages Message[]
+
+  @@index([student_external_id])
+  @@index([teacher_external_id])
+  @@index([parent_id])
+}
+
 model Message {
-  id               String  @id @default(uuid())
-  communication_id String
-  body             String
+  id                         String     @id @default(uuid())
+  communication_id           String
+  body                       String
+  sender_role                SenderRole
+  sender_parent_id           String? // si sender_role = PARENT
+  sender_teacher_external_id Int? // si sender_role = TEACHER
+  createdAt                  DateTime   @default(now())
+  editedAt                   DateTime?
+  deletedAt                  DateTime?
 
-  communication    Communication @relation(fields: [communication_id], references: [id], onDelete: Cascade)
+  // Opcional: respuesta a otro mensaje
+  reply_to_id String?
 
-  @@map("messages")
+  // Opcional: adjuntos
+  attachments MessageAttachment[]
+
+  communication Communication @relation(fields: [communication_id], references: [id], onDelete: Cascade)
+
+  @@index([communication_id])
+}
+
+model MessageAttachment {
+  id         String  @id @default(uuid())
+  message_id String
+  url        String // S3/GCS
+  file_name  String
+  mime_type  String?
+  size_bytes Int?
+
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
+
+  @@index([message_id])
 }
 
 model PasswordReset {
   id        String   @id @default(uuid())
   userId    String
-  tokenHash String   // hash del token
+  tokenHash String // hash del token
   expiresAt DateTime
   used      Boolean  @default(false)
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])

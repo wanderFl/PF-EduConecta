@@ -1,6 +1,6 @@
 // src/routes/AppRoutes.tsx
 import React from "react";
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter, Outlet } from "react-router-dom";
 import { LoginPage } from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import { DashboardDirectivo } from "../pages/DashboardDirectivo";
@@ -9,6 +9,20 @@ import { DashboardFamilia } from "../pages/DashboardFamilia";
 import { ProtectedRoute } from "./ProtectedRoute";
 import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
 import ResetPasswordForm from '../components/auth/ResetPasswordForm';
+import  FamilyProvider  from "../contexts/FamilyProvider";
+import WeeklyTasksPage from "../pages/WeeklyTasksPage"; // 👈 nuevo
+import MonthlyAttendancePage from "../pages/MonthlyAttendancePage";
+import PinGate from "./PinGate";
+import CommunicationsPage from "../pages/CommunicationsPage";
+import GradesPage from "../pages/GradesPage";
+
+const FamiliaLayout: React.FC = () => (
+  <ProtectedRoute roles={["FAMILIA"]}>
+    <FamilyProvider>
+      <Outlet />
+    </FamilyProvider>
+  </ProtectedRoute>
+);
 
 export const AppRoutes: React.FC = () => (
     <BrowserRouter>
@@ -33,14 +47,18 @@ export const AppRoutes: React.FC = () => (
                     </ProtectedRoute>
                 }
             />
-            <Route
-                path="/familia"
-                element={
-                    <ProtectedRoute roles={["FAMILIA"]}>
-                        <DashboardFamilia />
-                    </ProtectedRoute>
-                }
-            />           
+            {/* Grupo Familia con un solo FamilyProvider compartido */}
+            <Route path="/familia" element={<FamiliaLayout />}>
+                <Route index element={<DashboardFamilia />} />
+                <Route path="tareas" element={<WeeklyTasksPage />} />
+                <Route element={<PinGate />}>
+                    <Route path="asistencia" element={<MonthlyAttendancePage />} />
+                </Route>
+                <Route element={<PinGate />}>
+                    <Route path="comunicados" element={<CommunicationsPage />} />
+                </Route> 
+                <Route path="calificaciones" element={<GradesPage />} />
+            </Route>      
             <Route path="*" element={<LoginPage />} />
         </Routes>
     </BrowserRouter>

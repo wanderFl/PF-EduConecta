@@ -4,6 +4,9 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth';
 import protectedRoutes from './routes/protected';
 import { verifySmtpConnection } from './utils/email';
+import familiaRoutes from './routes/familia';
+import commRoutes from './routes/communications';
+import ceiafRoutes from "./routes/ceiafRoutes";
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
@@ -25,7 +28,9 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', protectedRoutes);
-
+app.use('/api/familia', familiaRoutes);
+app.use('/api/comm', commRoutes);
+app.use('/api/ceiaf', ceiafRoutes);
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
