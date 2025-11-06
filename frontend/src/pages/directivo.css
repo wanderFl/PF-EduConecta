@@ -143,3 +143,13 @@ select:focus, button:focus { outline:none; box-shadow:0 0 0 3px var(--ring); }
   box-shadow: 0 0 0 3px var(--ring);
 }
 .logout-ic { display: inline-block; }
+/* Ajustes suaves para el card del gráfico */
+.card .card-title { margin-bottom: 4px; }
+.card .card-sub { margin-bottom: 10px; }
+
+/* Breadcrumb reutilizado del estilo familia */
+.fam-breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.crumb-link { color: var(--blue); cursor: pointer; }
+.crumb-link:hover { text-decoration: underline; }
+.crumb-sep { color:#9aa3af; }
+.crumb-current { font-weight:700; }

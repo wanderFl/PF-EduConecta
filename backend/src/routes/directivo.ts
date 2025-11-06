@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listCourses } from "../controllers/directivo";
+import { listCourses, gradesBySubject } from "../controllers/directivo";
 import { authenticate, authorize } from "../middlewares/auth"; // asumiendo que ya tienes esto
 import { Role } from '@prisma/client';
 
@@ -11,7 +11,7 @@ const router = Router();
 router.use(authenticate, authorize(Role.DIRECTIVO));
 
 router.get("/courses", listCourses);
-
+router.get("/courses/:courseId/analytics/grades-by-subject", gradesBySubject);
 export default router;
 
 

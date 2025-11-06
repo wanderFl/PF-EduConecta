@@ -135,3 +135,9 @@ export type CeiafCourse = {
   ano_lectivo?: string | null;
   display_name?: string | null;
 };
+
+export type GradesBySubjectItem = {
+  subject_external_id: number;
+  subject_name: string;
+  avg: number | null;
+};
