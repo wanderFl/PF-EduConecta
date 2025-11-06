@@ -89,11 +89,13 @@ model Task {
 
   // NUEVO: instrucciones visibles al alumno
   instructions String? // texto libre opcional
+  subject_external_id Int?   // materia
 
   submissions SubmissionGrade[]
 
   @@index([teacher_external_id])
   @@index([course_external_id])
+  @@index([subject_external_id])
   @@map("tasks")
 }
 
@@ -108,10 +110,20 @@ model SubmissionGrade {
   // NUEVO: comentario opcional del estudiante al enviar
   student_comment String?
 
+  // NUEVO: denormalización para filtros rápidos
+  subject_external_id Int?     // materia (externa CEIAF)
+  course_external_id  Int?     // curso (externo CEIAF)
+
+  // Claves de tiempo opcionales para KPIs rápidos
+  year                Int?     // para particionar/agrupar
+  month               Int?     // 1..12
   task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
   @@unique([task_id, student_external_id])
   @@index([student_external_id])
+  @@index([course_external_id])
+  @@index([subject_external_id])
+  @@index([year, month, course_external_id]) // para dashboards por mes/curso
   @@map("submissions_grades")
 }
 
@@ -123,9 +135,16 @@ model AttendanceRecord {
   status                       AttendanceStatus
   justification_file_reference String?
   justification_reason         String?
+  // NUEVO: denormalización
+  course_external_id  Int?              // curso al que pertenece ese día
 
+  // Claves de tiempo
+  year                Int?
+  month               Int?
   @@unique([student_external_id, date], name: "student_external_id_date")
   @@index([student_external_id, date])
+  @@index([course_external_id])
+  @@index([year, month, course_external_id])
   @@map("attendance_records")
 }
 

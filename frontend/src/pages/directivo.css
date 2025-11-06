@@ -1,0 +1,145 @@
+:root{
+  --blue:#1e4db7;        /* azul institucional */
+  --blue-600:#173f96;
+  --gold:#b08900;        /* dorado botones primarios */
+  --ink:#111827;         /* texto principal */
+  --muted:#6b7280;       /* texto secundario */
+  --bg:#f7f8fb;          /* fondo claro */
+  --card:#ffffff;        /* tarjetas */
+  --border:#e5e7eb;      /* borde suave */
+  --ring:rgba(30,77,183,.18);
+}
+
+html, body, #root { background: var(--bg); }
+
+.dir-layout { display:flex; flex-direction:column; min-height:100vh; }
+
+/* Header azul */
+.dir-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px; background:var(--blue); color:#fff;
+}
+.dir-header-left { display:flex; align-items:center; gap:10px; }
+.dir-avatar { width:36px; height:36px; border-radius:8px; background:#fff; color:var(--blue);
+  display:flex; align-items:center; justify-content:center; font-weight:700; }
+.dir-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px; }
+
+.dir-header-center { display:flex; align-items:center; gap:8px; }
+.dir-course-select {
+  min-width:280px; padding:8px; border-radius:8px; border:none; color:#111; background-color: #fff;
+}
+.dir-logout { background:#fff; color:var(--blue); border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:700; }
+
+.dir-body { display:flex; flex:1; gap:18px; padding:16px; box-sizing:border-box; }
+.dir-main { flex:1; display:flex; flex-direction:column; gap:16px; }
+.dir-sidebar { width:320px; }
+
+/* Tarjeta genérica */
+.card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:14px;
+}
+.card-title { font-weight:800; color:var(--ink); }
+.card-sub { color:var(--muted); }
+
+/* Grid selección de cursos */
+.course-grid {
+  display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:14px;
+}
+.course-tile {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:14px; cursor:pointer;
+  transition: box-shadow .15s, border-color .15s, transform .06s;
+}
+.course-tile:hover { border-color:#cbd5e1; box-shadow:0 6px 14px rgba(0,0,0,.06); transform: translateY(-1px); }
+.ct-name { font-weight:800; color:var(--ink); margin-bottom:6px; }
+.ct-meta { color:var(--muted); }
+
+/* Botones grandes del dashboard */
+.kpi-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap:14px;
+}
+.kpi-tile{
+  background:var(--card); border:1px solid var(--gold);
+  border-radius:14px; padding:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:space-between;
+  transition: box-shadow .15s, border-color .15s, transform .06s;
+}
+.kpi-tile:hover{ border-color:#cbd5e1; box-shadow:0 8px 18px rgba(0,0,0,.06); transform: translateY(-1px); }
+.kpi-title{ font-weight:800; color:var(--ink); }
+.kpi-cta{ background:var(--gold); color:#fff; border:none; padding:8px 12px; border-radius:10px; font-weight:700; }
+
+/* Acentos */
+a.link{ color:var(--blue); text-decoration:none; }
+a.link:hover{ text-decoration:underline; }
+
+/* Focus ring para inputs */
+select:focus, button:focus { outline:none; box-shadow:0 0 0 3px var(--ring); }
+/* Bloques por nivel */
+.level-block { margin-top: 6px; }
+.level-header {
+  font-weight: 800;
+  color: var(--blue-600);
+  margin: 8px 4px 10px;
+}
+
+/* Curso: card base (reusa tu grid) */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+/* Fondo celeste claro + borde suave */
+.course-tile {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  transition: box-shadow .15s, border-color .15s, transform .06s;
+  text-align: left;
+}
+
+/* Variante Básica (celeste más claro) */
+.course-tile--basic {
+  background: #9cb7e2;          /* celeste muy claro */
+  border-color: #053396;
+}
+
+/* Variante Bachillerato (celeste algo más saturado) */
+.course-tile--bach {
+  background: #d8b75d;          /* celeste claro */
+  border-color: #a77b03;
+}
+
+.course-tile:hover {
+  border-color: #bcd3ff;
+  box-shadow: 0 8px 18px rgba(0,0,0,.06);
+  transform: translateY(-1px);
+}
+
+.ct-name { font-weight: 800; color: var(--ink); margin-bottom: 6px; }
+.ct-meta { color: var(--muted); }
+
+/* Botón de logout con icono */
+.dir-logout {
+  background: #fff;
+  color: var(--blue);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background .15s, box-shadow .15s, transform .06s;
+}
+.dir-logout:hover {
+  background: #eef4ff;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.logout-ic { display: inline-block; }

@@ -127,4 +127,11 @@ export interface GradeRow {
   grade: number | null;  // viene de Decimal -> number
   comments: string;      // usamos student_comment; vacío si null
 }
-
+export type CeiafCourse = {
+  id_curso: number;
+  nombre: string;
+  nivel?: string | null;
+  paralelo?: string | null;
+  ano_lectivo?: string | null;
+  display_name?: string | null;
+};
