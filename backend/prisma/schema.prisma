@@ -115,9 +115,17 @@ model SubmissionGrade {
   student_external_id Int
   grade               Decimal? @db.Decimal(5,2)
   file_reference      String?
+  comment_student     String?  // Comentario del estudiante al enviar
+  comment_teacher     String?  // Comentario del docente al calificar
+  submitted_at        DateTime? // Fecha de entrega del estudiante
+  graded_at           DateTime? // Fecha de calificación del docente
+  
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
   task                Task    @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
+  @@unique([task_id, student_external_id])
   @@index([student_external_id])
   @@map("submissions_grades")
 }
