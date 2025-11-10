@@ -7,7 +7,7 @@ import { DashboardDirectivo } from "../pages/DashboardDirectivo";
 import { DashboardDocente } from "../pages/DashboardDocente";
 import { DashboardFamilia } from "../pages/DashboardFamilia";
 // Docente sub-dashboards
-import AgendaEscolar from "../pages/docente/AgendaEscolar";
+import AgendaPage from "../pages/docente/AgendaPage";
 import Asistencia from "../pages/docente/Asistencia";
 import Comunicados from "../pages/docente/Comunicados";
 import RegistrarCalificaciones from "../pages/docente/RegistrarCalificaciones";
@@ -51,7 +51,7 @@ export const AppRoutes: React.FC = () => (
                     path="/docente/agenda"
                     element={
                         <ProtectedRoute roles={["DOCENTE"]}>
-                            <AgendaEscolar />
+                            <AgendaPage />
                         </ProtectedRoute>
                     }
                 />

@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth';
 import protectedRoutes from './routes/protected';
 import studentsRoutes from './routes/students';
+import tasksRoutes from './routes/tasks';
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
@@ -30,8 +31,9 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api', protectedRoutes);
+app.use('/api/protected', protectedRoutes);
 app.use('/api/students', studentsRoutes);
+app.use('/api/tasks', tasksRoutes);
 
 // Add a test route to verify server is working
 app.get('/api/test', (req, res) => {
@@ -66,7 +68,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-const PORT = process.env.PORT || 3001;
+// Default to 3000 to match frontend dev defaults and compiled/dist behavior
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
