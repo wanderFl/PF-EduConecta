@@ -11,6 +11,8 @@ interface TaskData {
     fechaVencimiento: string;
     cursoSeleccionado: number | null;
     paraleloSeleccionado: string | null;
+    trimestre: number | null;
+    aporte: number | null;
     archivo?: File;
 }
 
@@ -25,7 +27,9 @@ const CreacionTareas: React.FC = () => {
         puntuacion: 0,
         fechaVencimiento: '',
         cursoSeleccionado: null,
-        paraleloSeleccionado: null
+        paraleloSeleccionado: null,
+        trimestre: null,
+        aporte: null
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -97,6 +101,22 @@ const CreacionTareas: React.FC = () => {
         }));
     };
 
+    const handleTrimestreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const trimestre = e.target.value;
+        setTaskData(prev => ({
+            ...prev,
+            trimestre: trimestre ? parseInt(trimestre) : null
+        }));
+    };
+
+    const handleAporteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const aporte = e.target.value;
+        setTaskData(prev => ({
+            ...prev,
+            aporte: aporte ? parseInt(aporte) : null
+        }));
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -136,6 +156,8 @@ const CreacionTareas: React.FC = () => {
                 fechaVencimiento: taskData.fechaVencimiento,
                 cursoId: String(cursoId),
                 paralelo: taskData.paraleloSeleccionado || undefined,
+                trimestre: taskData.trimestre || undefined,
+                aporte: taskData.aporte || undefined,
                 file: selectedFile ?? undefined
             });
 
@@ -149,7 +171,9 @@ const CreacionTareas: React.FC = () => {
                     puntuacion: 0,
                     fechaVencimiento: '',
                     cursoSeleccionado: null,
-                    paraleloSeleccionado: null
+                    paraleloSeleccionado: null,
+                    trimestre: null,
+                    aporte: null
                 });
                 setSelectedFile(null);
             } catch (error) {
@@ -361,6 +385,81 @@ const CreacionTareas: React.FC = () => {
                     }}>
                         * La selección de paralelo es opcional. Si no se selecciona, la tarea será visible para todos los paralelos del curso.
                     </p>
+                </div>
+
+                {/* Selección de Trimestre y Aporte */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '1.5rem',
+                    marginBottom: '1.5rem'
+                }}>
+                    {/* Trimestre */}
+                    <div>
+                        <label style={{
+                            display: 'block',
+                            fontWeight: '600',
+                            marginBottom: '0.5rem',
+                            color: '#2c3e50'
+                        }}>
+                            Trimestre *
+                        </label>
+                        <select
+                            value={taskData.trimestre || ''}
+                            onChange={handleTrimestreChange}
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                border: '2px solid #e1e5e9',
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                                outline: 'none',
+                                backgroundColor: 'white',
+                                cursor: 'pointer',
+                                transition: 'border-color 0.3s ease'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
+                            onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                        >
+                            <option value="">-- Selecciona trimestre --</option>
+                            <option value="1">Primer Trimestre</option>
+                            <option value="2">Segundo Trimestre</option>
+                            <option value="3">Tercer Trimestre</option>
+                        </select>
+                    </div>
+
+                    {/* Aporte */}
+                    <div>
+                        <label style={{
+                            display: 'block',
+                            fontWeight: '600',
+                            marginBottom: '0.5rem',
+                            color: '#2c3e50'
+                        }}>
+                            Aporte *
+                        </label>
+                        <select
+                            value={taskData.aporte || ''}
+                            onChange={handleAporteChange}
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                border: '2px solid #e1e5e9',
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                                outline: 'none',
+                                backgroundColor: 'white',
+                                cursor: 'pointer',
+                                transition: 'border-color 0.3s ease'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
+                            onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                        >
+                            <option value="">-- Selecciona aporte --</option>
+                            <option value="1">Aporte 1</option>
+                            <option value="2">Aporte 2</option>
+                        </select>
+                    </div>
                 </div>
 
                 {/* Instrucciones */}
@@ -594,9 +693,9 @@ const CreacionTareas: React.FC = () => {
                     
                     <button
                         onClick={handleGuardarYEnviar}
-                        disabled={!taskData.nombre.trim() || !taskData.fechaVencimiento}
+                        disabled={!taskData.nombre.trim() || !taskData.fechaVencimiento || !taskData.trimestre || !taskData.aporte}
                         style={{
-                            background: taskData.nombre.trim() && taskData.fechaVencimiento
+                            background: taskData.nombre.trim() && taskData.fechaVencimiento && taskData.trimestre && taskData.aporte
                                 ? '#28a745' 
                                 : '#6c757d',
                             color: 'white',
@@ -604,7 +703,7 @@ const CreacionTareas: React.FC = () => {
                             padding: '0.75rem 2rem',
                             borderRadius: '8px',
                             fontSize: '1rem',
-                            cursor: taskData.nombre.trim() && taskData.fechaVencimiento
+                            cursor: taskData.nombre.trim() && taskData.fechaVencimiento && taskData.trimestre && taskData.aporte
                                 ? 'pointer' 
                                 : 'not-allowed',
                             transition: 'all 0.3s ease',

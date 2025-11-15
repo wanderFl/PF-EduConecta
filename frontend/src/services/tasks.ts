@@ -7,6 +7,8 @@ export interface CreateTaskData {
   fechaVencimiento: string;
   cursoId: string;
   paralelo?: string;
+  trimestre?: number;
+  aporte?: number;
   file?: File | null;
 }
 
@@ -73,6 +75,12 @@ export const taskService = {
       form.append('cursoId', normalizedData.cursoId);
       if (taskData.paralelo) {
         form.append('paralelo', taskData.paralelo);
+      }
+      if (taskData.trimestre) {
+        form.append('trimestre', String(taskData.trimestre));
+      }
+      if (taskData.aporte) {
+        form.append('aporte', String(taskData.aporte));
       }
       if (taskData.file) {
         form.append('archivo', taskData.file);

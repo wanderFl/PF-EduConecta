@@ -98,6 +98,8 @@ model Task {
   teacher_external_id Int
   course_external_id  Int
   paralelo           String?  // Paralelo del curso (A, B, C, etc.)
+  trimestre          Int?     // Trimestre (1, 2, 3)
+  aporte             Int?     // Aporte (1, 2)
   
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
@@ -107,6 +109,8 @@ model Task {
   @@index([teacher_external_id])
   @@index([course_external_id])
   @@index([course_external_id, paralelo])
+  @@index([trimestre])
+  @@index([aporte])
   @@map("tasks")
 }
 

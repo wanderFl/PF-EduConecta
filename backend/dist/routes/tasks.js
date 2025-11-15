@@ -164,12 +164,26 @@ router.get('/:taskId', async (req, res) => {
 // POST /api/tasks - Crear nueva tarea
 router.post('/', async (req, res) => {
     try {
-        const { title, instructions, due_date, max_points, file_reference, teacher_external_id, course_external_id, paralelo } = req.body;
+        const { title, instructions, due_date, max_points, file_reference, teacher_external_id, course_external_id, paralelo, trimestre, aporte } = req.body;
         // Validar campos requeridos
         if (!title || !due_date || !teacher_external_id || !course_external_id) {
             return res.status(400).json({
                 success: false,
                 message: 'Faltan campos requeridos: title, due_date, teacher_external_id, course_external_id'
+            });
+        }
+        // Validar trimestre si se proporciona
+        if (trimestre && (trimestre < 1 || trimestre > 3)) {
+            return res.status(400).json({
+                success: false,
+                message: 'El trimestre debe ser 1, 2 o 3'
+            });
+        }
+        // Validar aporte si se proporciona
+        if (aporte && (aporte < 1 || aporte > 2)) {
+            return res.status(400).json({
+                success: false,
+                message: 'El aporte debe ser 1 o 2'
             });
         }
         const taskData = {
@@ -180,7 +194,9 @@ router.post('/', async (req, res) => {
             file_reference,
             teacher_external_id: parseInt(teacher_external_id),
             course_external_id: parseInt(course_external_id),
-            paralelo: paralelo || undefined
+            paralelo: paralelo || undefined,
+            trimestre: trimestre ? parseInt(trimestre) : undefined,
+            aporte: aporte ? parseInt(aporte) : undefined
         };
         const task = await (0, tasks_1.createTask)(taskData);
         res.status(201).json({

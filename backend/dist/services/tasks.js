@@ -152,7 +152,9 @@ async function createTask(taskData) {
                 file_reference: taskData.file_reference || null,
                 teacher_external_id: taskData.teacher_external_id,
                 course_external_id: taskData.course_external_id,
-                paralelo: taskData.paralelo || null
+                paralelo: taskData.paralelo || null,
+                trimestre: taskData.trimestre || null,
+                aporte: taskData.aporte || null
             },
             include: {
                 submissions: true

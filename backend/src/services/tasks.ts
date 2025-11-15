@@ -12,6 +12,9 @@ export interface TaskWithDetails {
   file_reference: string | null;
   teacher_external_id: number;
   course_external_id: number;
+  paralelo: string | null;
+  trimestre: number | null;
+  aporte: number | null;
   created_at: Date;
   updated_at: Date;
   submissions?: SubmissionGradeDetails[];
@@ -175,6 +178,8 @@ export async function createTask(taskData: {
   teacher_external_id: number;
   course_external_id: number;
   paralelo?: string;
+  trimestre?: number;
+  aporte?: number;
 }): Promise<TaskWithDetails> {
   try {
     const task = await prisma.task.create({
@@ -186,7 +191,9 @@ export async function createTask(taskData: {
         file_reference: taskData.file_reference || null,
         teacher_external_id: taskData.teacher_external_id,
         course_external_id: taskData.course_external_id,
-        paralelo: taskData.paralelo || null
+        paralelo: taskData.paralelo || null,
+        trimestre: taskData.trimestre || null,
+        aporte: taskData.aporte || null
       },
       include: {
         submissions: true

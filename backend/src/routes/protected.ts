@@ -37,7 +37,7 @@ router.post(
   handleUploadError,
   async (req: Request, res: Response) => {
     try {
-      const { nombre, instrucciones, puntuacion, fechaVencimiento, cursoId, paralelo } = req.body;
+      const { nombre, instrucciones, puntuacion, fechaVencimiento, cursoId, paralelo, trimestre, aporte } = req.body;
       
       console.log('📝 Datos recibidos para crear tarea:', {
         nombre, 
@@ -46,6 +46,8 @@ router.post(
         fechaVencimiento, 
         cursoId,
         paralelo,
+        trimestre,
+        aporte,
         hasFile: !!req.file
       });
       
@@ -54,6 +56,24 @@ router.post(
         return res.status(400).json({
           success: false,
           message: 'Nombre, fecha de vencimiento y curso son requeridos'
+        });
+      }
+
+      // Validar trimestre si se proporciona
+      const trimestreNum = trimestre ? parseInt(trimestre, 10) : null;
+      if (trimestre && (isNaN(trimestreNum!) || trimestreNum! < 1 || trimestreNum! > 3)) {
+        return res.status(400).json({
+          success: false,
+          message: 'El trimestre debe ser 1, 2 o 3'
+        });
+      }
+
+      // Validar aporte si se proporciona
+      const aporteNum = aporte ? parseInt(aporte, 10) : null;
+      if (aporte && (isNaN(aporteNum!) || aporteNum! < 1 || aporteNum! > 2)) {
+        return res.status(400).json({
+          success: false,
+          message: 'El aporte debe ser 1 o 2'
         });
       }
 
@@ -132,7 +152,9 @@ router.post(
           due_date: fechaDate,
           teacher_external_id: teacherExternalId,
           course_external_id: courseExternalId,
-          paralelo: paralelo || null
+          paralelo: paralelo || null,
+          trimestre: trimestreNum,
+          aporte: aporteNum
         }
       });
 
