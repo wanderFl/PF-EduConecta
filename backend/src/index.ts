@@ -9,6 +9,7 @@ import authRoutes from './routes/auth';
 import protectedRoutes from './routes/protected';
 import studentsRoutes from './routes/students';
 import tasksRoutes from './routes/tasks';
+import attendanceRoutes from './routes/attendance';
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
 app.use('/api/students', studentsRoutes);
 app.use('/api/tasks', tasksRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Add a test route to verify server is working
 app.get('/api/test', (req, res) => {

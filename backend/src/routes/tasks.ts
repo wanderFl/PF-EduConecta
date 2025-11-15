@@ -202,7 +202,8 @@ router.post('/', async (req, res) => {
       max_points,
       file_reference,
       teacher_external_id,
-      course_external_id
+      course_external_id,
+      paralelo
     } = req.body;
 
     // Validar campos requeridos
@@ -220,7 +221,8 @@ router.post('/', async (req, res) => {
       max_points: max_points ? parseInt(max_points) : undefined,
       file_reference,
       teacher_external_id: parseInt(teacher_external_id),
-      course_external_id: parseInt(course_external_id)
+      course_external_id: parseInt(course_external_id),
+      paralelo: paralelo || undefined
     };
 
     const task = await createTask(taskData);
@@ -248,7 +250,8 @@ router.put('/:taskId', async (req, res) => {
       instructions,
       due_date,
       max_points,
-      file_reference
+      file_reference,
+      paralelo
     } = req.body;
 
     const taskData: any = {};
@@ -258,6 +261,7 @@ router.put('/:taskId', async (req, res) => {
     if (due_date !== undefined) taskData.due_date = new Date(due_date);
     if (max_points !== undefined) taskData.max_points = parseInt(max_points);
     if (file_reference !== undefined) taskData.file_reference = file_reference;
+    if (paralelo !== undefined) taskData.paralelo = paralelo;
 
     const task = await updateTask(taskId, taskData);
     

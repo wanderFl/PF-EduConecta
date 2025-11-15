@@ -97,6 +97,7 @@ model Task {
   file_reference     String?
   teacher_external_id Int
   course_external_id  Int
+  paralelo           String?  // Paralelo del curso (A, B, C, etc.)
   
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
@@ -105,6 +106,7 @@ model Task {
 
   @@index([teacher_external_id])
   @@index([course_external_id])
+  @@index([course_external_id, paralelo])
   @@map("tasks")
 }
 

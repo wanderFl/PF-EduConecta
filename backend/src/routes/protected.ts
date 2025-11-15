@@ -37,7 +37,7 @@ router.post(
   handleUploadError,
   async (req: Request, res: Response) => {
     try {
-      const { nombre, instrucciones, puntuacion, fechaVencimiento, cursoId } = req.body;
+      const { nombre, instrucciones, puntuacion, fechaVencimiento, cursoId, paralelo } = req.body;
       
       console.log('📝 Datos recibidos para crear tarea:', {
         nombre, 
@@ -45,6 +45,7 @@ router.post(
         puntuacion, 
         fechaVencimiento, 
         cursoId,
+        paralelo,
         hasFile: !!req.file
       });
       
@@ -130,7 +131,8 @@ router.post(
           file_reference: fileReference,
           due_date: fechaDate,
           teacher_external_id: teacherExternalId,
-          course_external_id: courseExternalId
+          course_external_id: courseExternalId,
+          paralelo: paralelo || null
         }
       });
 
@@ -150,7 +152,8 @@ router.post(
           max_points: task.max_points,
           file_reference: task.file_reference,
           due_date: task.due_date,
-          course_external_id: task.course_external_id
+          course_external_id: task.course_external_id,
+          paralelo: task.paralelo
         }
       });
 

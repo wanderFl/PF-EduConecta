@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getStudentsByCourse, getStudentById, searchStudents, getAllCourses } from '../services/students';
+import { getStudentsByCourse, getStudentById, searchStudents, getAllCourses, getParalelosByCourse } from '../services/students';
 import { 
   saveAttendance, 
   saveBulkAttendance, 
@@ -28,11 +28,46 @@ router.get('/courses', async (req, res) => {
   }
 });
 
+// GET /api/students/course/:courseId/paralelos - Obtener paralelos disponibles para un curso
+router.get('/course/:courseId/paralelos', async (req, res) => {
+  try {
+    const courseId = parseInt(req.params.courseId);
+    
+    if (isNaN(courseId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de curso inválido'
+      });
+    }
+
+    const paralelos = await getParalelosByCourse(String(courseId));
+    
+    res.json({
+      success: true,
+      data: paralelos,
+      count: paralelos.length
+    });
+  } catch (error) {
+    console.error('Error fetching paralelos by course:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener paralelos del curso'
+    });
+  }
+});
+
 // GET /api/students/course/:courseId - Obtener estudiantes por curso
 router.get('/course/:courseId', async (req, res) => {
   try {
     const { courseId } = req.params;
-    const students = await getStudentsByCourse(courseId);
+    const { parallel } = req.query;
+    
+    let students = await getStudentsByCourse(courseId);
+    
+    // Filtrar por paralelo si se especifica
+    if (parallel) {
+      students = students.filter(student => student.paralelo === parallel);
+    }
     
     res.json({
       success: true,
@@ -44,6 +79,30 @@ router.get('/course/:courseId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Error al obtener estudiantes del curso'
+    });
+  }
+});
+
+// GET /api/students/course/:courseId/parallels - Obtener paralelos disponibles para un curso
+router.get('/course/:courseId/parallels', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    
+    // Usar la nueva función que hace consulta directa a la base de datos
+    const parallels = await getParalelosByCourse(courseId);
+    
+    console.log(`Paralelos encontrados para curso ${courseId}:`, parallels);
+    
+    res.json({
+      success: true,
+      data: parallels,
+      count: parallels.length
+    });
+  } catch (error) {
+    console.error('Error fetching parallels by course:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al obtener paralelos del curso'
     });
   }
 });

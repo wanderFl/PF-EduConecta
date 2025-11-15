@@ -176,3 +176,100 @@ export async function getAllCourses() {
     throw new Error('Error al obtener cursos');
   }
 }
+
+/**
+ * Obtiene todos los paralelos disponibles para un curso específico
+ */
+export async function getParalelosByCourse(courseId: string): Promise<string[]> {
+  try {
+    const numericCourseId = parseInt(courseId);
+    
+    // Mapeo correcto según la estructura de la base de datos
+    const courseNameMapping: { [key: number]: string } = {
+      8: 'Octavo EGB',    // Para frontend courseId=8 -> Octavo EGB
+      9: 'Noveno EGB',    // Para frontend courseId=9 -> Noveno EGB
+      10: 'Décimo EGB',   // Para frontend courseId=10 -> Décimo EGB
+      11: 'Primero BGU',  // Para frontend courseId=11 -> Primero BGU
+      12: 'Segundo BGU',  // Para frontend courseId=12 -> Segundo BGU
+      13: 'Tercero BGU'   // Para frontend courseId=13 -> Tercero BGU
+    };
+    
+    if (!isNaN(numericCourseId)) {
+      const courseName = courseNameMapping[numericCourseId];
+      
+      if (!courseName) {
+        // Si no hay mapeo específico, usar paralelos por defecto
+        switch (numericCourseId) {
+          case 8:
+          case 9:
+          case 10:
+            return ['A', 'B', 'C'];
+          case 11:
+          case 12:
+          case 13:
+            return ['A', 'B'];
+          default:
+            return ['A'];
+        }
+      }
+      
+      // Consultar todos los paralelos disponibles para este nombre de curso
+      const [rows] = await ceiafPool.query(`
+        SELECT DISTINCT c.paralelo
+        FROM cursos c
+        INNER JOIN estudiantes e ON e.id_curso = c.id_curso
+        WHERE c.nombre = ? AND c.paralelo IS NOT NULL AND c.paralelo != ''
+        ORDER BY c.paralelo
+      `, [courseName]);
+
+      const paralelos = (rows as any[]).map(row => row.paralelo);
+      
+      // Si no hay paralelos en la DB, devolver por defecto
+      if (paralelos.length === 0) {
+        switch (numericCourseId) {
+          case 8:
+          case 9:
+          case 10:
+            return ['A', 'B', 'C'];
+          case 11:
+          case 12:
+          case 13:
+            return ['A', 'B'];
+          default:
+            return ['A'];
+        }
+      }
+      
+      return paralelos;
+    } else {
+      // Para compatibilidad con sistema anterior (mapeo por string)
+      const courseMapping: { [key: string]: string } = {
+        '8vo': 'Octavo EGB',
+        '9no': 'Noveno EGB', 
+        '10mo': 'Décimo EGB',
+        '1bgu': 'Primero BGU',
+        '2bgu': 'Segundo BGU',
+        '3bgu': 'Tercero BGU'
+      };
+
+      const courseName = courseMapping[courseId];
+      if (!courseName) {
+        throw new Error(`Curso no encontrado: ${courseId}`);
+      }
+      
+      const [rows] = await ceiafPool.query(`
+        SELECT DISTINCT c.paralelo
+        FROM cursos c
+        INNER JOIN estudiantes e ON e.id_curso = c.id_curso
+        WHERE c.nombre = ? AND c.paralelo IS NOT NULL AND c.paralelo != ''
+        ORDER BY c.paralelo
+      `, [courseName]);
+
+      const paralelos = (rows as any[]).map(row => row.paralelo);
+      return paralelos.length > 0 ? paralelos : ['A'];
+    }
+  } catch (error) {
+    console.error('Error fetching paralelos by course:', error);
+    throw new Error('Error al obtener paralelos del curso');
+  }
+}
