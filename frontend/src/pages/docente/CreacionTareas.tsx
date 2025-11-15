@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Course } from "../../types";
+import { studentsService } from "../../services/students";
 import { taskService } from "../../services/tasks";
 
 interface TaskData {
@@ -8,40 +9,91 @@ interface TaskData {
     instrucciones: string;
     puntuacion: number;
     fechaVencimiento: string;
+    cursoSeleccionado: number | null;
+    paraleloSeleccionado: string | null;
     archivo?: File;
 }
 
 const CreacionTareas: React.FC = () => {
     const navigate = useNavigate();
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+    const [availableParalelos, setAvailableParalelos] = useState<string[]>([]);
+    const [loadingParalelos, setLoadingParalelos] = useState<boolean>(false);
     const [taskData, setTaskData] = useState<TaskData>({
         nombre: '',
         instrucciones: '',
         puntuacion: 0,
-        fechaVencimiento: ''
+        fechaVencimiento: '',
+        cursoSeleccionado: null,
+        paraleloSeleccionado: null
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    // Cargar curso preseleccionado del localStorage y sus paralelos
     useEffect(() => {
-        const courseData = localStorage.getItem('selectedCourseData');
-        if (!courseData) {
-            navigate('/docente');
-            return;
-        }
-        
-        try {
-            const course = JSON.parse(courseData);
-            setSelectedCourse(course);
-        } catch {
-            navigate('/docente');
-        }
-    }, [navigate]);
+        const loadCourseAndParalelos = async () => {
+            const courseData = localStorage.getItem('selectedCourseData');
+            if (courseData) {
+                try {
+                    const course = JSON.parse(courseData);
+                    setSelectedCourse(course);
+                    // Si existe un curso preseleccionado, buscar su ID equivalente en la lista de cursos
+                    if (course.id) {
+                        // Mapear el ID del curso del localStorage al course_external_id
+                        const courseMapping: { [key: string]: number } = {
+                            '8vo': 8,
+                            '9no': 9,
+                            '10mo': 10,
+                            '1bgu': 11,
+                            '2bgu': 12,
+                            '3bgu': 13
+                        };
+                        const mappedId = courseMapping[course.id];
+                        if (mappedId) {
+                            setTaskData(prev => ({...prev, cursoSeleccionado: mappedId}));
+                            
+                            // Cargar paralelos automáticamente para el curso seleccionado
+                            try {
+                                setLoadingParalelos(true);
+                                const paralelos = await studentsService.getParalelosByCourse(mappedId);
+                                setAvailableParalelos(paralelos);
+                            } catch (error) {
+                                console.error('Error cargando paralelos:', error);
+                                // Si hay error (como 401), usar paralelos por defecto
+                                const paralelosDefault = mappedId <= 10 ? ['A', 'B', 'C'] : ['A', 'B'];
+                                setAvailableParalelos(paralelosDefault);
+                                console.log('Usando paralelos por defecto:', paralelosDefault);
+                            } finally {
+                                setLoadingParalelos(false);
+                            }
+                        }
+                    }
+                } catch {
+                    console.log('No se pudo parsear el curso del localStorage');
+                }
+            }
+        };
+
+        loadCourseAndParalelos();
+    }, []);
+
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setTaskData(prev => ({
             ...prev,
             [name]: name === 'puntuacion' ? Number(value) : value
+        }));
+    };
+
+
+
+    const handleParaleloChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const paralelo = e.target.value;
+        setTaskData(prev => ({
+            ...prev,
+            paraleloSeleccionado: paralelo || null
         }));
     };
 
@@ -63,15 +115,29 @@ const CreacionTareas: React.FC = () => {
 
     const handleGuardarYEnviar = async () => {
         try {
-                // Enviar al backend usando taskService (FormData)
-                const res = await taskService.createTask({
-                    nombre: taskData.nombre,
-                    instrucciones: taskData.instrucciones,
-                    puntuacion: taskData.puntuacion,
-                    fechaVencimiento: taskData.fechaVencimiento,
-                    cursoId: String(selectedCourse?.id ?? ''),
-                    file: selectedFile ?? undefined
-                });
+            // El curso se toma automáticamente del localStorage, ya no necesita validación manual
+            const cursoId = taskData.cursoSeleccionado || (selectedCourse?.id ? (() => {
+                const courseMapping: { [key: string]: number } = {
+                    '8vo': 8, '9no': 9, '10mo': 10, '1bgu': 11, '2bgu': 12, '3bgu': 13
+                };
+                return courseMapping[selectedCourse.id];
+            })() : null);
+
+            if (!cursoId) {
+                alert('No se pudo determinar el curso. Por favor, verifica tu sesión.');
+                return;
+            }
+
+            // Enviar al backend usando taskService (FormData)
+            const res = await taskService.createTask({
+                nombre: taskData.nombre,
+                instrucciones: taskData.instrucciones,
+                puntuacion: taskData.puntuacion,
+                fechaVencimiento: taskData.fechaVencimiento,
+                cursoId: String(cursoId),
+                paralelo: taskData.paraleloSeleccionado || undefined,
+                file: selectedFile ?? undefined
+            });
 
                 console.log('Respuesta creación tarea:', res);
                 alert(`Tarea "${taskData.nombre}" creada y guardada en el servidor (id: ${res?.task?.id ?? 'n/a'})`);
@@ -81,7 +147,9 @@ const CreacionTareas: React.FC = () => {
                     nombre: '',
                     instrucciones: '',
                     puntuacion: 0,
-                    fechaVencimiento: ''
+                    fechaVencimiento: '',
+                    cursoSeleccionado: null,
+                    paraleloSeleccionado: null
                 });
                 setSelectedFile(null);
             } catch (error) {
@@ -94,9 +162,7 @@ const CreacionTareas: React.FC = () => {
         navigate("/docente/dashboard");
     };
 
-    if (!selectedCourse) {
-        return <div>Cargando...</div>;
-    }
+
 
     return (
         <div style={{
@@ -120,7 +186,7 @@ const CreacionTareas: React.FC = () => {
                     <div style={{
                         width: '40px',
                         height: '40px',
-                        background: selectedCourse.color,
+                        background: selectedCourse?.color || '#3498db',
                         borderRadius: '10px',
                         display: 'flex',
                         alignItems: 'center',
@@ -145,7 +211,7 @@ const CreacionTareas: React.FC = () => {
                             color: '#7f8c8d',
                             fontSize: '0.9rem'
                         }}>
-                            {selectedCourse.name} "A"
+                            {selectedCourse?.name || 'Curso Seleccionado'} "A"
                         </p>
                     </div>
                 </div>
@@ -162,6 +228,43 @@ const CreacionTareas: React.FC = () => {
             }}>
                 Agenda Escolar Digital → Crear Tarea
             </div>
+
+            {/* Información del curso */}
+            {selectedCourse && (
+                <div style={{
+                    background: 'rgba(52, 152, 219, 0.1)',
+                    border: '2px solid rgba(52, 152, 219, 0.3)',
+                    padding: '1rem',
+                    borderRadius: '10px',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center'
+                }}>
+                    <div style={{
+                        width: '24px',
+                        height: '24px',
+                        background: selectedCourse.color || '#3498db',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: '0.8rem',
+                        marginRight: '0.75rem'
+                    }}>
+                        📚
+                    </div>
+                    <div>
+                        <span style={{ fontWeight: '600', color: '#2c3e50' }}>
+                            Creando tarea para: {selectedCourse.name || `Curso ${selectedCourse.id?.toUpperCase()}`}
+                        </span>
+                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#666' }}>
+                            Selecciona un paralelo específico o deja vacío para todos los paralelos del curso
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Formulario Principal */}
             <div style={{
@@ -195,10 +298,69 @@ const CreacionTareas: React.FC = () => {
                             outline: 'none',
                             transition: 'border-color 0.3s ease'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = selectedCourse.color}
+                        onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
                         onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
                         placeholder="Ingrese el nombre de la tarea"
                     />
+                </div>
+
+                {/* Selección de Paralelo */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                        display: 'block',
+                        fontWeight: '600',
+                        marginBottom: '0.5rem',
+                        color: '#2c3e50'
+                    }}>
+                        Paralelo (Sección) - Opcional
+                    </label>
+                        {loadingParalelos ? (
+                            <div style={{
+                                padding: '0.75rem',
+                                border: '2px solid #e1e5e9',
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                                color: '#666',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
+                                <span style={{ marginRight: '0.5rem' }}>⏳</span>
+                                Cargando paralelos...
+                            </div>
+                        ) : (
+                            <select
+                                value={taskData.paraleloSeleccionado || ''}
+                                onChange={handleParaleloChange}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    border: '2px solid #e1e5e9',
+                                    borderRadius: '8px',
+                                    fontSize: '1rem',
+                                    outline: 'none',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer',
+                                    transition: 'border-color 0.3s ease'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
+                                onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                            >
+                                <option value="">-- Selecciona un paralelo (opcional) --</option>
+                                {availableParalelos.map((paralelo) => (
+                                    <option key={paralelo} value={paralelo}>
+                                        Paralelo {paralelo}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    <p style={{
+                        margin: '0.5rem 0 0 0',
+                        fontSize: '0.8rem',
+                        color: '#666',
+                        fontStyle: 'italic'
+                    }}>
+                        * La selección de paralelo es opcional. Si no se selecciona, la tarea será visible para todos los paralelos del curso.
+                    </p>
                 </div>
 
                 {/* Instrucciones */}
@@ -226,7 +388,7 @@ const CreacionTareas: React.FC = () => {
                             resize: 'vertical',
                             transition: 'border-color 0.3s ease'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = selectedCourse.color}
+                        onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
                         onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
                         placeholder="Describa las instrucciones para la tarea..."
                     />
@@ -237,7 +399,7 @@ const CreacionTareas: React.FC = () => {
                     <button
                         onClick={() => document.getElementById('fileInput')?.click()}
                         style={{
-                            background: selectedCourse.color,
+                            background: selectedCourse?.color || '#3498db',
                             color: 'white',
                             border: 'none',
                             padding: '0.75rem 1.5rem',
@@ -245,7 +407,7 @@ const CreacionTareas: React.FC = () => {
                             fontSize: '1rem',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
-                            boxShadow: `0 4px 15px ${selectedCourse.color}30`
+                            boxShadow: `0 4px 15px ${selectedCourse?.color || '#3498db'}30`
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
@@ -361,7 +523,7 @@ const CreacionTareas: React.FC = () => {
                                     outline: 'none',
                                     marginRight: '0.5rem'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = selectedCourse.color}
+                                onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
                                 onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
                             />
                             <span style={{ color: '#666', fontWeight: '500' }}>Puntos</span>
@@ -391,7 +553,7 @@ const CreacionTareas: React.FC = () => {
                                 fontSize: '1rem',
                                 outline: 'none'
                             }}
-                            onFocus={(e) => e.target.style.borderColor = selectedCourse.color}
+                            onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
                             onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
                         />
                     </div>
@@ -434,7 +596,7 @@ const CreacionTareas: React.FC = () => {
                         onClick={handleGuardarYEnviar}
                         disabled={!taskData.nombre.trim() || !taskData.fechaVencimiento}
                         style={{
-                            background: taskData.nombre.trim() && taskData.fechaVencimiento 
+                            background: taskData.nombre.trim() && taskData.fechaVencimiento
                                 ? '#28a745' 
                                 : '#6c757d',
                             color: 'white',
@@ -442,7 +604,7 @@ const CreacionTareas: React.FC = () => {
                             padding: '0.75rem 2rem',
                             borderRadius: '8px',
                             fontSize: '1rem',
-                            cursor: taskData.nombre.trim() && taskData.fechaVencimiento 
+                            cursor: taskData.nombre.trim() && taskData.fechaVencimiento
                                 ? 'pointer' 
                                 : 'not-allowed',
                             transition: 'all 0.3s ease',

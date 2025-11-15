@@ -1,4 +1,5 @@
 import axios from 'axios';
+import api from './api';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -73,6 +74,19 @@ export const studentsService = {
     } catch (error) {
       console.error('Error fetching courses:', error);
       throw new Error('Error al obtener cursos');
+    }
+  },
+
+  /**
+   * Obtener paralelos por curso
+   */
+  async getParalelosByCourse(courseId: number): Promise<string[]> {
+    try {
+      const response = await api.get(`/students/course/${courseId}/paralelos`);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching paralelos by course:', error);
+      throw new Error('Error al obtener paralelos del curso');
     }
   },
 

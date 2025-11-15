@@ -6,6 +6,7 @@ export interface CreateTaskData {
   puntuacion: number;
   fechaVencimiento: string;
   cursoId: string;
+  paralelo?: string;
   file?: File | null;
 }
 
@@ -70,6 +71,9 @@ export const taskService = {
       form.append('puntuacion', String(normalizedData.puntuacion));
       form.append('fechaVencimiento', normalizedData.fechaVencimiento);
       form.append('cursoId', normalizedData.cursoId);
+      if (taskData.paralelo) {
+        form.append('paralelo', taskData.paralelo);
+      }
       if (taskData.file) {
         form.append('archivo', taskData.file);
         console.log('📎 Archivo adjunto:', taskData.file.name, taskData.file.size, 'bytes');

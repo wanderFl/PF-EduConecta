@@ -1,17 +1,106 @@
-.creacion-tareas {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: var(--spacing-2xl);
-  background: var(--color-white);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-lg);
+/* CreacionTareas.css - Task Creation Form */
+.creacion-tareas-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4f8, #e2e8f0);
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
-.creacion-tareas-header {
+.creacion-tareas-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 800px;
+  overflow: hidden;
+}
+
+.creacion-tareas-card.success-card {
+  max-width: 500px;
   text-align: center;
-  margin-bottom: var(--spacing-3xl);
-  padding-bottom: var(--spacing-xl);
-  border-bottom: 2px solid var(--color-bg-light);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+}
+
+.card-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.card-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+.task-form {
+  padding: 2rem;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input.has-value,
+.form-group textarea.has-value {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+.field-help {
+  display: block;
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
 }
 
 .creacion-tareas-title {
