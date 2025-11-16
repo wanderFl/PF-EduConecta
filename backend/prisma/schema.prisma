@@ -19,6 +19,7 @@ enum Role {
   DIRECTIVO
   DOCENTE
   FAMILIA
+  INSPECTOR
 }
 
 // USERS: login + roles

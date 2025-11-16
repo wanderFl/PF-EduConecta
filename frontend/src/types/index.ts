@@ -1,5 +1,5 @@
 // src/types/index.ts
-export type Role = "DIRECTIVO" | "DOCENTE" | "FAMILIA";
+export type Role = "DIRECTIVO" | "DOCENTE" | "FAMILIA" | "INSPECTOR";
 
 export interface User {
     id: string;

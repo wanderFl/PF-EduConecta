@@ -50,3 +50,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
+// El hook useAuth se ha movido a hooks/useAuth.ts para cumplir con Fast Refresh

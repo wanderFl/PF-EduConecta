@@ -1,11 +1,11 @@
 // src/routes/AppRoutes.tsx
 import React from "react";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "../contexts/AuthContext";
 import { LoginPage } from "../pages/LoginPage";
 import { DashboardDirectivo } from "../pages/DashboardDirectivo";
 import { DashboardDocente } from "../pages/DashboardDocente";
 import { DashboardFamilia } from "../pages/DashboardFamilia";
+import { DashboardInspector } from "../pages/DashboardInspector";
 // Docente sub-dashboards
 import AgendaPage from "../pages/docente/AgendaPage";
 import Asistencia from "../pages/docente/Asistencia";
@@ -17,8 +17,7 @@ import CourseSelection from "../pages/docente/CourseSelection";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export const AppRoutes: React.FC = () => (
-    <AuthProvider>
-        <BrowserRouter>
+    <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route
@@ -103,8 +102,15 @@ export const AppRoutes: React.FC = () => (
                         </ProtectedRoute>
                     }
                 />
+                <Route
+                    path="/inspector"
+                    element={
+                        <ProtectedRoute roles={["INSPECTOR"]}>
+                            <DashboardInspector />
+                        </ProtectedRoute>
+                    }
+                />
                 <Route path="*" element={<LoginPage />} />
             </Routes>
-        </BrowserRouter>
-    </AuthProvider>
+    </BrowserRouter>
 );
