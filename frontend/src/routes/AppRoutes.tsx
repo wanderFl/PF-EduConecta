@@ -18,6 +18,9 @@ import DirectivoProvider  from "../contexts/DirectivoProvider";
 import DirectivoSelectCoursePage from "../pages/DirectivoSelectCoursePage";
 import DirectivoDashboard from "../pages/DirectivoDashboard";
 import DirectivoRendimientoPage from "../pages/DirectivoRendimientoPage";
+import DirectivoSubjectPerformancePage from "../pages/DirectivoSubjectPerformancePage";
+import DirectivoStudentSubjectPage from "../pages/DirectivoStudentSubjectPage";
+
 const FamiliaLayout: React.FC = () => (
   <ProtectedRoute roles={["FAMILIA"]}>
     <FamilyProvider>
@@ -48,6 +51,8 @@ export const AppRoutes: React.FC = () => (
                 <Route path="dashboard" element={<DirectivoDashboard />} />
                 {/* Placeholders por ahora */}
                 <Route path="rendimiento" element={<DirectivoRendimientoPage />} />
+                <Route path="grades/subject/:subjectId" element={<DirectivoSubjectPerformancePage />} />
+                <Route path="grades/subject/:subjectId/student/:studentId" element={<DirectivoStudentSubjectPage />} />
                 <Route path="asistencia"  element={<div style={{padding:16}}>Asistencia (próximamente)</div>} />
             </Route>
 

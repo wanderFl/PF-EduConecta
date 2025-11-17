@@ -153,3 +153,281 @@ select:focus, button:focus { outline:none; box-shadow:0 0 0 3px var(--ring); }
 .crumb-link:hover { text-decoration: underline; }
 .crumb-sep { color:#9aa3af; }
 .crumb-current { font-weight:700; }
+
+.nice-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.nice-table th, .nice-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f7;
+  text-align: left;
+}
+.nice-table thead th {
+  background: #f7f9ff;
+  font-weight: 700;
+}
+.nice-table tr:hover td {
+  background: #fafcff;
+}
+/* ====== Rendimiento por materia (tabla + resumen) ====== */
+
+/* Lienzo blanco */
+.dir-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+/* Cabecera de la sección */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.section-title {
+  font-weight: 800;
+  color: var(--ink);
+}
+.section-sub {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Buscador */
+.table-search {
+  min-width: 260px;
+  border: 1px solid #82a8d6;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+.table-search:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Tabla */
+.tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+.tbl thead th {
+  background: #f7f9ff;
+  color: #1f3aa2;
+  font-weight: 800;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.tbl tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #eef2f7;
+  color: var(--ink);
+}
+.tbl tbody tr:nth-child(even) {
+  background: #fcfdff;
+}
+.tbl tbody tr:hover {
+  background: #f1f6ff;
+}
+.tbl .td-right {
+  text-align: right;
+}
+
+/* Badges numéricos */
+.badge {
+  display: inline-block;
+  min-width: 36px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-weight: 700;
+}
+.badge.ok    { color: #166534; background: #ecfdf5; border-color: #bbf7d0; }  /* verde */
+.badge.warn  { color: #9a6700; background: #fff7ed; border-color: #fde68a; }  /* ámbar */
+.badge.dang  { color: #991b1b; background: #fee2e2; border-color: #fecaca; }  /* rojo */
+
+/* Resumen */
+.stats-card {
+  background: #fff;
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  padding: 14px;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.stats-k {
+  font-size: 16px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.stats-v {
+  font-weight: 1000;
+  color: var(--ink);
+}
+
+/* Contenedor general de la página para quitar zonas grises */
+.dir-main, .dir-body {
+  background: var(--bg);
+}
+
+.row-clickable:hover {
+  background-color: #f5f5f5;
+}
+
+.dir-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.dir-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  max-width: 640px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+}
+
+.dir-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dir-modal-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.dir-modal-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.dir-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.dir-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dir-modal-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.dir-modal-block {
+  margin-top: 10px;
+}
+
+.dir-modal-text {
+  font-size: 0.9rem;
+  color: #334155;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.dir-link {
+  color: #2563eb;
+  text-decoration: underline;
+  font-size: 0.9rem;
+}
+
+.tri-header-row td {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  border-top: 1px solid #dbe3f0;
+}
+
+.ap-header-row td {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+}
+
+/* Fila de "1º Trimestre", "2º Trimestre", etc. */
+.tri-header-row td {
+  background: #e0edff;
+  color: #1d4ed8;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-top: 1px solid #dbe3f0;
+}
+
+/* Fila de "Aporte 1", "Aporte 2" */
+.ap-header-row td {
+  background: #f9fafb;
+  padding: 6px 12px 4px;
+}
+
+/* Chip de Aporte */
+.ap-badge {
+  display: inline-block;
+  background: #eef2ff;
+  color: #4f46e5;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dir-link-button {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+}
+.dir-link-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

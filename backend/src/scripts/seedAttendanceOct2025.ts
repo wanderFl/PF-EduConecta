@@ -49,11 +49,11 @@ function shuffle<T>(arr: T[]): T[] {
 
 async function seedForStudent(studentId: number) {
   const YEAR = 2025;
-  const OCT = 9; // 0-based => 9 es octubre
-  const monthStart = new Date(Date.UTC(YEAR, OCT, 1));
-  const monthEnd = new Date(Date.UTC(YEAR, OCT + 1, 1)); // exclusivo
+  const NOV = 10; // 0-based => 9 es octubre
+  const monthStart = new Date(Date.UTC(YEAR, NOV, 1));
+  const monthEnd = new Date(Date.UTC(YEAR, NOV + 1, 1)); // exclusivo
 
-  const weekdays = getWeekdaysUTC(YEAR, OCT);
+  const weekdays = getWeekdaysUTC(YEAR, NOV);
   const total = weekdays.length;
   const absentCount = Math.round(total * 0.20);
   const presentCount = total - absentCount;
