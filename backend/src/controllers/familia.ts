@@ -184,15 +184,19 @@ export const verifyParentPin = async (req: Request, res: Response) => {
 export const listStudentGrades = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { student_external_id } = req.body as { student_external_id?: number };
-
-    if (!userId || !student_external_id) {
+    const { student_external_id, subject_external_id } = req.body as {
+      student_external_id?: number;
+      subject_external_id?: number;
+    };
+    if (!userId || !student_external_id || !subject_external_id) {
       return res.status(400).json({ message: "Faltan datos requeridos" });
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.parent_id) {
-      return res.status(400).json({ message: "Tu usuario no está asociado a un perfil de padre" });
+      return res
+        .status(400)
+        .json({ message: "Tu usuario no está asociado a un perfil de padre" });
     }
 
     // Verificar vínculo padre-estudiante
@@ -205,23 +209,89 @@ export const listStudentGrades = async (req: Request, res: Response) => {
       },
     });
     if (!link) {
-      return res.status(403).json({ message: "No tienes acceso a este estudiante" });
+      return res
+        .status(403)
+        .json({ message: "No tienes acceso a este estudiante" });
     }
 
-    // 🔹 Leer de submissions_grades y traer título de la tarea
-    const grades = await prisma.submissionGrade.findMany({
-      where: { student_external_id },
-      include: { task: { select: { title: true } } },
-      orderBy: [{ task_id: "asc" }],
+    // 🔹 Leer submissions + task asociada (materia, trimestre, aporte, etc.)
+    const submissions = await prisma.submissionGrade.findMany({
+      where: { student_external_id, subject_external_id },
+      include: {
+        task: {
+          select: {
+            id: true,
+            title: true,
+            due_date: true,
+            subject_external_id: true,
+            trimestre: true,
+            aporte: true,
+            instructions: true,
+          },
+        },
+      },
+      orderBy: [
+        // primero por materia, luego por trimestre, aporte, fecha
+        { subject_external_id: "asc" },
+      ],
     });
 
-    const rows = grades.map(g => ({
-      id: g.id,
-      task_title: g.task?.title ?? "(Tarea)",
-      // Prisma.Decimal -> number
-      grade: g.grade === null ? null : (g.grade as unknown as Prisma.Decimal).toNumber(),
-      comments: g.student_comment ?? "",          // muestra vacío si no hay
-    }));
+    // Distintos subject_external_id para ir a CEIAF y traer nombres
+    const subjectIds = Array.from(
+      new Set(
+        submissions
+          .map((s) => s.task?.subject_external_id)
+          .filter((x): x is number => typeof x === "number")
+      )
+    );
+
+    let nameBySubjectId = new Map<number, string>();
+    if (subjectIds.length > 0) {
+      const [rows]: any[] = await ceiafPool.query(
+        `
+        SELECT id_materia, nombre
+        FROM materias
+        WHERE id_materia IN (?)
+      `,
+        [subjectIds]
+      );
+      nameBySubjectId = new Map<number, string>(
+        rows.map((r: any) => [Number(r.id_materia), String(r.nombre)])
+      );
+    }
+
+    const rows = submissions.map((g) => {
+      const t = g.task;
+      const subjectId = t?.subject_external_id ?? null;
+      const subjectName =
+        subjectId != null
+          ? nameBySubjectId.get(subjectId) ?? `Materia #${subjectId}`
+          : "Sin materia";
+
+      // 👇 Usa el campo real que tengas para fecha de envío
+      // si tu modelo tiene createdAt, cámbialo aquí:
+      // ahora usamos el campo real de tu modelo
+      const submittedAt: Date | null = g.submitted_at ?? null;
+
+      return {
+        id: g.id,
+        subject_id: subjectId,
+        subject_name: subjectName,
+        task_id: t?.id ?? "",
+        task_title: t?.title ?? "(Tarea)",
+        trimestre: (t as any)?.trimestre ?? null,
+        aporte: (t as any)?.aporte ?? null,
+        due_date: t?.due_date ? t.due_date.toISOString() : null,
+        submitted_at: submittedAt ? submittedAt.toISOString() : null,
+        grade:
+          g.grade === null
+            ? null
+            : (g.grade as unknown as Prisma.Decimal).toNumber(),
+        comments: g.student_comment ?? "",
+        file_url: g.file_reference ?? null,
+        instructions: t?.instructions ?? null,
+      };
+    });
 
     return res.json(rows);
   } catch (err) {
@@ -229,3 +299,51 @@ export const listStudentGrades = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Error interno del servidor" });
   }
 };
+
+// GET /api/familia/materias/:studentId
+export const listStudentSubjects = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const studentId = Number(req.params.studentId);
+
+    if (!userId || !studentId) {
+      return res.status(400).json({ message: "Faltan datos requeridos" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.parent_id) return res.status(400).json({ message: "Tu usuario no está asociado a un perfil de padre" });
+
+    const link = await prisma.parentStudentLink.findUnique({
+      where: {
+        parent_id_student_external_id: {
+          parent_id: user.parent_id,
+          student_external_id: String(studentId),
+        },
+      },
+    });
+
+    if (!link) return res.status(403).json({ message: "No tienes acceso a este estudiante" });
+
+    // Materias donde tiene submission
+    const subjects = await prisma.submissionGrade.groupBy({
+      by: ["subject_external_id"],
+      where: { student_external_id: studentId },
+    });
+
+    const ids = subjects.map(s => s.subject_external_id).filter(Boolean) as number[];
+
+    if (ids.length === 0) return res.json([]);
+
+    // Obtener nombres reales desde CEIAF
+    const [rows]: any[] = await ceiafPool.query(
+      `SELECT id_materia, nombre FROM materias WHERE id_materia IN (?)`,
+      [ids]
+    );
+
+    return res.json(rows);
+  } catch (err) {
+    console.error("GET /familia/materias error:", err);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+

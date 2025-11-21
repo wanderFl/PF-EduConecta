@@ -53,7 +53,7 @@ export const AppRoutes: React.FC = () => (
                 <Route path="rendimiento" element={<DirectivoRendimientoPage />} />
                 <Route path="grades/subject/:subjectId" element={<DirectivoSubjectPerformancePage />} />
                 <Route path="grades/subject/:subjectId/student/:studentId" element={<DirectivoStudentSubjectPage />} />
-                <Route path="asistencia"  element={<div style={{padding:16}}>Asistencia (próximamente)</div>} />
+                <Route path="comportamiento"  element={<div style={{padding:16}}>Comportamiento (próximamente)</div>} />
             </Route>
 
             <Route

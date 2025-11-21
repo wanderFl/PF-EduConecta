@@ -123,9 +123,18 @@ export interface PaginatedMessages {
 
 export interface GradeRow {
   id: string;
+  subject_id: number | null;
+  subject_name: string;
+  task_id: string;
   task_title: string;
-  grade: number | null;  // viene de Decimal -> number
-  comments: string;      // usamos student_comment; vacío si null
+  trimestre: number | null;
+  aporte: number | null;
+  due_date: string | null;
+  submitted_at: string | null;
+  grade: number | null;
+  comments: string;
+  file_url: string | null;
+  instructions: string | null;
 }
 
 export type CeiafCourse = {

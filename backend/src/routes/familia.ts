@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middlewares/auth';
 import { Role } from '@prisma/client';
-import { getLinkedChildren, findStudentByCedula, linkStudentToParent, verifyParentPin } from '../controllers/familia';
+import { getLinkedChildren, findStudentByCedula, linkStudentToParent, verifyParentPin, listStudentSubjects } from '../controllers/familia';
 import { getStudentTasks } from '../controllers/tasks'; 
 import { submitTask } from '../controllers/submissions';
 import { createSignedUploadUrl } from "../controllers/uploads";
 import { getMonthlyAttendance, createJustificationUploadUrl, submitJustification } from "../controllers/attendance";
 import { listStudentGrades } from "../controllers/familia";
+import {  getSubmissionDownloadUrl } from "../controllers/uploads";
 
 
 const router = Router();
@@ -26,4 +27,8 @@ router.post('/asistencia/upload-url', createJustificationUploadUrl);
 router.post('/asistencia/justificar', submitJustification);
 router.post('/verify-pin', verifyParentPin);
 router.post('/calificaciones', listStudentGrades);
+router.get("/submission-download-url", getSubmissionDownloadUrl);
+router.get("/materias/:studentId", listStudentSubjects);
+
+
 export default router;

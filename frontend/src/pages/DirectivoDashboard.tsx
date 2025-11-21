@@ -67,8 +67,8 @@ const DirectivoDashboard: React.FC = () => {
               <button className="kpi-cta">Ver</button>
             </div>
 
-            <div className="kpi-tile" onClick={() => navigate("/directivo/asistencia")}>
-              <div className="kpi-title">Indicador de asistencia</div>
+            <div className="kpi-tile" onClick={() => navigate("/directivo/comportamiento")}>
+              <div className="kpi-title">Indicador de Comportamiento</div>
               <button className="kpi-cta">Ver</button>
             </div>
           </section>

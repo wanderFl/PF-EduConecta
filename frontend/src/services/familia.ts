@@ -118,9 +118,26 @@ export const verifyParentPin = async (pin: string): Promise<boolean> => {
 };
 
 // Obtener calificaciones del estudiante
-export async function getStudentGrades(studentExternalId: number): Promise<GradeRow[]> {
+export async function getStudentGrades(studentExternalId: number, subjectId: number): Promise<GradeRow[]> {
   const { data } = await api.post("/familia/calificaciones", {
     student_external_id: studentExternalId,
+    subject_external_id: subjectId,
   });
-  return Array.isArray(data) ? (data as GradeRow[]) : [];
+  return Array.isArray(data) ? data : [];
+}
+
+
+// Genera una URL firmada para descargar el archivo de una tarea
+export async function getSubmissionDownloadUrl(fileRef: string): Promise<string> {
+  const { data } = await api.get("/familia/submission-download-url", {
+    params: { fileRef },
+  });
+  // El backend responde { url: "https://..." }
+  return data.url as string;
+}
+
+// Obtener materias del estudiante
+export async function getStudentSubjects(studentId: number): Promise<{id_materia: number, nombre: string}[]> {
+  const { data } = await api.get(`/familia/materias/${studentId}`);
+  return Array.isArray(data) ? data : [];
 }
