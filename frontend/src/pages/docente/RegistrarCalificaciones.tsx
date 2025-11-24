@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { taskService } from "../../services/tasks";
 import type { Course, Task, Student } from "../../types";
+import './RegistrarCalificaciones.css';
 
 const RegistrarCalificaciones: React.FC = () => {
     const navigate = useNavigate();
@@ -145,8 +146,11 @@ const RegistrarCalificaciones: React.FC = () => {
 
     if (!selectedCourse) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-lg">Cargando...</div>
+            <div className="calificaciones-container">
+                <div className="loading-spinner">
+                    <div className="spinner"></div>
+                    <div style={{ fontSize: '1.125rem', color: 'white' }}>Cargando...</div>
+                </div>
             </div>
         );
     }
@@ -170,36 +174,35 @@ const RegistrarCalificaciones: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-6xl mx-auto">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-800">
-                                Registrar Calificaciones
-                            </h1>
-                            <p className="text-gray-600">
-                                Curso: {selectedCourse.name}
-                            </p>
+        <div className="calificaciones-container">
+            <div className="calificaciones-content">
+                <div className="calificaciones-card">
+                    <div className="calificaciones-header">
+                        <div className="calificaciones-header-content">
+                            <div className="calificaciones-header-title">
+                                <h1>Registrar Calificaciones</h1>
+                                <p>Curso: {selectedCourse.name}</p>
+                            </div>
+                            <button
+                                onClick={() => navigate("/docente/dashboard")}
+                                className="btn-calificaciones btn-secondary"
+                            >
+                                ← Volver al Dashboard
+                            </button>
                         </div>
-                        <button
-                            onClick={() => navigate("/docente/dashboard")}
-                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-                        >
-                            Volver al Dashboard
-                        </button>
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                            {error}
+                        <div className="alert-calificaciones alert-error" style={{ margin: '1.5rem' }}>
+                            <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                            <span>{error}</span>
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                            <p className="mt-4 text-gray-600">Cargando tareas...</p>
+                        <div className="loading-spinner">
+                            <div className="spinner"></div>
+                            <p style={{ fontSize: '1.125rem', color: '#667eea' }}>Cargando tareas...</p>
                         </div>
                     ) : (
                         <>
@@ -245,67 +248,104 @@ const TaskListView: React.FC<TaskListViewProps> = ({
     formatDate,
     navigate
 }) => (
-    <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+    <div className="task-list-grid">
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2d3748', marginBottom: '1.5rem' }}>
             Seleccionar Tarea para Calificar
         </h2>
         {tasks.length === 0 ? (
-            <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">
-                    No hay tareas creadas para este curso
+            <div className="empty-state">
+                <div className="empty-state-icon">📚</div>
+                <h3 className="empty-state-title">No hay tareas creadas</h3>
+                <p className="empty-state-description">
+                    Comienza creando tu primera tarea para este curso
                 </p>
                 <button
                     onClick={() => navigate("/docente/crear-tarea")}
-                    className="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+                    className="btn-calificaciones btn-primary"
                 >
-                    Crear Primera Tarea
+                    ➕ Crear Primera Tarea
                 </button>
             </div>
         ) : (
-            <div className="grid gap-4">
-                {tasks.map((task) => (
-                    <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                    {task.title}
-                                </h3>
-                                {task.instructions && (
-                                    <p className="text-gray-600 mb-2 line-clamp-2">
-                                        {task.instructions}
-                                    </p>
-                                )}
-                                <div className="text-sm text-gray-500 space-x-4">
-                                    <span>Vence: {formatDate(task.due_date)}</span>
-                                    {task.max_points && (
-                                        <span>Puntos máximos: {task.max_points}</span>
+            <div style={{ display: 'grid', gap: '1.5rem' }}>
+                {tasks.map((task) => {
+                    const totalStudents = task.students.length;
+                    const submittedCount = task.students.filter(s => s.has_submission).length;
+                    const gradedCount = task.students.filter(s => s.grade !== null && s.grade !== undefined).length;
+                    const submissionPercentage = totalStudents > 0 ? (submittedCount / totalStudents) * 100 : 0;
+                    const gradedPercentage = totalStudents > 0 ? (gradedCount / totalStudents) * 100 : 0;
+                    
+                    return (
+                        <div key={task.id} className="task-card">
+                            <div className="task-card-header">
+                                <div style={{ flex: 1 }}>
+                                    <h3 className="task-card-title">{task.title}</h3>
+                                    {task.instructions && (
+                                        <p className="task-card-description">{task.instructions}</p>
                                     )}
-                                    <span>Estudiantes: {task.students.length}</span>
-                                    <span>
-                                        Entregas: {task.students.filter(s => s.has_submission).length}
-                                    </span>
-                                    <span>
-                                        Calificados: {task.students.filter(s => s.grade !== null && s.grade !== undefined).length}
-                                    </span>
+                                    <div className="task-card-meta">
+                                        <div className="task-card-meta-item">
+                                            <span>📅</span>
+                                            <span><strong>Vence:</strong> {formatDate(task.due_date)}</span>
+                                        </div>
+                                        {task.max_points && (
+                                            <div className="task-card-meta-item">
+                                                <span>⭐</span>
+                                                <span><strong>Puntos:</strong> {task.max_points}</span>
+                                            </div>
+                                        )}
+                                        <div className="task-card-meta-item">
+                                            <span>👥</span>
+                                            <span><strong>Estudiantes:</strong> {totalStudents}</span>
+                                        </div>
+                                    </div>
+                                    {task.file_reference && (
+                                        <a
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                onDownloadTaskFile(task.file_reference!.split('/').pop()!);
+                                            }}
+                                            className="download-link"
+                                        >
+                                            📎 Descargar archivo adjunto
+                                        </a>
+                                    )}
+                                    <div className="progress-bar-container">
+                                        <div className="progress-bar-label">
+                                            <span><strong>Entregas:</strong> {submittedCount} de {totalStudents}</span>
+                                            <span>{submissionPercentage.toFixed(0)}%</span>
+                                        </div>
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-bar-fill" 
+                                                style={{ width: `${submissionPercentage}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                    <div className="progress-bar-container">
+                                        <div className="progress-bar-label">
+                                            <span><strong>Calificados:</strong> {gradedCount} de {totalStudents}</span>
+                                            <span>{gradedPercentage.toFixed(0)}%</span>
+                                        </div>
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-bar-fill" 
+                                                style={{ width: `${gradedPercentage}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
                                 </div>
-                                {task.file_reference && (
-                                    <button
-                                        onClick={() => onDownloadTaskFile(task.file_reference!.split('/').pop()!)}
-                                        className="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
-                                    >
-                                        📎 Descargar archivo adjunto
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => onSelectTask(task)}
+                                    className="btn-calificaciones btn-primary"
+                                >
+                                    📝 Calificar
+                                </button>
                             </div>
-                            <button
-                                onClick={() => onSelectTask(task)}
-                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                            >
-                                Calificar
-                            </button>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         )}
     </div>
@@ -328,114 +368,104 @@ const TaskStudentListView: React.FC<TaskStudentListViewProps> = ({
     formatDate,
     isGrading
 }) => (
-    <div>
-        <div className="flex justify-between items-center mb-6">
+    <div className="students-table-container">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-                <h2 className="text-xl font-semibold text-gray-800">
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2d3748', marginBottom: '0.5rem' }}>
                     {task.title}
                 </h2>
-                <p className="text-gray-600">
-                    Vence: {formatDate(task.due_date)}
+                <p style={{ color: '#718096', fontSize: '1rem' }}>
+                    📅 Vence: {formatDate(task.due_date)}
                 </p>
             </div>
             <button
                 onClick={onBack}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
+                className="btn-calificaciones btn-secondary"
             >
-                Volver a Tareas
+                ← Volver a Tareas
             </button>
         </div>
 
         {task.students.length === 0 ? (
-            <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">
+            <div className="empty-state">
+                <div className="empty-state-icon">👥</div>
+                <h3 className="empty-state-title">No hay estudiantes</h3>
+                <p className="empty-state-description">
                     No hay estudiantes registrados en este curso
                 </p>
             </div>
         ) : (
-            <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-200">
-                    <thead className="bg-gray-50">
+            <div style={{ overflowX: 'auto' }}>
+                <table className="students-table">
+                    <thead>
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Estudiante
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Estado de Entrega
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Calificación
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Acciones
-                            </th>
+                            <th>Estudiante</th>
+                            <th>Estado de Entrega</th>
+                            <th>Calificación</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody>
                         {task.students.map((student) => (
-                            <tr key={student.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap border-b">
-                                    <div className="text-sm font-medium text-gray-900">
+                            <tr key={student.id}>
+                                <td>
+                                    <div className="student-name">
                                         {student.nombre_completo}
                                     </div>
-                                    <div className="text-sm text-gray-500">
+                                    <div className="student-id">
                                         ID: {student.id}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap border-b">
-                                    <div className="flex items-center">
-                                        {student.has_submission ? (
-                                            <div>
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    Entregado
-                                                </span>
-                                                {student.submitted_at && (
-                                                    <div className="text-xs text-gray-500 mt-1">
-                                                        {formatDate(student.submitted_at)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                No entregado
+                                <td>
+                                    {student.has_submission ? (
+                                        <div>
+                                            <span className="status-badge status-submitted">
+                                                ✓ Entregado
                                             </span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap border-b">
-                                    <div className="flex items-center">
-                                        <span className={`text-sm font-medium ${
-                                            student.grade !== null && student.grade !== undefined 
-                                                ? student.grade >= 7 
-                                                    ? 'text-green-600' 
-                                                    : 'text-red-600'
-                                                : 'text-gray-400'
-                                        }`}>
-                                            {student.grade !== null && student.grade !== undefined 
-                                                ? `${student.grade}/10`
-                                                : 'Sin calificar'
-                                            }
+                                            {student.submitted_at && (
+                                                <div style={{ fontSize: '0.875rem', color: '#718096', marginTop: '0.5rem' }}>
+                                                    {formatDate(student.submitted_at)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <span className="status-badge status-not-submitted">
+                                            ✗ No entregado
                                         </span>
-                                        {student.graded_at && (
-                                            <div className="text-xs text-gray-500 ml-2">
-                                                {formatDate(student.graded_at)}
-                                            </div>
+                                    )}
+                                </td>
+                                <td>
+                                    <div className="grade-display">
+                                        {student.grade !== null && student.grade !== undefined ? (
+                                            <>
+                                                <span className={student.grade >= 7 ? 'grade-high' : 'grade-low'}>
+                                                    {student.grade}/10
+                                                </span>
+                                                {student.grade >= 7 && <span className="status-badge status-graded">✓ Aprobado</span>}
+                                            </>
+                                        ) : (
+                                            <span className="grade-pending">Sin calificar</span>
                                         )}
                                     </div>
+                                    {student.graded_at && (
+                                        <div style={{ fontSize: '0.875rem', color: '#718096', marginTop: '0.5rem' }}>
+                                            {formatDate(student.graded_at)}
+                                        </div>
+                                    )}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium border-b">
-                                    <div className="flex gap-2">
+                                <td>
+                                    <div className="action-buttons">
                                         <button
                                             onClick={() => onSelectStudent(student)}
-                                            className="text-blue-600 hover:text-blue-900 px-3 py-1 border border-blue-600 rounded hover:bg-blue-50"
+                                            className="btn-action btn-action-primary"
                                             disabled={isGrading === student.id}
                                         >
-                                            {isGrading === student.id ? 'Procesando...' : 'Ver Detalles'}
+                                            {isGrading === student.id ? '⏳ Procesando...' : '👁️ Ver Detalles'}
                                         </button>
                                         {student.file_reference && (
                                             <button
                                                 onClick={() => onSelectStudent(student)}
-                                                className="text-green-600 hover:text-green-900 px-3 py-1 border border-green-600 rounded hover:bg-green-50"
+                                                className="btn-action btn-action-success"
                                             >
                                                 📎 Entrega
                                             </button>
@@ -503,98 +533,102 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg shadow-md">
-                    {/* Header similar a la imagen */}
-                    <div className="border-b border-gray-200 p-6">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h1 className="text-xl font-semibold text-gray-800">
-                                    Detalles de la Tarea
-                                </h1>
-                                <div className="mt-2 space-y-1">
-                                    <p className="text-sm"><strong>Nombre:</strong> {task.title}</p>
-                                    <p className="text-sm"><strong>Estudiante:</strong> {student.nombre_completo}</p>
-                                    <p className="text-sm"><strong>Curso:</strong> {course.name}</p>
+        <div className="detail-view-container">
+            <div className="detail-view-content">
+                <div className="detail-view-card">
+                    {/* Header */}
+                    <div className="detail-view-header">
+                        <div className="detail-view-header-content">
+                            <div className="detail-view-info">
+                                <h1>📝 Detalles de la Tarea</h1>
+                                <div className="detail-info-grid">
+                                    <div className="detail-info-item"><strong>Tarea:</strong> {task.title}</div>
+                                    <div className="detail-info-item"><strong>Estudiante:</strong> {student.nombre_completo}</div>
+                                    <div className="detail-info-item"><strong>Curso:</strong> {course.name}</div>
+                                    <div className="detail-info-item"><strong>ID Estudiante:</strong> {student.id}</div>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="detail-view-actions">
                                 <button
                                     onClick={onBack}
-                                    className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors"
+                                    className="btn-calificaciones btn-warning"
                                 >
-                                    Guardar y Cerrar
+                                    💾 Guardar y Cerrar
                                 </button>
                                 <button
                                     onClick={onBack}
-                                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+                                    className="btn-calificaciones btn-danger"
                                 >
-                                    Cancelar
+                                    ✗ Cancelar
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-6 space-y-6">
+                    <div className="detail-view-body">
                         {error && (
-                            <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                                {error}
+                            <div className="alert-calificaciones alert-error">
+                                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                                <span>{error}</span>
                             </div>
                         )}
 
                         {/* Información de la tarea */}
-                        <div className="border border-gray-200 rounded-lg p-4">
-                            <h3 className="font-medium text-gray-800 mb-2">Información de la Tarea</h3>
-                            <div className="space-y-2 text-sm">
+                        <div className="detail-section">
+                            <h3 className="detail-section-title">📋 Información de la Tarea</h3>
+                            <div className="detail-section-content">
                                 <p><strong>Instrucciones:</strong> {task.instructions || 'No hay instrucciones'}</p>
-                                <p><strong>Fecha de Entrega:</strong> {formatDate(task.due_date)}</p>
-                                <p><strong>Fecha de Envío:</strong> {student.submitted_at ? formatDate(student.submitted_at) : 'No enviado'}</p>
+                                <p><strong>📅 Fecha de Entrega:</strong> {formatDate(task.due_date)}</p>
+                                <p><strong>📤 Fecha de Envío:</strong> {student.submitted_at ? formatDate(student.submitted_at) : 'No enviado'}</p>
                                 {task.max_points && (
-                                    <p><strong>Puntuación Máxima:</strong> {task.max_points} puntos</p>
+                                    <p><strong>⭐ Puntuación Máxima:</strong> {task.max_points} puntos</p>
                                 )}
                             </div>
                             
                             {task.file_reference && (
-                                <div className="mt-3">
-                                    <button
-                                        onClick={() => onDownloadTask(task.file_reference!.split('/').pop()!)}
-                                        className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-2"
+                                <div style={{ marginTop: '1rem' }}>
+                                    <a
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onDownloadTask(task.file_reference!.split('/').pop()!);
+                                        }}
+                                        className="download-link"
                                     >
                                         📎 Descargar archivo de la tarea
-                                    </button>
+                                    </a>
                                 </div>
                             )}
                         </div>
 
                         {/* Comentario del estudiante */}
-                        <div className="border border-gray-200 rounded-lg p-4">
-                            <h3 className="font-medium text-gray-800 mb-2">Comentario del Estudiante</h3>
-                            <p className="text-sm text-gray-600">
+                        <div className="detail-section">
+                            <h3 className="detail-section-title">💬 Comentario del Estudiante</h3>
+                            <p className="detail-section-content">
                                 {student.comment_student || 'El estudiante no dejó comentarios'}
                             </p>
                         </div>
 
                         {/* Archivo de entrega */}
                         {student.file_reference && (
-                            <div className="border border-gray-200 rounded-lg p-4">
-                                <h3 className="font-medium text-gray-800 mb-2">Archivo de Entrega</h3>
+                            <div className="detail-section">
+                                <h3 className="detail-section-title">📂 Archivo de Entrega</h3>
                                 <button
                                     onClick={() => onDownloadSubmission(student.file_reference!.split('/').pop()!)}
-                                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors flex items-center gap-2"
+                                    className="btn-calificaciones btn-success"
                                 >
-                                    📎 Descargar Entrega del Estudiante
+                                    📥 Descargar Entrega del Estudiante
                                 </button>
                             </div>
                         )}
 
                         {/* Calificación */}
-                        <form onSubmit={handleSubmit} className="border border-gray-200 rounded-lg p-4">
-                            <h3 className="font-medium text-gray-800 mb-4">Calificación</h3>
+                        <form onSubmit={handleSubmit} className="detail-section">
+                            <h3 className="detail-section-title">✍️ Calificación</h3>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">
                                         Calificación (0-10)
                                     </label>
                                     <input
@@ -604,7 +638,7 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({
                                         step="0.1"
                                         value={grade}
                                         onChange={(e) => setGrade(e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                                        className="form-input"
                                         placeholder="Ingrese la calificación"
                                         disabled={isGrading}
                                         required
@@ -612,41 +646,43 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({
                                 </div>
                             </div>
 
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Retroalimentación
+                            <div className="form-group">
+                                <label className="form-label">
+                                    💭 Retroalimentación
                                 </label>
                                 <textarea
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                                    className="form-textarea"
                                     rows={4}
                                     placeholder="Escriba sus comentarios sobre la entrega del estudiante..."
                                     disabled={isGrading}
                                 />
                             </div>
 
-                            <div className="mt-6 flex gap-3">
+                            {student.grade !== null && student.grade !== undefined && (
+                                <div className="current-grade-info">
+                                    <span>Calificación actual:</span>
+                                    <strong className={student.grade >= 7 ? 'grade-high' : 'grade-low'}>
+                                        {student.grade}/10
+                                    </strong>
+                                    {student.graded_at && (
+                                        <span style={{ marginLeft: 'auto' }}>
+                                            📅 Calificado el: {formatDate(student.graded_at)}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            <div style={{ marginTop: '1.5rem' }}>
                                 <button
                                     type="submit"
                                     disabled={isGrading}
-                                    className={`px-6 py-2 rounded transition-colors ${
-                                        isGrading
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : 'bg-blue-600 hover:bg-blue-700'
-                                    } text-white`}
+                                    className="btn-calificaciones btn-success"
+                                    style={{ width: '100%', justifyContent: 'center' }}
                                 >
-                                    {isGrading ? 'Guardando...' : 'Guardar Calificación'}
+                                    {isGrading ? '⏳ Guardando...' : '💾 Guardar Calificación'}
                                 </button>
-                                
-                                {student.grade !== null && student.grade !== undefined && (
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <span>Calificación actual: <strong>{student.grade}/10</strong></span>
-                                        {student.graded_at && (
-                                            <span className="ml-3">Fecha: {formatDate(student.graded_at)}</span>
-                                        )}
-                                    </div>
-                                )}
                             </div>
                         </form>
                     </div>
