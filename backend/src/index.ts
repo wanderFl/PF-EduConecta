@@ -10,6 +10,8 @@ import protectedRoutes from './routes/protected';
 import studentsRoutes from './routes/students';
 import tasksRoutes from './routes/tasks';
 import attendanceRoutes from './routes/attendance';
+import disciplinaryReportsRoutes from './routes/disciplinaryReports';
+import communicationsRoutes from './routes/communications';
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
@@ -30,17 +32,35 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// TEMP: Debug routes ANTES de las rutas protegidas
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend server is working!', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/communications-status', (req, res) => {
+  res.json({ 
+    status: 'Communications routes are registered',
+    requiresAuth: true,
+    endpoints: [
+      'GET /api/communications/teacher (requires DOCENTE token)',
+      'POST /api/communications/teacher',
+      'GET /api/communications/teacher/students',
+      'GET /api/communications/conversation/:id/messages',
+      'POST /api/communications/conversation/:id/messages',
+      'PUT /api/communications/conversation/:id/archive'
+    ],
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
 app.use('/api/students', studentsRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/attendance', attendanceRoutes);
-
-// Add a test route to verify server is working
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend server is working!', timestamp: new Date().toISOString() });
-});
+app.use('/api/disciplinary-reports', disciplinaryReportsRoutes);
+app.use('/api/communications', communicationsRoutes);
 
 // Add a route to list all available routes
 app.get('/api/routes', (req, res) => {

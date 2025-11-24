@@ -14,6 +14,8 @@ const protected_1 = __importDefault(require("./routes/protected"));
 const students_1 = __importDefault(require("./routes/students"));
 const tasks_1 = __importDefault(require("./routes/tasks"));
 const attendance_1 = __importDefault(require("./routes/attendance"));
+const disciplinaryReports_1 = __importDefault(require("./routes/disciplinaryReports"));
+const communications_1 = __importDefault(require("./routes/communications"));
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is required');
@@ -29,16 +31,33 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
+// TEMP: Debug routes ANTES de las rutas protegidas
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'Backend server is working!', timestamp: new Date().toISOString() });
+});
+app.get('/api/communications-status', (req, res) => {
+    res.json({
+        status: 'Communications routes are registered',
+        requiresAuth: true,
+        endpoints: [
+            'GET /api/communications/teacher (requires DOCENTE token)',
+            'POST /api/communications/teacher',
+            'GET /api/communications/teacher/students',
+            'GET /api/communications/conversation/:id/messages',
+            'POST /api/communications/conversation/:id/messages',
+            'PUT /api/communications/conversation/:id/archive'
+        ],
+        timestamp: new Date().toISOString()
+    });
+});
 // Routes
 app.use('/api/auth', auth_1.default);
 app.use('/api/protected', protected_1.default);
 app.use('/api/students', students_1.default);
 app.use('/api/tasks', tasks_1.default);
 app.use('/api/attendance', attendance_1.default);
-// Add a test route to verify server is working
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'Backend server is working!', timestamp: new Date().toISOString() });
-});
+app.use('/api/disciplinary-reports', disciplinaryReports_1.default);
+app.use('/api/communications', communications_1.default);
 // Add a route to list all available routes
 app.get('/api/routes', (req, res) => {
     const routes = [];

@@ -174,3 +174,79 @@ model Message {
 
   @@map("messages")
 }
+
+/// Conversaciones entre docentes y padres
+model Conversation {
+  id                     String              @id @default(uuid())
+  kind                   String              @default("THREAD") // THREAD o ANNOUNCEMENT
+  student_external_id    Int                 // ID del estudiante en MySQL
+  teacher_external_id    Int                 // ID del docente en MySQL
+  parent_id              String?             // ID del padre en PostgreSQL (opcional)
+  subject                String?             // Asunto de la conversación
+  is_behavioral_note     Boolean             @default(false) // Si es nota de conducta
+  
+  // Estado de la conversación
+  archived_by_parent     Boolean             @default(false)
+  archived_by_teacher    Boolean             @default(false)
+  
+  // Timestamps
+  created_at             DateTime            @default(now())
+  updated_at             DateTime            @updatedAt
+  
+  // Relación con mensajes
+  conversation_messages  ConversationMessage[]
+
+  @@index([student_external_id])
+  @@index([teacher_external_id])
+  @@index([parent_id])
+  @@map("conversations")
+}
+
+/// Mensajes dentro de conversaciones
+model ConversationMessage {
+  id                String       @id @default(uuid())
+  conversation_id   String
+  sender_role       String       // DOCENTE o FAMILIA
+  sender_id         String       // ID del usuario que envía (teacher_external_id o parent_id)
+  body              String       @db.Text
+  
+  created_at        DateTime     @default(now())
+  
+  conversation      Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id])
+  @@index([created_at])
+  @@map("conversation_messages")
+}
+
+/// Reportes disciplinarios / Novedades
+model DisciplinaryReport {
+  id                     String    @id @default(uuid())
+  student_external_id    Int       // ID del estudiante en MySQL
+  course_external_id     Int       // ID del curso en MySQL  
+  paralelo               String    // Paralelo del curso
+  inspector_external_id  String    // ID del usuario inspector
+  
+  // Contenido de la novedad
+  title                  String    // Título/asunto de la novedad
+  description            String    @db.Text // Descripción detallada del incidente
+  severity               String    // LEVE, MODERADA, GRAVE
+  category               String    // COMPORTAMIENTO, ACADEMICO, ASISTENCIA, UNIFORME, OTROS
+  
+  // Estado y seguimiento
+  status                 String    @default("ENVIADA") // ENVIADA, LEIDA, RESPONDIDA
+  parent_viewed_at       DateTime? // Cuándo el padre vio la novedad
+  parent_response        String?   @db.Text // Respuesta del padre (opcional)
+  
+  // Metadatos
+  incident_date          DateTime  // Fecha del incidente
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  @@index([student_external_id])
+  @@index([course_external_id, paralelo])
+  @@index([inspector_external_id])
+  @@index([incident_date])
+  @@index([status])
+  @@map("disciplinary_reports")
+}
