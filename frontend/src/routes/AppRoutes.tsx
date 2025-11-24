@@ -6,12 +6,12 @@ import { DashboardDirectivo } from "../pages/DashboardDirectivo";
 import { DashboardDocente } from "../pages/DashboardDocente";
 import { DashboardFamilia } from "../pages/DashboardFamilia";
 import { DashboardInspector } from "../pages/DashboardInspector";
+import Novedades from "../pages/Inspector/Novedades";
+import AsistenciaInspector from "../pages/Inspector/Asistencia";
 // Docente sub-dashboards
 import AgendaPage from "../pages/docente/AgendaPage";
-import Asistencia from "../pages/docente/Asistencia";
 import Comunicados from "../pages/docente/Comunicados";
 import RegistrarCalificaciones from "../pages/docente/RegistrarCalificaciones";
-import GestionarFaltas from "../pages/docente/GestionarFaltas";
 import CreacionTareas from "../pages/docente/CreacionTareas";
 import CourseSelection from "../pages/docente/CourseSelection";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -55,14 +55,6 @@ export const AppRoutes: React.FC = () => (
                     }
                 />
                 <Route
-                    path="/docente/asistencia"
-                    element={
-                        <ProtectedRoute roles={["DOCENTE"]}>
-                            <Asistencia />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
                     path="/docente/comunicados"
                     element={
                         <ProtectedRoute roles={["DOCENTE"]}>
@@ -75,14 +67,6 @@ export const AppRoutes: React.FC = () => (
                     element={
                         <ProtectedRoute roles={["DOCENTE"]}>
                             <RegistrarCalificaciones />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/docente/faltas"
-                    element={
-                        <ProtectedRoute roles={["DOCENTE"]}>
-                            <GestionarFaltas />
                         </ProtectedRoute>
                     }
                 />
@@ -107,6 +91,30 @@ export const AppRoutes: React.FC = () => (
                     element={
                         <ProtectedRoute roles={["INSPECTOR"]}>
                             <DashboardInspector />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inspector/dashboard"
+                    element={
+                        <ProtectedRoute roles={["INSPECTOR"]}>
+                            <DashboardInspector />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inspector/novedades"
+                    element={
+                        <ProtectedRoute roles={["INSPECTOR"]}>
+                            <Novedades />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inspector/asistencia"
+                    element={
+                        <ProtectedRoute roles={["INSPECTOR"]}>
+                            <AsistenciaInspector />
                         </ProtectedRoute>
                     }
                 />

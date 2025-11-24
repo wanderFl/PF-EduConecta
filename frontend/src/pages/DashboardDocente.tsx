@@ -34,12 +34,6 @@ export const DashboardDocente: React.FC = () => {
             icon: "📅"
         },
         {
-            title: "Asistencia",
-            description: "Registrar y controlar la asistencia diaria de estudiantes",
-            path: "/docente/asistencia",
-            icon: "✅"
-        },
-        {
             title: "Comunicados",
             description: "Enviar notificaciones y comunicados importantes a las familias",
             path: "/docente/comunicados",
@@ -50,12 +44,6 @@ export const DashboardDocente: React.FC = () => {
             description: "Gestionar notas, evaluaciones y seguimiento académico",
             path: "/docente/calificaciones",
             icon: "📝"
-        },
-        {
-            title: "Gestionar Faltas",
-            description: "Administrar faltas disciplinarias y reportes de comportamiento",
-            path: "/docente/faltas",
-            icon: "⚠️"
         },
         {
             title: "Creación de Tareas",
