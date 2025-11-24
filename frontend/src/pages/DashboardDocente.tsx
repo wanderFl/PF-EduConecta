@@ -3,12 +3,30 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import type { Course } from "../types";
+import { taskService } from "../services/tasks";
+import { listTeacherConversations, type TeacherConversation } from "../services/communications";
 import "./DashboardDocente.css";
+
+interface TaskSubmission {
+    id_estudiante: number;
+    nombre_estudiante: string;
+    estado: string;
+    calificacion: number | null;
+}
+
+interface TaskWithSubmissions {
+    id_tarea: string;
+    nombre_tarea: string;
+    estudiantes: TaskSubmission[];
+}
 
 export const DashboardDocente: React.FC = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+    const [recentMessages, setRecentMessages] = useState<TeacherConversation[]>([]);
+    const [pendingGrades, setPendingGrades] = useState<TaskSubmission[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const courseData = localStorage.getItem('selectedCourseData');
@@ -20,11 +38,52 @@ export const DashboardDocente: React.FC = () => {
         try {
             const course = JSON.parse(courseData);
             setSelectedCourse(course);
+            loadDashboardData(course);
         } catch (error) {
             console.error('Error parsing course data:', error);
             navigate('/docente');
         }
     }, [navigate]);
+
+    const loadDashboardData = async (course: Course) => {
+        setLoading(true);
+        try {
+            // Cargar mensajes recientes de comunicados
+            const conversations = await listTeacherConversations();
+            setRecentMessages(conversations.slice(0, 3)); // Solo los 3 más recientes
+
+            // Cargar tareas pendientes de calificar
+            const courseIdNum = course.id.replace(/\D/g, ''); // Extraer solo números del ID
+            const tasksData = await taskService.getTasksByCourse(courseIdNum);
+            
+            // Obtener estudiantes pendientes de calificar
+            const pending: TaskSubmission[] = [];
+            if (tasksData && Array.isArray(tasksData)) {
+                tasksData.forEach((task: TaskWithSubmissions) => {
+                    if (task.estudiantes) {
+                        const ungraded = task.estudiantes.filter(
+                            (student: TaskSubmission) => 
+                                student.estado === 'ENTREGADO' && student.calificacion === null
+                        );
+                        ungraded.forEach((student: TaskSubmission) => {
+                            pending.push({
+                                ...student,
+                                id_estudiante: student.id_estudiante,
+                                nombre_estudiante: `${task.nombre_tarea} - ${student.nombre_estudiante}`,
+                                estado: 'Pendiente de calificar',
+                                calificacion: null
+                            });
+                        });
+                    }
+                });
+            }
+            setPendingGrades(pending.slice(0, 3)); // Solo los 3 primeros
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const dashboardItems = [
         {
@@ -53,35 +112,25 @@ export const DashboardDocente: React.FC = () => {
         }
     ];
 
-    const eventosImportantes = [
-        {
-            title: "Justificativos de Faltas",
-            description: "Tony Chen - Pendiente"
-        },
-        {
-            title: "Felipe Caicedo",
-            description: "Revisión de comportamiento"
-        },
-        {
-            title: "María Fernández",
-            description: "Entrevista programada"
-        }
-    ];
+    // Eventos importantes dinámicos (mensajes recientes)
+    const eventosImportantes = loading 
+        ? [{ title: "Cargando...", description: "Obteniendo información" }]
+        : recentMessages.length > 0
+            ? recentMessages.map(conv => ({
+                title: `Mensaje de ${conv.student_name}`,
+                description: conv.lastMessagePreview || "Nueva conversación"
+            }))
+            : [{ title: "Sin mensajes", description: "No hay comunicados recientes" }];
 
-    const tareasEntregadas = [
-        {
-            title: "Matemáticas - Tony Chen",
-            description: "Álgebra básica completada"
-        },
-        {
-            title: "Biología - Felipe Caicedo",
-            description: "Ecosistemas entregado"
-        },
-        {
-            title: "Lenguaje - María Fernández",
-            description: "Ensayo literario revisado"
-        }
-    ];
+    // Tareas pendientes dinámicas
+    const tareasEntregadas = loading
+        ? [{ title: "Cargando...", description: "Obteniendo información" }]
+        : pendingGrades.length > 0
+            ? pendingGrades.map(grade => ({
+                title: grade.nombre_estudiante,
+                description: grade.estado
+            }))
+            : [{ title: "Sin tareas pendientes", description: "No hay entregas por calificar" }];
 
     const handleChangeCourse = () => {
         localStorage.removeItem('selectedCourse');
