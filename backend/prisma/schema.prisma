@@ -18,6 +18,7 @@ enum Role {
   DIRECTIVO
   DOCENTE
   FAMILIA
+  INSPECTOR
 }
 
 enum AttendanceStatus {
@@ -244,4 +245,34 @@ model PasswordReset {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_resets")
+}
+
+model DisciplinaryReport {
+  id                    String @id @default(uuid())
+  student_external_id   Int // ID del estudiante en MySQL
+  course_external_id    Int // ID del curso en MySQL  
+  inspector_external_id String // ID del usuario inspector
+
+  // Contenido de la novedad
+  title       String // Título/asunto de la novedad
+  description String // Descripción detallada del incidente
+  severity    String // LEVE, MODERADA, GRAVE
+  category    String // COMPORTAMIENTO, ACADEMICO, ASISTENCIA, UNIFORME, OTROS
+
+  // Estado y seguimiento
+  status           String    @default("ENVIADA") // ENVIADA, LEIDA, RESPONDIDA
+  parent_viewed_at DateTime? // Cuándo el padre vio la novedad
+  parent_response  String? // Respuesta del padre (opcional)
+
+  // Metadatos
+  incident_date DateTime // Fecha del incidente
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@index([student_external_id])
+  @@index([course_external_id])
+  @@index([inspector_external_id])
+  @@index([incident_date])
+  @@index([status])
+  @@map("disciplinary_reports")
 }

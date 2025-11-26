@@ -2,8 +2,13 @@ import { Request, Response } from "express";
 import { ceiafPool } from "../ext/ceiafDb";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import type { SubjectStudentsPayload, SubjectStudentRow, SubjectStudentsSummary, StudentTaskRow, StudentSubjectTasksPayload } from "../types";
-
+import type { SubjectStudentsPayload, SubjectStudentRow, SubjectStudentsSummary, 
+  StudentTaskRow, StudentSubjectTasksPayload } from "../types";
+import { getStudentsByCourseId } from "../controllers/ceiafController";
+import { RowDataPacket } from "mysql2";
+interface StudentRow extends RowDataPacket {
+  nombre: string;
+}
 /**
  * GET /api/directivo/courses
  * Lista cursos activos (o todos) desde CEIAF.
@@ -434,5 +439,255 @@ export const studentSubjectTasks = async (req: Request, res: Response) => {
   } catch (e) {
     console.error("studentSubjectTasks error", e);
     return res.status(500).json({ error: "Error obteniendo tareas del estudiante" });
+  }
+};
+
+// estados que cuentan como FALTA
+const ABSENT = ["ABSENT_UNJUSTIFIED"];
+
+function computeRisk(absPct: number, rep: any) {
+  const reports = rep?.total ?? 0;
+  const hasGrave = rep?.severities?.GRAVE > 0;
+
+  if (hasGrave) return "ALTO";
+  if (absPct >= 12 || reports >= 4) return "ALTO";
+  if (absPct >= 6 || reports >= 2) return "MEDIO";
+  return "BAJO";
+}
+
+// GET /api/directivo/courses/:courseId/behavior-indicator
+export const getCourseBehaviorIndicator = async (req: Request, res: Response) => {
+  try {
+    const courseId = Number(req.params.courseId);
+    if (!courseId || Number.isNaN(courseId)) {
+      return res.status(400).json({ message: "courseId inválido" });
+    }
+
+    // ============================
+    // 1) Estudiantes del curso (CEIAF)
+    // ============================
+    const students = await getStudentsByCourseId(courseId);
+
+    // ============================
+    // 2) Días únicos con asistencia
+    // ============================
+    const distinctDays = await prisma.attendanceRecord.findMany({
+      where: { course_external_id: courseId },
+      distinct: ["date"],
+      select: { date: true },
+    });
+
+    const totalAttendanceDays = distinctDays.length;
+
+    // ============================
+    // 3) Faltas por estudiante
+    // ============================
+    const attendanceAgg = await prisma.attendanceRecord.groupBy({
+      by: ["student_external_id", "status"],
+      where: { course_external_id: courseId },
+      _count: { _all: true },
+    });
+
+    const absenceMap = new Map<number, number>();
+
+    for (const row of attendanceAgg) {
+      if (ABSENT.includes(row.status)) {
+        const prev = absenceMap.get(row.student_external_id) ?? 0;
+        absenceMap.set(row.student_external_id, prev + row._count._all);
+      }
+    }
+
+    // ============================
+    // 4) Novedades disciplinarias
+    // ============================
+    const reports = await prisma.disciplinaryReport.groupBy({
+      by: ["student_external_id", "severity", "category"],
+      where: { course_external_id: courseId },
+      _count: { _all: true },
+    });
+
+    const reportMap = new Map<
+      number,
+      {
+        total: number;
+        severities: Record<string, number>;
+        categories: Record<string, number>;
+      }
+    >();
+
+    for (const r of reports) {
+      const sid = r.student_external_id;
+      let entry = reportMap.get(sid);
+
+      if (!entry) {
+        entry = {
+          total: 0,
+          severities: {},
+          categories: {},
+        };
+        reportMap.set(sid, entry);
+      }
+
+      entry.total += r._count._all;
+      entry.severities[r.severity] =
+        (entry.severities[r.severity] ?? 0) + r._count._all;
+      entry.categories[r.category] =
+        (entry.categories[r.category] ?? 0) + r._count._all;
+    }
+
+    // ============================
+    // 5) Construcción del resultado final
+    // ============================
+    const items = [];
+
+    for (const stu of students) {
+      const abs = absenceMap.get(stu.id_estudiante) ?? 0;
+      const rep = reportMap.get(stu.id_estudiante);
+
+      const absPct =
+        totalAttendanceDays > 0
+          ? Number(((abs / totalAttendanceDays) * 100).toFixed(2))
+          : 0;
+
+      const mostCommonCategory = rep?.categories
+        ? Object.entries(rep.categories).sort((a, b) => b[1] - a[1])[0]?.[0]
+        : null;
+
+      items.push({
+        student_id: stu.id_estudiante,
+        name: stu.nombre_completo,
+        absences: abs,
+        absence_pct: absPct,
+        reports: rep?.total ?? 0,
+        most_common_category: mostCommonCategory ?? "—", // ← ahora sí existe
+        severity_counts: rep?.severities ?? {},
+        risk_level: computeRisk(absPct, rep),
+      });
+    }
+
+    return res.json({
+      courseId,
+      totalAttendanceDays,
+      totalCourseReports: reports.length,
+      items,
+    });
+  } catch (err) {
+    console.error("Error en indicador comportamiento:", err);
+    return res.status(500).json({ message: "Error generando indicador" });
+  }
+};
+
+// GET /api/directivo/courses/:courseId/behavior/students/:studentId
+export const getStudentBehavior = async (req: Request, res: Response) => {
+  try {
+    const courseId = Number(req.params.courseId);
+    const studentId = Number(req.params.studentId);
+
+    if (!courseId || !studentId) {
+      return res.status(400).json({ message: "Datos inválidos" });
+    }
+
+    // ============================
+    // 1. Obtener nombre del estudiante
+    // ============================
+    const [rows] = await ceiafPool.query<StudentRow[]>(
+  `SELECT concat(nombres,' ',apellidos) AS nombre
+   FROM estudiantes
+   WHERE id_estudiante = ?`,
+  [studentId]
+);
+
+const studentName = rows[0]?.nombre ?? "Estudiante";
+
+
+    // ============================
+    // 2. Obtener reportes disciplinarios (PostgreSQL)
+    // ============================
+    const reports = await prisma.disciplinaryReport.findMany({
+      where: { student_external_id: studentId, course_external_id: courseId },
+      orderBy: { incident_date: "desc" },
+    });
+
+    const totalReports = reports.length;
+
+    // Categoría más común
+    const categoryCount: Record<string, number> = {};
+    for (const r of reports) {
+      categoryCount[r.category] = (categoryCount[r.category] || 0) + 1;
+    }
+    const mostCommonCategory =
+      Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+    // ============================
+    // 3. Asistencia del estudiante
+    // ============================
+    const attendance = await prisma.attendanceRecord.findMany({
+      where: { student_external_id: studentId, course_external_id: courseId },
+      orderBy: { date: "asc" },
+    });
+
+    const totalDays = attendance.length;
+    const totalAbsences = attendance.filter(
+      (a) =>
+        a.status === "ABSENT_UNJUSTIFIED" ||
+        a.status === "ABSENT_JUSTIFIED_ACCEPTED" ||
+        a.status === "ABSENT_JUSTIFIED_PENDING"
+    ).length;
+
+    const absencePct =
+      totalDays === 0 ? 0 : (totalAbsences / totalDays) * 100;
+
+    // ============================
+    // 4. Agrupar faltas por mes → gráfico
+    // ============================
+    const monthlyMap = new Map<string, number>();
+
+    attendance.forEach((a) => {
+      if (
+        a.status === "PRESENT"
+      ) return;
+
+      const monthKey = `${a.year}-${String(a.month).padStart(2, "0")}`;
+      monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + 1);
+    });
+
+    const monthlyAbsences = Array.from(monthlyMap.entries()).map(
+      ([month, n]) => ({ month, absences: n })
+    );
+
+    // ============================
+    // 5. Calcular nivel de riesgo
+    // ============================
+    function computeRisk() {
+      if (absencePct > 25 || totalReports > 10) return "ALTO";
+      if (absencePct > 10 || totalReports > 3) return "MEDIO";
+      return "BAJO";
+    }
+
+    return res.json({
+      student_id: studentId,
+      student_name: studentName,
+
+      total_reports: totalReports,
+      total_absences: totalAbsences,
+      total_days: totalDays,
+      absence_pct: absencePct,
+      risk_level: computeRisk(),
+      most_common_category: mostCommonCategory,
+
+      reports: reports.map((r) => ({
+        id: r.id,
+        date: r.incident_date.toISOString(),
+        category: r.category,
+        severity: r.severity,
+        title: r.title,
+        description: r.description,
+      })),
+
+      monthly_absences: monthlyAbsences,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error interno del servidor" });
   }
 };

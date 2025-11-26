@@ -208,3 +208,51 @@ export interface StudentSubjectTasksPayload {
   student_name: string;
   items: StudentTaskRow[];
 }
+
+export interface BehaviorItem {
+  student_id: number;
+  name: string;
+  absences: number;
+  absence_pct: number;
+  reports: number;
+  most_common_category: string;
+  severity_counts: Record<string, number>;
+  risk_level: "BAJO" | "MEDIO" | "ALTO";
+}
+
+export interface CourseBehaviorPayload {
+  courseId: number;
+  totalAttendanceDays: number;
+  totalCourseReports: number;
+  items: BehaviorItem[];
+}
+
+// Indicador de comportamiento (detalle estudiante)
+export interface StudentBehaviorReportRow {
+  id: string;
+  date: string; // ISO
+  category: string;
+  severity: string;
+  title: string;
+  description: string;
+}
+
+export interface MonthlyAbsencesPoint {
+  month: string; // "2025-01"
+  absences: number;
+}
+
+export interface StudentBehaviorPayload {
+  student_id: number;
+  student_name: string;
+
+  total_reports: number;
+  total_absences: number;
+  total_days: number;
+  absence_pct: number;
+  risk_level: "BAJO" | "MEDIO" | "ALTO" | string;
+  most_common_category: string | null;
+
+  reports: StudentBehaviorReportRow[];
+  monthly_absences: MonthlyAbsencesPoint[];
+}

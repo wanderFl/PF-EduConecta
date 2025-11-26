@@ -431,3 +431,19 @@ select:focus, button:focus { outline:none; box-shadow:0 0 0 3px var(--ring); }
   opacity: 0.6;
   cursor: default;
 }
+
+.stats-sub {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.badge.warn {
+  background: #f97316;
+  color: #fff;
+}
+
+.badge.dang {
+  background: #dc2626;
+  color: #fff;
+}

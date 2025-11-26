@@ -1,5 +1,5 @@
 import api from "./api"; // tu axios preconfigurado
-import type { CeiafCourse, GradesBySubjectItem, SubjectStudentsPayload, StudentSubjectTasksPayload } from "../types";
+import type { CeiafCourse, GradesBySubjectItem, SubjectStudentsPayload, StudentSubjectTasksPayload, CourseBehaviorPayload, StudentBehaviorPayload } from "../types";
 
 // Lista los cursos desde el endpoint del directivo
 export async function listCoursesForDirector(): Promise<CeiafCourse[]> {
@@ -48,4 +48,17 @@ export async function getSubmissionDownloadUrl(fileRef: string): Promise<string>
   });
   // El backend responde { url: "https://..." }
   return data.url as string;
+}
+
+// Obtener indicador de comportamiento
+export async function getCourseBehavior(courseId: number): Promise<CourseBehaviorPayload> {
+  const { data } = await api.get(`/directivo/courses/${courseId}/behavior`);
+  return data as CourseBehaviorPayload;
+}
+
+// Obtener detalle de comportamiento de un estudiante
+// Nuevo: obtener comportamiento individual de un estudiante
+export async function getStudentBehavior(courseId: number, studentId: number): Promise<StudentBehaviorPayload> {
+  const { data } = await api.get(`/directivo/behavior/student/${courseId}/${studentId}`);
+  return data as StudentBehaviorPayload;
 }
