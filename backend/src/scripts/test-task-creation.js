@@ -1,5 +1,5 @@
 // Script para probar el endpoint de creación de tareas directamente
-const { PrismaClient } = require('../../generated/prisma');
+const { PrismaClient } = require('@prisma/client');
 
 async function testTaskCreation() {
   const prisma = new PrismaClient();

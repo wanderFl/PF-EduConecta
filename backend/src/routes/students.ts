@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { getStudentsByCourse, getStudentById, searchStudents, getAllCourses, getParalelosByCourse } from '../services/students';
+import { Role } from '@prisma/client';
+import { authenticate, authorize } from '../middlewares/auth';
+
 import { 
   saveAttendance, 
   saveBulkAttendance, 
@@ -10,6 +13,7 @@ import {
 } from '../services/attendance';
 
 const router = Router();
+router.use(authenticate, authorize(Role.INSPECTOR));
 
 // GET /api/students/courses - Obtener todos los cursos
 router.get('/courses', async (req, res) => {

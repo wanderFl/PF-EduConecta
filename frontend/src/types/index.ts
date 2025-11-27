@@ -5,6 +5,7 @@ export interface User {
     id: string;
     email: string;
     role: Role;
+    external_id?: string | null;
 }
 
 export interface AuthResponse {

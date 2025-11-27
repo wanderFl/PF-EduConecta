@@ -49,7 +49,14 @@ export const DashboardDocente: React.FC = () => {
         setLoading(true);
         try {
             // Cargar mensajes recientes de comunicados
-            const conversations = await listTeacherConversations();
+            const conversationsResponse = await listTeacherConversations();
+            // El backend puede devolver un objeto con { conversations, warning } o un array directamente
+            let conversations: TeacherConversation[] = [];
+            if (Array.isArray(conversationsResponse)) {
+                conversations = conversationsResponse;
+            } else {
+                conversations = conversationsResponse.conversations || [];
+            }
             setRecentMessages(conversations.slice(0, 3)); // Solo los 3 más recientes
 
             // Cargar tareas pendientes de calificar

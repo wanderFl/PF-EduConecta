@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.seedTasks = seedTasks;
-const prisma_1 = require("../../generated/prisma");
-const prisma = new prisma_1.PrismaClient();
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
 async function seedTasks() {
     try {
         console.log('🌱 Creando tareas de prueba...');
@@ -73,7 +73,7 @@ async function seedTasks() {
                 task_id: task1.id,
                 student_external_id: 101,
                 grade: 8.5,
-                comment_teacher: 'Buen trabajo, pero falta mejorar en la presentación.',
+                teacher_comment: 'Buen trabajo, pero falta mejorar en la presentación.',
                 submitted_at: new Date('2025-11-09T10:30:00Z'),
                 graded_at: new Date('2025-11-10T14:20:00Z'),
             }
@@ -83,7 +83,7 @@ async function seedTasks() {
                 task_id: task1.id,
                 student_external_id: 102,
                 submitted_at: new Date('2025-11-09T15:45:00Z'),
-                comment_student: 'Adjunto los ejercicios resueltos paso a paso.',
+                student_comment: 'Adjunto los ejercicios resueltos paso a paso.',
             }
         });
         await prisma.submissionGrade.create({
@@ -91,7 +91,7 @@ async function seedTasks() {
                 task_id: task2.id,
                 student_external_id: 103,
                 grade: 14.0,
-                comment_teacher: 'Excelente análisis literario y uso del lenguaje.',
+                teacher_comment: 'Excelente análisis literario y uso del lenguaje.',
                 submitted_at: new Date('2025-11-08T16:30:00Z'),
                 graded_at: new Date('2025-11-09T09:15:00Z'),
             }
@@ -101,7 +101,7 @@ async function seedTasks() {
                 task_id: task3.id,
                 student_external_id: 104,
                 submitted_at: new Date('2025-11-11T08:20:00Z'),
-                comment_student: 'Maqueta terminada, incluye explicación de flora y fauna.',
+                student_comment: 'Maqueta terminada, incluye explicación de flora y fauna.',
             }
         });
         console.log('✅ Tareas de prueba creadas exitosamente:');

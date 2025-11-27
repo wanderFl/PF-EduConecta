@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Role } from '@prisma/client';
 import { 
   getAllTasks,
   getTasksByCourse,
@@ -11,17 +12,29 @@ import {
   deleteTask,
   getTasksStats
 } from '../services/tasks';
-import { authenticate } from '../middlewares/auth';
+import { authenticate, authorize } from '../middlewares/auth';
 
 const router = Router();
 
 // Middleware de autenticación para todas las rutas
-router.use(authenticate);
+router.use(authenticate, authorize(Role.DOCENTE));
 
-// GET /api/tasks - Obtener todas las tareas
+// GET /api/tasks - Obtener todas las tareas (filtradas por el docente logueado)
 router.get('/', async (req, res) => {
   try {
-    const tasks = await getAllTasks();
+    // Obtener external_id del docente autenticado
+    const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+    
+    if (!teacherExternalId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Usuario no vinculado con un docente'
+      });
+    }
+
+    // Obtener todas las tareas pero filtrar por docente
+    const allTasks = await getAllTasks();
+    const tasks = allTasks.filter(task => task.teacher_external_id === teacherExternalId);
     
     res.json({
       success: true,
@@ -75,7 +88,7 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// GET /api/tasks/course/:courseId - Obtener tareas por curso
+// GET /api/tasks/course/:courseId - Obtener tareas por curso (filtradas por el docente logueado)
 router.get('/course/:courseId', async (req, res) => {
   try {
     const courseId = parseInt(req.params.courseId);
@@ -88,12 +101,25 @@ router.get('/course/:courseId', async (req, res) => {
       });
     }
 
+    // Obtener external_id del docente autenticado
+    const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+    
+    if (!teacherExternalId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Usuario no vinculado con un docente'
+      });
+    }
+
     let tasks;
     if (paralelo && typeof paralelo === 'string') {
       tasks = await getTasksByCourseAndParalelo(courseId, paralelo);
     } else {
       tasks = await getTasksByCourse(courseId);
     }
+    
+    // Filtrar solo las tareas creadas por este docente
+    tasks = tasks.filter(task => task.teacher_external_id === teacherExternalId);
     
     res.json({
       success: true,
@@ -201,18 +227,28 @@ router.post('/', async (req, res) => {
       due_date,
       max_points,
       file_reference,
-      teacher_external_id,
       course_external_id,
+      subject_external_id, // CAMPO OBLIGATORIO
       paralelo,
       trimestre,
       aporte
     } = req.body;
 
-    // Validar campos requeridos
-    if (!title || !due_date || !teacher_external_id || !course_external_id) {
+    // Obtener teacher_external_id del usuario autenticado (NO del body)
+    const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+    
+    if (!teacherExternalId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Usuario no vinculado con un docente'
+      });
+    }
+
+    // Validar campos requeridos (incluyendo subject_external_id)
+    if (!title || !due_date || !course_external_id || !subject_external_id) {
       return res.status(400).json({
         success: false,
-        message: 'Faltan campos requeridos: title, due_date, teacher_external_id, course_external_id'
+        message: 'Faltan campos requeridos: title, due_date, course_external_id, subject_external_id'
       });
     }
 
@@ -238,8 +274,9 @@ router.post('/', async (req, res) => {
       due_date: new Date(due_date),
       max_points: max_points ? parseInt(max_points) : undefined,
       file_reference,
-      teacher_external_id: parseInt(teacher_external_id),
+      teacher_external_id: teacherExternalId,
       course_external_id: parseInt(course_external_id),
+      subject_external_id: parseInt(subject_external_id), // Campo obligatorio
       paralelo: paralelo || undefined,
       trimestre: trimestre ? parseInt(trimestre) : undefined,
       aporte: aporte ? parseInt(aporte) : undefined

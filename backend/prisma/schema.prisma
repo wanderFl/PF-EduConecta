@@ -1,13 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 // backend/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -22,20 +15,42 @@ enum Role {
   INSPECTOR
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT_UNJUSTIFIED
+  ABSENT_JUSTIFIED_PENDING
+  ABSENT_JUSTIFIED_ACCEPTED
+}
+
+enum CommunicationKind {
+  THREAD  // chat tipo WhatsApp
+  NOTICE  // comunicado / anuncio
+}
+
+enum SenderRole {
+  PARENT
+  TEACHER
+}
+
+enum CommunicationStatus {
+  OPEN
+  CLOSED
+}
+
 // USERS: login + roles
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  password_hash  String
-  role           Role
-  external_id    String?      // id del sistema externo (docente/directivo), opcional
-  parent_id      String?  @unique
-  parent         Parent?  @relation(fields: [parent_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  id            String  @id @default(uuid())
+  email         String  @unique
+  password_hash String
+  role          Role
+  external_id   String? // id del sistema externo (docente/directivo), opcional
+  parent_id     String? @unique
+  parent        Parent? @relation(fields: [parent_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  is_active      Boolean  @default(true)
-  is_verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  is_active   Boolean  @default(true)
+  is_verified Boolean  @default(false)
 
   passwordResets PasswordReset[]
 
@@ -46,13 +61,14 @@ model User {
 
 // PASSWORD RESET: tokens para reset de contraseña
 model PasswordReset {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  tokenHash  String   @map("token_hash")
-  expiresAt  DateTime @map("expires_at")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  used      Boolean  @default(false)
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -66,12 +82,12 @@ model Parent {
   cedula            String? @unique
   home_address      String?
   work_place        String?
-  security_pin_hash String  // hash del PIN
+  security_pin_hash String // hash del PIN
 
-  student_links     ParentStudentLink[]
+  student_links ParentStudentLink[]
 
   // Relación inversa (opcional): un Parent puede tener 0 o 1 User asociado
-  user              User?
+  user User?
 
   @@map("parents")
 }
@@ -81,7 +97,7 @@ model ParentStudentLink {
   parent_id           String
   student_external_id String
 
-  parent              Parent @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent Parent @relation(fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([parent_id, student_external_id])
   @@index([student_external_id])
@@ -90,161 +106,176 @@ model ParentStudentLink {
 
 /// Tareas asignadas por docente/curso (referencias externas)
 model Task {
-  id                 String   @id @default(uuid())
-  title              String
-  instructions       String?
-  due_date           DateTime
-  max_points         Int?
-  file_reference     String?
+  id                  String   @id @default(uuid())
+  title               String
+  instructions        String?
+  due_date            DateTime
+  max_points          Int?
+  file_reference      String?
   teacher_external_id Int
   course_external_id  Int
-  paralelo           String?  // Paralelo del curso (A, B, C, etc.)
-  trimestre          Int?     // Trimestre (1, 2, 3)
-  aporte             Int?     // Aporte (1, 2)
-  
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
+  trimestre           Int?     // Trimestre (1, 2, 3)
+  aporte              Int?     // Aporte (1, 2)
+  subject_external_id Int?     // Materia externa (CEIAF)
 
-  submissions        SubmissionGrade[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  submissions SubmissionGrade[]
 
   @@index([teacher_external_id])
   @@index([course_external_id])
-  @@index([course_external_id, paralelo])
   @@index([trimestre])
   @@index([aporte])
+  @@index([subject_external_id])
   @@map("tasks")
 }
 
 /// Entregas y notas de tareas
 model SubmissionGrade {
-  id                  String  @id @default(uuid())
+  id                  String   @id @default(uuid())
   task_id             String
   student_external_id Int
-  grade               Decimal? @db.Decimal(5,2)
+  grade               Decimal? @db.Decimal(5, 2)
   file_reference      String?
-  comment_student     String?  // Comentario del estudiante al enviar
-  comment_teacher     String?  // Comentario del docente al calificar
-  submitted_at        DateTime? // Fecha de entrega del estudiante
-  graded_at           DateTime? // Fecha de calificación del docente
-  
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
 
-  task                Task    @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  // Comentarios (se reutilizan las columnas existentes comment_student / comment_teacher)
+  student_comment String? @map("comment_student")
+  teacher_comment String? @map("comment_teacher")
+
+  // Denormalización para filtros rápidos
+  subject_external_id Int? // materia (externa CEIAF)
+  course_external_id  Int? // curso (externo CEIAF)
+
+  // Claves de tiempo opcionales para KPIs rápidos
+  year  Int?
+  month Int?
+
+  submitted_at DateTime? @default(now())
+  graded_at    DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
   @@unique([task_id, student_external_id])
   @@index([student_external_id])
+  @@index([course_external_id])
+  @@index([subject_external_id])
+  @@index([year, month, course_external_id])
   @@map("submissions_grades")
 }
 
 /// Asistencia por estudiante/fecha
 model AttendanceRecord {
-  id                          String  @id @default(uuid())
-  student_external_id         Int
-  course_external_id          Int?    // ID del curso para identificar la clase (opcional por migración)
-  date                        DateTime @db.Date
-  status                      String
+  id                           String           @id @default(uuid())
+  student_external_id          Int
+  date                         DateTime         @db.Date
+  status                       AttendanceStatus
   justification_file_reference String?
+  justification_reason         String?
+  course_external_id           Int? // curso al que pertenece ese día
 
+  // Claves de tiempo
+  year  Int?
+  month Int?
+
+  @@unique([student_external_id, date], name: "student_external_id_date")
   @@index([student_external_id, date])
+  @@index([course_external_id])
   @@index([course_external_id, date])
+  @@index([year, month, course_external_id])
   @@map("attendance_records")
 }
 
-/// Conversaciones formales (pueden ser notas de comportamiento)
+// Conversaciones entre docentes y padres / comunicados
 model Communication {
-  id                         String   @id @default(uuid())
-  subject                    String
-  is_behavioral_note         Boolean  @default(false)
-  author_teacher_external_id Int
+  id                  String            @id @default(uuid())
+  kind                CommunicationKind @default(THREAD) // THREAD o NOTICE
+  subject             String?           // solo se usa si kind = NOTICE
+  student_external_id Int
+  teacher_external_id Int
+  parent_id           String?          // lo dejamos opcional para flexibilidad
+  is_behavioral_note  Boolean          @default(false)
 
-  messages                   Message[]
+  status        CommunicationStatus @default(OPEN)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  lastMessageAt DateTime            @default(now())
 
-  @@index([author_teacher_external_id])
-  @@map("communications")
-}
+  archived_by_parent  Boolean @default(false)
+  archived_by_teacher Boolean @default(false)
 
-/// Mensajes dentro de una conversación
-model Message {
-  id               String  @id @default(uuid())
-  communication_id String
-  body             String
-
-  communication    Communication @relation(fields: [communication_id], references: [id], onDelete: Cascade)
-
-  @@map("messages")
-}
-
-/// Conversaciones entre docentes y padres
-model Conversation {
-  id                     String              @id @default(uuid())
-  kind                   String              @default("THREAD") // THREAD o ANNOUNCEMENT
-  student_external_id    Int                 // ID del estudiante en MySQL
-  teacher_external_id    Int                 // ID del docente en MySQL
-  parent_id              String?             // ID del padre en PostgreSQL (opcional)
-  subject                String?             // Asunto de la conversación
-  is_behavioral_note     Boolean             @default(false) // Si es nota de conducta
-  
-  // Estado de la conversación
-  archived_by_parent     Boolean             @default(false)
-  archived_by_teacher    Boolean             @default(false)
-  
-  // Timestamps
-  created_at             DateTime            @default(now())
-  updated_at             DateTime            @updatedAt
-  
-  // Relación con mensajes
-  conversation_messages  ConversationMessage[]
+  messages Message[]
 
   @@index([student_external_id])
   @@index([teacher_external_id])
   @@index([parent_id])
-  @@map("conversations")
+  @@map("communications")
 }
 
-/// Mensajes dentro de conversaciones
-model ConversationMessage {
-  id                String       @id @default(uuid())
-  conversation_id   String
-  sender_role       String       // DOCENTE o FAMILIA
-  sender_id         String       // ID del usuario que envía (teacher_external_id o parent_id)
-  body              String       @db.Text
-  
-  created_at        DateTime     @default(now())
-  
-  conversation      Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+// Mensajes dentro de una comunicación
+model Message {
+  id                         String     @id @default(uuid())
+  communication_id           String
+  body                       String
+  sender_role                SenderRole
+  sender_parent_id           String? // si sender_role = PARENT
+  sender_teacher_external_id Int?    // si sender_role = TEACHER
+  createdAt                  DateTime   @default(now())
+  editedAt                   DateTime?
+  deletedAt                  DateTime?
 
-  @@index([conversation_id])
-  @@index([created_at])
-  @@map("conversation_messages")
+  // Opcional: respuesta a otro mensaje
+  reply_to_id String?
+
+  // Opcional: adjuntos
+  attachments MessageAttachment[]
+
+  communication Communication @relation(fields: [communication_id], references: [id], onDelete: Cascade)
+
+  @@index([communication_id])
+  @@map("messages")
 }
 
-/// Reportes disciplinarios / Novedades
+model MessageAttachment {
+  id         String  @id @default(uuid())
+  message_id String
+  url        String // S3/GCS
+  file_name  String
+  mime_type  String?
+  size_bytes Int?
+
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
+
+  @@index([message_id])
+}
+
 model DisciplinaryReport {
-  id                     String    @id @default(uuid())
-  student_external_id    Int       // ID del estudiante en MySQL
-  course_external_id     Int       // ID del curso en MySQL  
-  paralelo               String    // Paralelo del curso
-  inspector_external_id  String    // ID del usuario inspector
-  
+  id                     String   @id @default(uuid())
+  student_external_id    Int      // ID del estudiante en MySQL
+  course_external_id     Int      // ID del curso en MySQL  
+  inspector_external_id  String   // ID del usuario inspector
+
   // Contenido de la novedad
-  title                  String    // Título/asunto de la novedad
-  description            String    @db.Text // Descripción detallada del incidente
-  severity               String    // LEVE, MODERADA, GRAVE
-  category               String    // COMPORTAMIENTO, ACADEMICO, ASISTENCIA, UNIFORME, OTROS
-  
+  title       String
+  description String   @db.Text
+  severity    String   // LEVE, MODERADA, GRAVE
+  category    String   // COMPORTAMIENTO, ACADEMICO, ASISTENCIA, UNIFORME, OTROS
+
   // Estado y seguimiento
-  status                 String    @default("ENVIADA") // ENVIADA, LEIDA, RESPONDIDA
-  parent_viewed_at       DateTime? // Cuándo el padre vio la novedad
-  parent_response        String?   @db.Text // Respuesta del padre (opcional)
-  
+  status           String    @default("ENVIADA") // ENVIADA, LEIDA, RESPONDIDA
+  parent_viewed_at DateTime?
+  parent_response  String?  @db.Text
+
   // Metadatos
-  incident_date          DateTime  // Fecha del incidente
-  created_at             DateTime  @default(now())
-  updated_at             DateTime  @updatedAt
+  incident_date DateTime
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   @@index([student_external_id])
-  @@index([course_external_id, paralelo])
+  @@index([course_external_id])
   @@index([inspector_external_id])
   @@index([incident_date])
   @@index([status])

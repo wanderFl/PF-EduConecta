@@ -12,6 +12,8 @@ import tasksRoutes from './routes/tasks';
 import attendanceRoutes from './routes/attendance';
 import disciplinaryReportsRoutes from './routes/disciplinaryReports';
 import communicationsRoutes from './routes/communications';
+import teachersRoutes from './routes/teachers';
+import uploadsRoutes from './routes/uploads';
 
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
@@ -61,6 +63,8 @@ app.use('/api/tasks', tasksRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/disciplinary-reports', disciplinaryReportsRoutes);
 app.use('/api/communications', communicationsRoutes);
+app.use('/api/teachers', teachersRoutes);
+app.use('/api/uploads', uploadsRoutes);
 
 // Add a route to list all available routes
 app.get('/api/routes', (req, res) => {

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middlewares/auth';
-import { Role } from '../../generated/prisma';
+import { Role, PrismaClient } from '@prisma/client';
 import {
   listTeacherConversations,
   createTeacherConversation,
@@ -9,12 +9,10 @@ import {
   searchTeacherStudents,
   archiveConversation
 } from '../controllers/communications';
-
 const router = Router();
 
 // Todas las rutas requieren autenticación de DOCENTE
-router.use(authenticate);
-router.use(authorize(Role.DOCENTE));
+router.use(authenticate, authorize(Role.DOCENTE) );
 
 // Listar conversaciones del docente
 router.get('/teacher', listTeacherConversations);

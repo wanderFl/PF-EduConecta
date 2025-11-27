@@ -47,10 +47,16 @@ export interface SendMessageData {
 
 // Servicios
 
+// Tipo de respuesta que puede devolver el backend
+export interface ConversationsResponse {
+  conversations?: TeacherConversation[];
+  warning?: string;
+}
+
 /**
  * Obtener todas las conversaciones del docente
  */
-export const listTeacherConversations = async (): Promise<TeacherConversation[]> => {
+export const listTeacherConversations = async (): Promise<TeacherConversation[] | ConversationsResponse> => {
   try {
     const response = await api.get('/communications/teacher');
     return response.data;
@@ -66,13 +72,8 @@ export const listTeacherConversations = async (): Promise<TeacherConversation[]>
 export const createTeacherConversation = async (
   data: CreateConversationData
 ): Promise<TeacherConversation> => {
-  try {
-    const response = await api.post('/communications/teacher', data);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating teacher conversation:', error);
-    throw error;
-  }
+  const response = await api.post('/communications/teacher', data);
+  return response.data;
 };
 
 /**
@@ -81,15 +82,10 @@ export const createTeacherConversation = async (
 export const searchTeacherStudents = async (
   query: string
 ): Promise<StudentSearchResult[]> => {
-  try {
-    const response = await api.get('/communications/teacher/students', {
-      params: { query }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error searching teacher students:', error);
-    throw error;
-  }
+  const response = await api.get('/communications/teacher/students', {
+    params: { query }
+  });
+  return response.data;
 };
 
 /**

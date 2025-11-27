@@ -1,6 +1,6 @@
 import { compare, hash } from 'bcryptjs';
 import { sign, verify } from 'jsonwebtoken';
-import { Role } from '../../generated/prisma';
+import { Role } from '@prisma/client';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 const SALT_ROUNDS = 10;
@@ -9,6 +9,7 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: Role;
+  external_id?: string | null;
 }
 
 export const hashPassword = async (password: string): Promise<string> => {

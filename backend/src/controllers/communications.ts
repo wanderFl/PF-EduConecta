@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../../generated/prisma';
-import { ceiafPool } from '../ext/ceiafDb';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -10,76 +9,42 @@ const prisma = new PrismaClient();
  */
 export const listTeacherConversations = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId; // UUID del usuario desde JWT
-    
-    // Buscar el external_id del docente
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'No autenticado' });
+    }
+
+    // Obtener el usuario con external_id
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { external_id: true, role: true }
+      select: { external_id: true }
     });
 
     if (!user || !user.external_id) {
-      return res.status(404).json({ message: 'Teacher external ID not found' });
+      return res.status(403).json({ 
+        message: 'Tu cuenta no está vinculada con un docente en el sistema del colegio.',
+        needsLinking: true 
+      });
     }
 
-    if (user.role !== 'DOCENTE') {
-      return res.status(403).json({ message: 'Only teachers can access conversations' });
-    }
+    const teacherExternalId = parseInt(user.external_id);
 
-    const teacherIdInt = parseInt(user.external_id, 10);
-    if (isNaN(teacherIdInt)) {
-      return res.status(400).json({ message: 'Invalid teacher ID format' });
-    }
-
-    const conversations = await prisma.conversation.findMany({
+    // Obtener conversaciones del docente
+    const communications = await prisma.communication.findMany({
       where: {
-        teacher_external_id: teacherIdInt,
+        teacher_external_id: teacherExternalId,
         archived_by_teacher: false
       },
       include: {
-        conversation_messages: {
-          orderBy: {
-            created_at: 'desc'
-          },
-          take: 1 // Solo el último mensaje para preview
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
         }
       },
-      orderBy: {
-        updated_at: 'desc'
-      }
+      orderBy: { lastMessageAt: 'desc' }
     });
 
-    // Enriquecer con información del estudiante desde MySQL
-    const enriched = await Promise.all(
-      conversations.map(async (conv) => {
-        const [studentRows] = await ceiafPool.query(
-          'SELECT nombres, apellidos FROM estudiantes WHERE id_estudiante = ?',
-          [conv.student_external_id]
-        ) as any;
-
-        const student = studentRows?.[0];
-        const lastMsg = conv.conversation_messages[0];
-
-        return {
-          id: conv.id,
-          kind: conv.kind,
-          student_external_id: conv.student_external_id,
-          student_name: student ? `${student.nombres} ${student.apellidos}` : 'Estudiante',
-          teacher_external_id: conv.teacher_external_id,
-          parent_id: conv.parent_id,
-          subject: conv.subject,
-          is_behavioral_note: conv.is_behavioral_note,
-          archived_by_parent: conv.archived_by_parent,
-          archived_by_teacher: conv.archived_by_teacher,
-          createdAt: conv.created_at,
-          updatedAt: conv.updated_at,
-          lastMessageAt: lastMsg?.created_at || conv.updated_at,
-          lastMessagePreview: lastMsg?.body?.substring(0, 100) || null
-        };
-      })
-    );
-
-    res.json(enriched);
+    res.json(communications);
   } catch (error) {
     console.error('Error listing teacher conversations:', error);
     res.status(500).json({ message: 'Error al obtener conversaciones' });
@@ -87,62 +52,60 @@ export const listTeacherConversations = async (req: Request, res: Response) => {
 };
 
 /**
- * Crear conversación con un padre
+ * Crear conversación desde docente
  * POST /api/communications/teacher
  */
 export const createTeacherConversation = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
-    
-    // Buscar el external_id del docente
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'No autenticado' });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { external_id: true }
     });
 
     if (!user || !user.external_id) {
-      return res.status(404).json({ message: 'Teacher external ID not found' });
+      return res.status(403).json({ 
+        message: 'Tu cuenta no está vinculada con un docente.',
+        needsLinking: true 
+      });
     }
 
-    const teacherIdInt = parseInt(user.external_id, 10);
-    if (isNaN(teacherIdInt)) {
-      return res.status(400).json({ message: 'Invalid teacher ID format' });
-    }
-    
-    const {
-      student_external_id,
-      subject,
-      is_behavioral_note = false
-    } = req.body;
+    const { student_external_id, subject, initialMessage, kind } = req.body;
 
     if (!student_external_id) {
-      return res.status(400).json({ message: 'Se requiere student_external_id' });
+      return res.status(400).json({ message: 'student_external_id es requerido' });
     }
 
-    // Verificar que el estudiante existe en MySQL
-    const [studentRows] = await ceiafPool.query(
-      'SELECT id_estudiante FROM estudiantes WHERE id_estudiante = ?',
-      [student_external_id]
-    ) as any;
+    const teacherExternalId = parseInt(user.external_id);
 
-    if (!studentRows || studentRows.length === 0) {
-      return res.status(404).json({ message: 'Estudiante no encontrado' });
-    }
-
-    // Crear conversación
-    const conversation = await prisma.conversation.create({
+    // Crear comunicación
+    const communication = await prisma.communication.create({
       data: {
-        kind: 'THREAD',
-        student_external_id: parseInt(student_external_id, 10),
-        teacher_external_id: teacherIdInt,
+        kind: kind || 'THREAD',
         subject: subject || null,
-        is_behavioral_note
+        student_external_id: parseInt(student_external_id),
+        teacher_external_id: teacherExternalId,
+        status: 'OPEN',
+        messages: initialMessage ? {
+          create: {
+            body: initialMessage,
+            sender_role: 'TEACHER',
+            sender_teacher_external_id: teacherExternalId
+          }
+        } : undefined
+      },
+      include: {
+        messages: true
       }
     });
 
-    res.status(201).json(conversation);
+    res.status(201).json(communication);
   } catch (error) {
-    console.error('Error creating teacher conversation:', error);
+    console.error('Error creating conversation:', error);
     res.status(500).json({ message: 'Error al crear conversación' });
   }
 };
@@ -154,49 +117,16 @@ export const createTeacherConversation = async (req: Request, res: Response) => 
 export const getConversationMessages = async (req: Request, res: Response) => {
   try {
     const { conversationId } = req.params;
-    const userId = (req as any).user.userId;
-    const userRole = (req as any).user.role;
 
-    // Verificar acceso a la conversación
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId }
-    });
-
-    if (!conversation) {
-      return res.status(404).json({ message: 'Conversación no encontrada' });
-    }
-
-    // Verificar permisos según rol
-    if (userRole === 'DOCENTE') {
-      // Obtener external_id del usuario
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { external_id: true }
-      });
-
-      if (!user || !user.external_id) {
-        return res.status(403).json({ message: 'Teacher external ID not found' });
-      }
-
-      const teacherIdInt = parseInt(user.external_id, 10);
-      if (conversation.teacher_external_id !== teacherIdInt) {
-        return res.status(403).json({ message: 'No tienes acceso a esta conversación' });
-      }
-    }
-
-    // Obtener mensajes
-    const messages = await prisma.conversationMessage.findMany({
-      where: {
-        conversation_id: conversationId
-      },
-      orderBy: {
-        created_at: 'asc'
-      }
+    const messages = await prisma.message.findMany({
+      where: { communication_id: conversationId },
+      orderBy: { createdAt: 'asc' },
+      include: { attachments: true }
     });
 
     res.json(messages);
   } catch (error) {
-    console.error('Error getting conversation messages:', error);
+    console.error('Error getting messages:', error);
     res.status(500).json({ message: 'Error al obtener mensajes' });
   }
 };
@@ -207,56 +137,39 @@ export const getConversationMessages = async (req: Request, res: Response) => {
  */
 export const sendMessage = async (req: Request, res: Response) => {
   try {
+    const userId = req.user?.userId;
     const { conversationId } = req.params;
     const { body } = req.body;
-    const userId = (req as any).user.userId;
-    const userRole = (req as any).user.role;
 
-    if (!body || !body.trim()) {
-      return res.status(400).json({ message: 'El mensaje no puede estar vacío' });
+    if (!body) {
+      return res.status(400).json({ message: 'body es requerido' });
     }
 
-    // Verificar conversación existe
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId }
+    const user = await prisma.user.findUnique({
+      where: { id: userId! },
+      select: { external_id: true }
     });
 
-    if (!conversation) {
-      return res.status(404).json({ message: 'Conversación no encontrada' });
+    if (!user || !user.external_id) {
+      return res.status(403).json({ message: 'Usuario no vinculado' });
     }
 
-    // Verificar permisos según rol
-    if (userRole === 'DOCENTE') {
-      // Obtener external_id del usuario
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { external_id: true }
-      });
+    const teacherExternalId = parseInt(user.external_id);
 
-      if (!user || !user.external_id) {
-        return res.status(403).json({ message: 'Teacher external ID not found' });
-      }
-
-      const teacherIdInt = parseInt(user.external_id, 10);
-      if (conversation.teacher_external_id !== teacherIdInt) {
-        return res.status(403).json({ message: 'No tienes acceso a esta conversación' });
-      }
-    }
-
-    // Crear mensaje
-    const message = await prisma.conversationMessage.create({
+    // Crear mensaje y actualizar lastMessageAt
+    const message = await prisma.message.create({
       data: {
-        conversation_id: conversationId,
-        sender_role: userRole,
-        sender_id: userId,
-        body: body.trim()
-      }
+        communication_id: conversationId,
+        body,
+        sender_role: 'TEACHER',
+        sender_teacher_external_id: teacherExternalId
+      },
+      include: { attachments: true }
     });
 
-    // Actualizar timestamp de la conversación
-    await prisma.conversation.update({
+    await prisma.communication.update({
       where: { id: conversationId },
-      data: { updated_at: new Date() }
+      data: { lastMessageAt: new Date() }
     });
 
     res.status(201).json(message);
@@ -267,118 +180,98 @@ export const sendMessage = async (req: Request, res: Response) => {
 };
 
 /**
- * Buscar estudiantes del docente para iniciar conversación
- * GET /api/communications/teacher/students?query=
+ * Buscar estudiantes del docente
+ * GET /api/communications/teacher/students
  */
 export const searchTeacherStudents = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
-    
-    // Buscar el external_id del docente
+    const userId = req.user?.userId;
+    const { q, query: searchQuery, courseId } = req.query;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'No autenticado' });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { external_id: true }
     });
 
     if (!user || !user.external_id) {
-      return res.status(404).json({ message: 'Teacher external ID not found' });
+      return res.status(403).json({ 
+        message: 'Tu cuenta no está vinculada con un docente.',
+        needsLinking: true 
+      });
     }
 
-    const teacherIdInt = parseInt(user.external_id, 10);
-    if (isNaN(teacherIdInt)) {
-      return res.status(400).json({ message: 'Invalid teacher ID format' });
-    }
-    
-    const { query } = req.query;
+    const teacherExternalId = parseInt(user.external_id);
 
-    if (!query || typeof query !== 'string') {
-      return res.status(400).json({ message: 'Se requiere parámetro query' });
-    }
+    // Importar la conexión MySQL
+    const { ceiafPool } = await import('../ext/ceiafDb');
 
-    // Buscar estudiantes que tiene el docente en sus cursos
-    const [students] = await ceiafPool.query(
-      `SELECT DISTINCT 
+    // Usar q o query (el frontend puede enviar cualquiera)
+    const searchText = (q || searchQuery) as string | undefined;
+
+    // Buscar estudiantes del docente desde MySQL
+    let sqlQuery = `
+      SELECT DISTINCT
         e.id_estudiante,
-        e.nombres,
-        e.apellidos,
+        CONCAT(e.nombres, ' ', e.apellidos) as nombre_completo,
         e.cedula,
-        c.nombre AS curso_nombre,
+        c.id_curso,
+        c.nombre as curso_nombre,
+        c.nivel,
         c.paralelo
       FROM estudiantes e
       INNER JOIN cursos c ON e.id_curso = c.id_curso
-      INNER JOIN docente_materia_curso dmc ON dmc.id_curso = c.id_curso
+      INNER JOIN docente_materia_curso dmc ON c.id_curso = dmc.id_curso
       WHERE dmc.id_docente = ?
-      AND (
+    `;
+
+    const params: any[] = [teacherExternalId];
+
+    // Filtrar por curso si se especifica
+    if (courseId) {
+      sqlQuery += ' AND c.id_curso = ?';
+      params.push(parseInt(courseId as string));
+    }
+
+    // Filtrar por búsqueda de texto
+    if (searchText && searchText.trim()) {
+      sqlQuery += ` AND (
         e.nombres LIKE ? OR 
         e.apellidos LIKE ? OR 
         e.cedula LIKE ?
-      )
-      LIMIT 20`,
-      [teacherIdInt, `%${query}%`, `%${query}%`, `%${query}%`]
-    ) as any;
+      )`;
+      const searchTerm = `%${searchText.trim()}%`;
+      params.push(searchTerm, searchTerm, searchTerm);
+    }
 
-    const results = students.map((s: any) => ({
-      student_external_id: s.id_estudiante,
-      student_name: `${s.nombres} ${s.apellidos}`,
-      cedula: s.cedula,
-      curso: s.curso_nombre,
-      paralelo: s.paralelo
-    }));
+    sqlQuery += ' ORDER BY e.apellidos, e.nombres LIMIT 50';
 
-    res.json(results);
+    const [rows] = await ceiafPool.query(sqlQuery, params);
+
+    res.json({ students: rows });
   } catch (error) {
-    console.error('Error searching teacher students:', error);
+    console.error('Error searching students:', error);
     res.status(500).json({ message: 'Error al buscar estudiantes' });
   }
 };
 
 /**
- * Archivar conversación (docente)
+ * Archivar conversación
  * PUT /api/communications/conversation/:conversationId/archive
  */
 export const archiveConversation = async (req: Request, res: Response) => {
   try {
     const { conversationId } = req.params;
-    const userId = (req as any).user.userId;
-    const userRole = (req as any).user.role;
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId }
-    });
-
-    if (!conversation) {
-      return res.status(404).json({ message: 'Conversación no encontrada' });
-    }
-
-    // Verificar permisos
-    if (userRole === 'DOCENTE') {
-      // Obtener external_id del usuario
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { external_id: true }
-      });
-
-      if (!user || !user.external_id) {
-        return res.status(403).json({ message: 'Teacher external ID not found' });
-      }
-
-      const teacherIdInt = parseInt(user.external_id, 10);
-      if (conversation.teacher_external_id !== teacherIdInt) {
-        return res.status(403).json({ message: 'No tienes acceso a esta conversación' });
-      }
-    }
-
-    // Archivar según rol
-    const updateData = userRole === 'DOCENTE' 
-      ? { archived_by_teacher: true }
-      : { archived_by_parent: true };
-
-    await prisma.conversation.update({
+    await prisma.communication.update({
       where: { id: conversationId },
-      data: updateData
+      data: { archived_by_teacher: true }
     });
 
-    res.json({ message: 'Conversación archivada exitosamente' });
+    res.json({ message: 'Conversación archivada' });
   } catch (error) {
     console.error('Error archiving conversation:', error);
     res.status(500).json({ message: 'Error al archivar conversación' });

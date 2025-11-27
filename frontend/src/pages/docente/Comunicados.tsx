@@ -17,6 +17,7 @@ const Comunicados: React.FC = () => {
   const [conversations, setConversations] = useState<TeacherConversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<TeacherConversation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasExternalId, setHasExternalId] = useState(true); // Track if teacher is linked
 
   // Búsqueda de estudiantes
   const [query, setQuery] = useState("");
@@ -36,10 +37,23 @@ const Comunicados: React.FC = () => {
   const loadConversations = async () => {
     setLoading(true);
     try {
-      const convs = await listTeacherConversations();
-      setConversations(convs);
+      const response = await listTeacherConversations();
+      // El backend puede devolver un objeto con { conversations, warning } o un array
+      if (Array.isArray(response)) {
+        setConversations(response);
+        setHasExternalId(true);
+      } else {
+        setConversations(response.conversations || []);
+        setHasExternalId(!response.warning); // Si hay warning, no tiene external_id
+        // Mostrar advertencia si existe
+        if (response.warning) {
+          console.warn('⚠️', response.warning);
+        }
+      }
     } catch (error) {
       console.error('Error loading conversations:', error);
+      setConversations([]);
+      setHasExternalId(false);
     } finally {
       setLoading(false);
     }
@@ -60,7 +74,14 @@ const Comunicados: React.FC = () => {
         const results = await searchTeacherStudents(query.trim());
         setSearchResults(results);
       } catch (error) {
-        console.error('Error searching students:', error);
+        // Si es error 400, limpiar resultados silenciosamente (cuenta no vinculada)
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError?.response?.status === 400) {
+          setSearchResults([]);
+        } else {
+          // Solo mostrar errores que no sean de validación
+          console.error('Error searching students:', error);
+        }
       } finally {
         setSearching(false);
       }
@@ -99,7 +120,15 @@ const Comunicados: React.FC = () => {
       setSearchResults([]);
     } catch (error) {
       console.error('Error creating conversation:', error);
-      alert('Error al crear conversación');
+      // Manejar errores de validación de external_id
+      const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+      if (axiosError?.response?.status === 400) {
+        const message = axiosError.response.data?.message || 
+          'Tu cuenta no está vinculada con el sistema. Contacta al administrador.';
+        alert(message);
+      } else {
+        alert('Error al crear conversación. Por favor intenta nuevamente.');
+      }
     }
   };
 
@@ -165,7 +194,7 @@ const Comunicados: React.FC = () => {
         </button>
       </div>
 
-      {/* Búsqueda */}
+      {/* Búsqueda o mensaje de advertencia */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
@@ -174,57 +203,91 @@ const Comunicados: React.FC = () => {
         borderRadius: '15px',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
       }}>
-        <h3 style={{ marginTop: '0', color: '#333' }}>Buscar Estudiante</h3>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Busca por nombre o cédula del estudiante..."
-          style={{
-            width: '100%',
-            padding: '0.8rem',
-            border: '2px solid #e9ecef',
-            borderRadius: '8px',
-            fontSize: '1rem',
-            outline: 'none'
-          }}
-        />
-        
-        {searching && (
-          <div style={{ marginTop: '1rem', color: '#666' }}>Buscando...</div>
-        )}
+        {hasExternalId ? (
+          // Si tiene external_id, mostrar búsqueda normal
+          <>
+            <h3 style={{ marginTop: '0', color: '#333' }}>Buscar Estudiante</h3>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Busca por nombre o cédula del estudiante..."
+              style={{
+                width: '100%',
+                padding: '0.8rem',
+                border: '2px solid #e9ecef',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                outline: 'none'
+              }}
+            />
+            
+            {searching && (
+              <div style={{ marginTop: '1rem', color: '#666' }}>Buscando...</div>
+            )}
 
-        {searchResults.length > 0 && (
-          <ul style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: '1rem 0 0 0',
-            maxHeight: '300px',
-            overflowY: 'auto'
+            {searchResults.length > 0 && (
+              <ul style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: '1rem 0 0 0',
+                maxHeight: '300px',
+                overflowY: 'auto'
+              }}>
+                {searchResults.map((student) => (
+                  <li
+                    key={student.student_external_id}
+                    onClick={() => handleCreateConversation(student)}
+                    style={{
+                      padding: '0.75rem',
+                      background: 'white',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      marginBottom: '0.5rem',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f4ff'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                  >
+                    <strong>{student.student_name}</strong>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      {student.curso} - Paralelo {student.paralelo} | Cédula: {student.cedula}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          // Si NO tiene external_id, mostrar mensaje informativo
+          <div style={{
+            textAlign: 'center',
+            padding: '2rem'
           }}>
-            {searchResults.map((student) => (
-              <li
-                key={student.student_external_id}
-                onClick={() => handleCreateConversation(student)}
-                style={{
-                  padding: '0.75rem',
-                  background: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  marginBottom: '0.5rem',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f4ff'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-              >
-                <strong>{student.student_name}</strong>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                  {student.curso} - Paralelo {student.paralelo} | Cédula: {student.cedula}
-                </div>
-              </li>
-            ))}
-          </ul>
+            <div style={{
+              fontSize: '3rem',
+              marginBottom: '1rem'
+            }}>⚠️</div>
+            <h3 style={{ margin: '0 0 1rem 0', color: '#d97706' }}>Cuenta no vinculada</h3>
+            <p style={{ margin: '0', color: '#666', lineHeight: '1.6' }}>
+              Tu cuenta no está vinculada con un docente en el sistema del colegio.
+              <br />
+              Para poder usar el sistema de mensajería y buscar estudiantes,
+              <br />
+              contacta al administrador para que vincule tu cuenta.
+            </p>
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              background: '#fef3c7',
+              borderRadius: '8px',
+              fontSize: '0.875rem',
+              color: '#92400e'
+            }}>
+              <strong>Nota:</strong> Tu correo debe estar registrado en la base de datos del colegio.
+            </div>
+          </div>
         )}
       </div>
 

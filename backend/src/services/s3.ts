@@ -1,111 +1,69 @@
-import AWS from 'aws-sdk';
-import { v4 as uuidv4 } from 'uuid';
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-// Configurar AWS
-AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
+const AWS_REGION = process.env.AWS_REGION!;
+const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME!;
+if (!AWS_REGION) throw new Error("AWS_REGION is required");
+if (!AWS_BUCKET_NAME) throw new Error("AWS_BUCKET_NAME is required");
 
-const s3 = new AWS.S3();
+// El SDK detecta credentials por env (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY)
+export const s3 = new S3Client({ region: AWS_REGION });
 
-export interface UploadResult {
-  key: string;
-  url: string;
-  bucket: string;
+/**
+ * submissions/{studentId}/{taskId}/{timestamp}_{fileName}
+ */
+export function buildObjectKey(studentId: number, taskId: string, filename: string) {
+  const safe = filename.replace(/[^\w.\-]+/g, "_"); // sanitizar
+  const ts = Date.now();
+  return `submissions/${studentId}/${taskId}/${ts}_${safe}`;
 }
 
-export class S3Service {
-  private bucket: string;
-
-  constructor() {
-    this.bucket = process.env.AWS_BUCKET_NAME || 'educonecta-uploads-dev';
-  }
-
-  /**
-   * Subir archivo a S3
-   */
-  async uploadFile(file: Express.Multer.File, folder: string = 'tasks'): Promise<UploadResult> {
-    try {
-      const fileExtension = file.originalname.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExtension}`;
-      const key = `${folder}/${fileName}`;
-
-      const uploadParams = {
-        Bucket: this.bucket,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: 'private', // Archivo privado, acceso controlado
-      };
-
-      console.log('Subiendo archivo a S3:', { key, size: file.size, type: file.mimetype });
-
-      const result = await s3.upload(uploadParams).promise();
-
-      return {
-        key: key,
-        url: result.Location,
-        bucket: this.bucket,
-      };
-    } catch (error) {
-      console.error('Error uploading file to S3:', error);
-      throw new Error('Error al subir archivo a S3');
-    }
-  }
-
-  /**
-   * Generar URL presignada para acceso temporal al archivo
-   */
-  async getSignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
-    try {
-      const params = {
-        Bucket: this.bucket,
-        Key: key,
-        Expires: expiresIn, // Tiempo en segundos
-      };
-
-      return s3.getSignedUrl('getObject', params);
-    } catch (error) {
-      console.error('Error generating signed URL:', error);
-      throw new Error('Error al generar URL del archivo');
-    }
-  }
-
-  /**
-   * Eliminar archivo de S3
-   */
-  async deleteFile(key: string): Promise<void> {
-    try {
-      const params = {
-        Bucket: this.bucket,
-        Key: key,
-      };
-
-      await s3.deleteObject(params).promise();
-      console.log('Archivo eliminado de S3:', key);
-    } catch (error) {
-      console.error('Error deleting file from S3:', error);
-      throw new Error('Error al eliminar archivo de S3');
-    }
-  }
-
-  /**
-   * Verificar si el archivo existe en S3
-   */
-  async fileExists(key: string): Promise<boolean> {
-    try {
-      await s3.headObject({
-        Bucket: this.bucket,
-        Key: key,
-      }).promise();
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
+/**
+ * tasks/{teacherId}/{timestamp}_{fileName}
+ */
+export function buildTaskObjectKey(teacherId: number, filename: string) {
+  const safe = filename.replace(/[^\w.\-]+/g, "_"); // sanitizar
+  const ts = Date.now();
+  return `tasks/${teacherId}/${ts}_${safe}`;
 }
 
-// Instancia singleton del servicio
-export const s3Service = new S3Service();
+/**
+ * Devuelve URL firmada (PUT) para subir desde el navegador
+ * y la URL "pública" (no accesible si el bucket es privado, pero sirve como referencia).
+ * Para descargas seguras, luego generamos un GET firmado.
+ */
+export async function getPresignedPutUrl(objectKey: string, contentType: string) {
+  const put = new PutObjectCommand({
+    Bucket: AWS_BUCKET_NAME,
+    Key: objectKey,
+    ContentType: contentType || "application/octet-stream",
+  });
+
+  // V4 presigned URL, 15 minutos
+  const uploadUrl = await getSignedUrl(s3, put, { expiresIn: 15 * 60 });
+
+  // URL HTTPS (si el bucket es privado, no será accesible públicamente)
+  const fileUrl = `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${encodeURI(objectKey)}`;
+
+  return { uploadUrl, fileUrl };
+}
+
+export function buildJustificationKey(studentId: number, ymd: string, filename: string) {
+  // ymd = "YYYY-MM-DD"
+  const safe = filename.replace(/[^\w.\-]+/g, "_");
+  const ts = Date.now();
+  return `attendance/${studentId}/${ymd}/${ts}_${safe}`;
+}
+
+// 🔽 NUEVO: URL firmada para DESCARGA (GET)
+export async function getPresignedGetUrl(objectKey: string) {
+  const get = new GetObjectCommand({
+    Bucket: AWS_BUCKET_NAME,
+    Key: objectKey,
+  });
+
+  // URL GET firmada, por ejemplo 10 minutos
+  const downloadUrl = await getSignedUrl(s3, get, { expiresIn: 10 * 60 });
+  return downloadUrl;
+}

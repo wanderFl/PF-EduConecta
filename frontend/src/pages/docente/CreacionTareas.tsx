@@ -10,7 +10,7 @@ interface TaskData {
     puntuacion: number;
     fechaVencimiento: string;
     cursoSeleccionado: number | null;
-    paraleloSeleccionado: string | null;
+    materiaSeleccionada: number | null; // ID de la materia
     trimestre: number | null;
     aporte: number | null;
     archivo?: File;
@@ -19,66 +19,55 @@ interface TaskData {
 const CreacionTareas: React.FC = () => {
     const navigate = useNavigate();
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-    const [availableParalelos, setAvailableParalelos] = useState<string[]>([]);
-    const [loadingParalelos, setLoadingParalelos] = useState<boolean>(false);
     const [taskData, setTaskData] = useState<TaskData>({
         nombre: '',
         instrucciones: '',
         puntuacion: 0,
         fechaVencimiento: '',
         cursoSeleccionado: null,
-        paraleloSeleccionado: null,
+        materiaSeleccionada: null,
         trimestre: null,
         aporte: null
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-    // Cargar curso preseleccionado del localStorage y sus paralelos
+    // Cargar curso y materia preseleccionados del localStorage
     useEffect(() => {
-        const loadCourseAndParalelos = async () => {
+        const loadCourseAndSubject = () => {
             const courseData = localStorage.getItem('selectedCourseData');
+            const subjectData = localStorage.getItem('selectedSubjectData');
+            
             if (courseData) {
                 try {
                     const course = JSON.parse(courseData);
                     setSelectedCourse(course);
-                    // Si existe un curso preseleccionado, buscar su ID equivalente en la lista de cursos
-                    if (course.id) {
-                        // Mapear el ID del curso del localStorage al course_external_id
-                        const courseMapping: { [key: string]: number } = {
-                            '8vo': 8,
-                            '9no': 9,
-                            '10mo': 10,
-                            '1bgu': 11,
-                            '2bgu': 12,
-                            '3bgu': 13
-                        };
-                        const mappedId = courseMapping[course.id];
-                        if (mappedId) {
-                            setTaskData(prev => ({...prev, cursoSeleccionado: mappedId}));
-                            
-                            // Cargar paralelos automáticamente para el curso seleccionado
-                            try {
-                                setLoadingParalelos(true);
-                                const paralelos = await studentsService.getParalelosByCourse(mappedId);
-                                setAvailableParalelos(paralelos);
-                            } catch (error) {
-                                console.error('Error cargando paralelos:', error);
-                                // Si hay error (como 401), usar paralelos por defecto
-                                const paralelosDefault = mappedId <= 10 ? ['A', 'B', 'C'] : ['A', 'B'];
-                                setAvailableParalelos(paralelosDefault);
-                                console.log('Usando paralelos por defecto:', paralelosDefault);
-                            } finally {
-                                setLoadingParalelos(false);
-                            }
-                        }
+                    
+                    // Obtener el ID numérico del curso
+                    let courseId = course.id;
+                    if (typeof courseId === 'string') {
+                        // Si es string, intentar parsearlo o mapearlo
+                        courseId = parseInt(courseId);
                     }
-                } catch {
-                    console.log('No se pudo parsear el curso del localStorage');
+                    
+                    if (courseId && !isNaN(courseId)) {
+                        setTaskData(prev => ({...prev, cursoSeleccionado: courseId}));
+                    }
+                } catch (error) {
+                    console.error('Error parseando curso del localStorage:', error);
+                }
+            }
+            
+            if (subjectData) {
+                try {
+                    const subject = JSON.parse(subjectData);
+                    setTaskData(prev => ({...prev, materiaSeleccionada: subject.id_materia}));
+                } catch (error) {
+                    console.error('Error parseando materia del localStorage:', error);
                 }
             }
         };
 
-        loadCourseAndParalelos();
+        loadCourseAndSubject();
     }, []);
 
 
@@ -93,13 +82,7 @@ const CreacionTareas: React.FC = () => {
 
 
 
-    const handleParaleloChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const paralelo = e.target.value;
-        setTaskData(prev => ({
-            ...prev,
-            paraleloSeleccionado: paralelo || null
-        }));
-    };
+
 
     const handleTrimestreChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const trimestre = e.target.value;
@@ -135,16 +118,23 @@ const CreacionTareas: React.FC = () => {
 
     const handleGuardarYEnviar = async () => {
         try {
-            // El curso se toma automáticamente del localStorage, ya no necesita validación manual
-            const cursoId = taskData.cursoSeleccionado || (selectedCourse?.id ? (() => {
-                const courseMapping: { [key: string]: number } = {
-                    '8vo': 8, '9no': 9, '10mo': 10, '1bgu': 11, '2bgu': 12, '3bgu': 13
-                };
-                return courseMapping[selectedCourse.id];
-            })() : null);
-
+            // Validar que exista curso seleccionado
+            const cursoId = taskData.cursoSeleccionado;
             if (!cursoId) {
-                alert('No se pudo determinar el curso. Por favor, verifica tu sesión.');
+                alert('No se encontró el curso seleccionado. Por favor, regrese y seleccione un curso.');
+                return;
+            }
+
+            // Validar que exista materia seleccionada (OBLIGATORIO)
+            const materiaId = taskData.materiaSeleccionada;
+            if (!materiaId) {
+                alert('No se encontró la materia seleccionada. Por favor, regrese y seleccione una materia.');
+                return;
+            }
+
+            // Validar campos requeridos
+            if (!taskData.nombre || !taskData.fechaVencimiento) {
+                alert('Por favor, complete los campos obligatorios: nombre y fecha de vencimiento.');
                 return;
             }
 
@@ -155,31 +145,22 @@ const CreacionTareas: React.FC = () => {
                 puntuacion: taskData.puntuacion,
                 fechaVencimiento: taskData.fechaVencimiento,
                 cursoId: String(cursoId),
-                paralelo: taskData.paraleloSeleccionado || undefined,
+                subjectId: materiaId, // Campo obligatorio
                 trimestre: taskData.trimestre || undefined,
                 aporte: taskData.aporte || undefined,
                 file: selectedFile ?? undefined
             });
 
-                console.log('Respuesta creación tarea:', res);
-                alert(`Tarea "${taskData.nombre}" creada y guardada en el servidor (id: ${res?.task?.id ?? 'n/a'})`);
+            console.log('Respuesta creación tarea:', res);
+            alert(`✅ Tarea "${taskData.nombre}" creada exitosamente!`);
 
-                // Limpiar formulario
-                setTaskData({
-                    nombre: '',
-                    instrucciones: '',
-                    puntuacion: 0,
-                    fechaVencimiento: '',
-                    cursoSeleccionado: null,
-                    paraleloSeleccionado: null,
-                    trimestre: null,
-                    aporte: null
-                });
-                setSelectedFile(null);
-            } catch (error) {
-                console.error('Error al crear tarea:', error);
-                alert('Error al crear la tarea');
-            }
+            // Limpiar formulario o navegar al dashboard
+            navigate("/docente/dashboard");
+            
+        } catch (error) {
+            console.error('Error al crear tarea:', error);
+            alert('Error al crear la tarea: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+        }
     };
 
     const handleCancelar = () => {
@@ -328,62 +309,40 @@ const CreacionTareas: React.FC = () => {
                     />
                 </div>
 
-                {/* Selección de Paralelo */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{
-                        display: 'block',
-                        fontWeight: '600',
-                        marginBottom: '0.5rem',
-                        color: '#2c3e50'
-                    }}>
-                        Paralelo (Sección) - Opcional
-                    </label>
-                        {loadingParalelos ? (
-                            <div style={{
-                                padding: '0.75rem',
-                                border: '2px solid #e1e5e9',
-                                borderRadius: '8px',
-                                fontSize: '1rem',
-                                color: '#666',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}>
-                                <span style={{ marginRight: '0.5rem' }}>⏳</span>
-                                Cargando paralelos...
-                            </div>
-                        ) : (
-                            <select
-                                value={taskData.paraleloSeleccionado || ''}
-                                onChange={handleParaleloChange}
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem',
-                                    border: '2px solid #e1e5e9',
-                                    borderRadius: '8px',
-                                    fontSize: '1rem',
-                                    outline: 'none',
-                                    backgroundColor: 'white',
-                                    cursor: 'pointer',
-                                    transition: 'border-color 0.3s ease'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = selectedCourse?.color || '#3498db'}
-                                onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
-                            >
-                                <option value="">-- Selecciona un paralelo (opcional) --</option>
-                                {availableParalelos.map((paralelo) => (
-                                    <option key={paralelo} value={paralelo}>
-                                        Paralelo {paralelo}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
+                {/* Información del Curso y Materia Seleccionados */}
+                <div style={{ 
+                    marginBottom: '1.5rem',
+                    padding: '1rem',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '8px',
+                    border: '1px solid #e1e5e9'
+                }}>
                     <p style={{
-                        margin: '0.5rem 0 0 0',
-                        fontSize: '0.8rem',
-                        color: '#666',
-                        fontStyle: 'italic'
+                        margin: '0 0 0.5rem 0',
+                        fontSize: '0.9rem',
+                        color: '#2c3e50',
+                        fontWeight: '600'
                     }}>
-                        * La selección de paralelo es opcional. Si no se selecciona, la tarea será visible para todos los paralelos del curso.
+                        📚 Curso: {selectedCourse?.name || 'No especificado'}
+                    </p>
+                    <p style={{
+                        margin: '0',
+                        fontSize: '0.9rem',
+                        color: '#2c3e50',
+                        fontWeight: '600'
+                    }}>
+                        📖 Materia: {(() => {
+                            const subjectData = localStorage.getItem('selectedSubjectData');
+                            if (subjectData) {
+                                try {
+                                    const subject = JSON.parse(subjectData);
+                                    return subject.nombre_materia || 'No especificada';
+                                } catch {
+                                    return 'No especificada';
+                                }
+                            }
+                            return 'No especificada';
+                        })()}
                     </p>
                 </div>
 

@@ -1,5 +1,5 @@
 // Test database connection and server startup
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 

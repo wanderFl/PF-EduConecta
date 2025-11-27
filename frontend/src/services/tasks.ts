@@ -6,7 +6,8 @@ export interface CreateTaskData {
   puntuacion: number;
   fechaVencimiento: string;
   cursoId: string;
-  paralelo?: string;
+  subjectId: number; // OBLIGATORIO - ID de la materia
+  paralelo?: string; // Mantener por compatibilidad pero ya no se usará
   trimestre?: number;
   aporte?: number;
   file?: File | null;
@@ -73,6 +74,7 @@ export const taskService = {
       form.append('puntuacion', String(normalizedData.puntuacion));
       form.append('fechaVencimiento', normalizedData.fechaVencimiento);
       form.append('cursoId', normalizedData.cursoId);
+      form.append('subjectId', String(taskData.subjectId)); // Campo obligatorio
       if (taskData.paralelo) {
         form.append('paralelo', taskData.paralelo);
       }

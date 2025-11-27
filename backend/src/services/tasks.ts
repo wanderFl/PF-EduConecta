@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
@@ -12,7 +12,7 @@ export interface TaskWithDetails {
   file_reference: string | null;
   teacher_external_id: number;
   course_external_id: number;
-  paralelo: string | null;
+  subject_external_id: number | null;
   trimestre: number | null;
   aporte: number | null;
   created_at: Date;
@@ -27,10 +27,18 @@ export interface SubmissionGradeDetails {
   student_external_id: number;
   grade: Decimal | null;
   file_reference: string | null;
-  comment_student: string | null;
-  comment_teacher: string | null;
+  student_comment?: string | null;
+  teacher_comment?: string | null;
   submitted_at: Date | null;
   graded_at: Date | null;
+  // Campos opcionales del modelo Prisma
+  subject_external_id?: number | null;
+  course_external_id?: number | null;
+  task_id?: string;
+  created_at?: Date;
+  updated_at?: Date;
+  year?: number | null;
+  month?: number | null;
 }
 
 // Obtener todas las tareas
@@ -47,6 +55,7 @@ export async function getAllTasks(): Promise<TaskWithDetails[]> {
 
     return tasks.map(task => ({
       ...task,
+      subject_external_id: task.subject_external_id,
       submission_count: task.submissions.length,
       graded_count: task.submissions.filter(s => s.grade !== null).length
     }));
@@ -73,6 +82,7 @@ export async function getTasksByCourse(courseExternalId: number): Promise<TaskWi
 
     return tasks.map(task => ({
       ...task,
+      subject_external_id: task.subject_external_id,
       submission_count: task.submissions.length,
       graded_count: task.submissions.filter(s => s.grade !== null).length
     }));
@@ -82,37 +92,10 @@ export async function getTasksByCourse(courseExternalId: number): Promise<TaskWi
   }
 }
 
-// Obtener tareas por curso y paralelo
+// Obtener tareas por curso (sin filtro de paralelo)
 export async function getTasksByCourseAndParalelo(courseExternalId: number, paralelo?: string): Promise<TaskWithDetails[]> {
-  try {
-    // Si no se especifica paralelo, obtener todas las tareas del curso
-    if (!paralelo) {
-      return getTasksByCourse(courseExternalId);
-    }
-
-    // Filtrar por curso y paralelo específico
-    const tasks = await prisma.task.findMany({
-      where: {
-        course_external_id: courseExternalId,
-        paralelo: paralelo
-      },
-      include: {
-        submissions: true
-      },
-      orderBy: {
-        due_date: 'asc'
-      }
-    });
-
-    return tasks.map(task => ({
-      ...task,
-      submission_count: task.submissions.length,
-      graded_count: task.submissions.filter(s => s.grade !== null).length
-    }));
-  } catch (error) {
-    console.error('Error fetching tasks by course and paralelo:', error);
-    throw new Error('Error al obtener las tareas del curso y paralelo');
-  }
+  // Mantener firma de función para compatibilidad, pero ignorar paralelo
+  return getTasksByCourse(courseExternalId);
 }
 
 // Obtener tareas por docente
@@ -132,6 +115,7 @@ export async function getTasksByTeacher(teacherExternalId: number): Promise<Task
 
     return tasks.map(task => ({
       ...task,
+      subject_external_id: task.subject_external_id,
       submission_count: task.submissions.length,
       graded_count: task.submissions.filter(s => s.grade !== null).length
     }));
@@ -159,6 +143,7 @@ export async function getTaskById(taskId: string): Promise<TaskWithDetails | nul
 
     return {
       ...task,
+      subject_external_id: task.subject_external_id,
       submission_count: task.submissions.length,
       graded_count: task.submissions.filter(s => s.grade !== null).length
     };
@@ -177,7 +162,7 @@ export async function createTask(taskData: {
   file_reference?: string;
   teacher_external_id: number;
   course_external_id: number;
-  paralelo?: string;
+  subject_external_id: number; // AHORA ES OBLIGATORIO
   trimestre?: number;
   aporte?: number;
 }): Promise<TaskWithDetails> {
@@ -191,7 +176,7 @@ export async function createTask(taskData: {
         file_reference: taskData.file_reference || null,
         teacher_external_id: taskData.teacher_external_id,
         course_external_id: taskData.course_external_id,
-        paralelo: taskData.paralelo || null,
+        subject_external_id: taskData.subject_external_id,
         trimestre: taskData.trimestre || null,
         aporte: taskData.aporte || null
       },
@@ -203,7 +188,7 @@ export async function createTask(taskData: {
     return {
       ...task,
       submission_count: task.submissions.length,
-      graded_count: task.submissions.filter(s => s.grade !== null).length
+      graded_count: task.submissions.filter((s: any) => s.grade !== null).length
     };
   } catch (error) {
     console.error('Error creating task:', error);
@@ -238,8 +223,9 @@ export async function updateTask(
 
     return {
       ...task,
+      subject_external_id: task.subject_external_id,
       submission_count: task.submissions.length,
-      graded_count: task.submissions.filter(s => s.grade !== null).length
+      graded_count: task.submissions.filter((s: any) => s.grade !== null).length
     };
   } catch (error) {
     console.error('Error updating task:', error);
@@ -262,45 +248,23 @@ export async function deleteTask(taskId: string): Promise<boolean> {
   }
 }
 
-// Obtener paralelos disponibles para un curso desde la base de datos
+// Obtener paralelos disponibles desde MySQL (no desde tareas)
 export async function getParalelosByCourse(courseExternalId: number): Promise<string[]> {
+  // Esta función debe consultar MySQL para obtener paralelos reales
+  // Por ahora devolver paralelos por defecto según el curso
   try {
-    // Obtener paralelos únicos de las tareas existentes para este curso
-    const tasks = await prisma.task.findMany({
-      where: {
-        course_external_id: courseExternalId,
-        paralelo: {
-          not: null
-        }
-      },
-      select: {
-        paralelo: true
-      },
-      distinct: ['paralelo']
-    });
-
-    const paralelosFromTasks = tasks
-      .map(task => task.paralelo)
-      .filter((paralelo): paralelo is string => paralelo !== null);
-
-    // Si no hay paralelos en tareas, devolver paralelos típicos basados en el curso
-    if (paralelosFromTasks.length === 0) {
-      switch (courseExternalId) {
-        case 8: // 8vo
-        case 9: // 9no
-        case 10: // 10mo
-          return ['A', 'B', 'C'];
-        case 11: // 1ro BGU
-        case 12: // 2do BGU
-        case 13: // 3ro BGU
-          return ['A', 'B'];
-        default:
-          return ['A'];
-      }
+    switch (courseExternalId) {
+      case 8: // 8vo
+      case 9: // 9no
+      case 10: // 10mo
+        return ['A', 'B', 'C'];
+      case 11: // 1ro BGU
+      case 12: // 2do BGU
+      case 13: // 3ro BGU
+        return ['A', 'B'];
+      default:
+        return ['A'];
     }
-
-    // Ordenar paralelos alfabéticamente
-    return paralelosFromTasks.sort();
   } catch (error) {
     console.error('Error fetching paralelos by course:', error);
     throw new Error('Error al obtener paralelos del curso');

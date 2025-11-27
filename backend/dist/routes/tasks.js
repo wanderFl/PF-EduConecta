@@ -1,15 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const client_1 = require("@prisma/client");
 const tasks_1 = require("../services/tasks");
 const auth_1 = require("../middlewares/auth");
 const router = (0, express_1.Router)();
 // Middleware de autenticación para todas las rutas
-router.use(auth_1.authenticate);
-// GET /api/tasks - Obtener todas las tareas
+router.use(auth_1.authenticate, (0, auth_1.authorize)(client_1.Role.DOCENTE));
+// GET /api/tasks - Obtener todas las tareas (filtradas por el docente logueado)
 router.get('/', async (req, res) => {
     try {
-        const tasks = await (0, tasks_1.getAllTasks)();
+        // Obtener external_id del docente autenticado
+        const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+        if (!teacherExternalId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Usuario no vinculado con un docente'
+            });
+        }
+        // Obtener todas las tareas pero filtrar por docente
+        const allTasks = await (0, tasks_1.getAllTasks)();
+        const tasks = allTasks.filter(task => task.teacher_external_id === teacherExternalId);
         res.json({
             success: true,
             data: tasks,
@@ -55,7 +66,7 @@ router.get('/stats', async (req, res) => {
         });
     }
 });
-// GET /api/tasks/course/:courseId - Obtener tareas por curso
+// GET /api/tasks/course/:courseId - Obtener tareas por curso (filtradas por el docente logueado)
 router.get('/course/:courseId', async (req, res) => {
     try {
         const courseId = parseInt(req.params.courseId);
@@ -66,6 +77,14 @@ router.get('/course/:courseId', async (req, res) => {
                 message: 'ID de curso inválido'
             });
         }
+        // Obtener external_id del docente autenticado
+        const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+        if (!teacherExternalId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Usuario no vinculado con un docente'
+            });
+        }
         let tasks;
         if (paralelo && typeof paralelo === 'string') {
             tasks = await (0, tasks_1.getTasksByCourseAndParalelo)(courseId, paralelo);
@@ -73,6 +92,8 @@ router.get('/course/:courseId', async (req, res) => {
         else {
             tasks = await (0, tasks_1.getTasksByCourse)(courseId);
         }
+        // Filtrar solo las tareas creadas por este docente
+        tasks = tasks.filter(task => task.teacher_external_id === teacherExternalId);
         res.json({
             success: true,
             data: tasks,
@@ -164,12 +185,21 @@ router.get('/:taskId', async (req, res) => {
 // POST /api/tasks - Crear nueva tarea
 router.post('/', async (req, res) => {
     try {
-        const { title, instructions, due_date, max_points, file_reference, teacher_external_id, course_external_id, paralelo, trimestre, aporte } = req.body;
-        // Validar campos requeridos
-        if (!title || !due_date || !teacher_external_id || !course_external_id) {
+        const { title, instructions, due_date, max_points, file_reference, course_external_id, subject_external_id, // CAMPO OBLIGATORIO
+        paralelo, trimestre, aporte } = req.body;
+        // Obtener teacher_external_id del usuario autenticado (NO del body)
+        const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+        if (!teacherExternalId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Usuario no vinculado con un docente'
+            });
+        }
+        // Validar campos requeridos (incluyendo subject_external_id)
+        if (!title || !due_date || !course_external_id || !subject_external_id) {
             return res.status(400).json({
                 success: false,
-                message: 'Faltan campos requeridos: title, due_date, teacher_external_id, course_external_id'
+                message: 'Faltan campos requeridos: title, due_date, course_external_id, subject_external_id'
             });
         }
         // Validar trimestre si se proporciona
@@ -192,8 +222,9 @@ router.post('/', async (req, res) => {
             due_date: new Date(due_date),
             max_points: max_points ? parseInt(max_points) : undefined,
             file_reference,
-            teacher_external_id: parseInt(teacher_external_id),
+            teacher_external_id: teacherExternalId,
             course_external_id: parseInt(course_external_id),
+            subject_external_id: parseInt(subject_external_id), // Campo obligatorio
             paralelo: paralelo || undefined,
             trimestre: trimestre ? parseInt(trimestre) : undefined,
             aporte: aporte ? parseInt(aporte) : undefined

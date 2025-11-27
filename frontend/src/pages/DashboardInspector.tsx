@@ -1,10 +1,14 @@
 // src/pages/DashboardInspector.tsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardNavbar } from '../components/layout/DashboardNavbar';
+import './Inspector/inspector.css';
 
 export const DashboardInspector: React.FC = () => {
+    const navigate = useNavigate();
+    
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="inspector-container">
             {/* Top Navigation Bar */}
             <DashboardNavbar 
                 title="EduConecta"
@@ -14,165 +18,100 @@ export const DashboardInspector: React.FC = () => {
             
             <div className="max-w-7xl mx-auto p-6">
                 {/* Header */}
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Panel de Inspector
-                    </h1>
-                    <p className="text-gray-600">
-                        Sistema de supervisión y control educativo
-                    </p>
+                <div className="inspector-header">
+                    <div className="inspector-header-content">
+                        <div className="inspector-title-section">
+                            <div className="inspector-icon">
+                                🔍
+                            </div>
+                            <div>
+                                <h1 className="inspector-title">
+                                    Panel de Inspector
+                                </h1>
+                                <p className="inspector-subtitle">
+                                    Sistema de supervisión y control educativo
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Main Content */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Supervisión Académica */}
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex items-center mb-4">
-                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">📊</span>
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Supervisión Académica
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                    Monitoreo del desempeño académico
-                                </p>
-                            </div>
-                        </div>
-                        <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                            Acceder
-                        </button>
-                    </div>
-
+                <div className="inspector-cards-grid">
                     {/* Control de Asistencia */}
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex items-center mb-4">
-                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">✅</span>
+                    <div className="inspector-card" onClick={() => navigate('/inspector/asistencia')}>
+                        <div className="inspector-card-header">
+                            <div className="inspector-card-icon green">
+                                <span>✅</span>
                             </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
+                            <div>
+                                <h3 className="inspector-card-title">
                                     Control de Asistencia
                                 </h3>
-                                <p className="text-sm text-gray-500">
-                                    Supervisión de asistencia general
+                                <p className="inspector-card-label">
+                                    Supervisión y registro por curso
                                 </p>
                             </div>
                         </div>
-                        <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                            Acceder
+                        <p className="inspector-card-description">
+                            Gestiona y registra la asistencia de todos los estudiantes. 
+                            Marca presentes, ausentes, tardanzas y justificaciones.
+                        </p>
+                        <button 
+                            className="inspector-card-button green"
+                            onClick={(e) => { e.stopPropagation(); navigate('/inspector/asistencia'); }}
+                        >
+                            Acceder a Asistencia
                         </button>
                     </div>
 
-                    {/* Evaluación de Docentes */}
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex items-center mb-4">
-                            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">👨‍🏫</span>
+                    {/* Novedades Disciplinarias */}
+                    <div className="inspector-card" onClick={() => navigate('/inspector/novedades')}>
+                        <div className="inspector-card-header">
+                            <div className="inspector-card-icon yellow">
+                                <span>📝</span>
                             </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Evaluación Docente
+                            <div>
+                                <h3 className="inspector-card-title">
+                                    Novedades Disciplinarias
                                 </h3>
-                                <p className="text-sm text-gray-500">
-                                    Supervisión del desempeño docente
+                                <p className="inspector-card-label">
+                                    Registro de incidentes y reportes
                                 </p>
                             </div>
                         </div>
-                        <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
-                            Acceder
-                        </button>
-                    </div>
-
-                    {/* Reportes e Informes */}
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex items-center mb-4">
-                            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">📄</span>
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Reportes e Informes
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                    Generación de reportes oficiales
-                                </p>
-                            </div>
-                        </div>
-                        <button className="w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors">
-                            Acceder
-                        </button>
-                    </div>
-
-                    {/* Cumplimiento Normativo */}
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex items-center mb-4">
-                            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">⚖️</span>
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Cumplimiento Normativo
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                    Verificación de normativas educativas
-                                </p>
-                            </div>
-                        </div>
-                        <button className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
-                            Acceder
-                        </button>
-                    </div>
-
-                    {/* Comunicaciones Oficiales */}
-                    <div className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex items-center mb-4">
-                            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                <span className="text-2xl">📋</span>
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Comunicaciones Oficiales
-                                </h3>
-                                <p className="text-sm text-gray-500">
-                                    Gestión de comunicados oficiales
-                                </p>
-                            </div>
-                        </div>
-                        <button className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
-                            Acceder
+                        <p className="inspector-card-description">
+                            Documenta y gestiona novedades disciplinarias de los estudiantes. 
+                            Clasifica por severidad y categoría.
+                        </p>
+                        <button 
+                            className="inspector-card-button yellow"
+                            onClick={(e) => { e.stopPropagation(); navigate('/inspector/novedades'); }}
+                        >
+                            Acceder a Novedades
                         </button>
                     </div>
                 </div>
 
-                {/* Quick Stats */}
-                <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                        Resumen de Actividades
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">125</div>
-                            <div className="text-sm text-gray-500">Docentes Supervisados</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">98%</div>
-                            <div className="text-sm text-gray-500">Asistencia Promedio</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-purple-600">45</div>
-                            <div className="text-sm text-gray-500">Evaluaciones Realizadas</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-orange-600">12</div>
-                            <div className="text-sm text-gray-500">Reportes Generados</div>
+                {/* Information Card */}
+                <div className="inspector-info-card">
+                    <div className="inspector-info-content">
+                        <div className="inspector-info-icon">💡</div>
+                        <div>
+                            <h3 className="inspector-info-title">
+                                Panel de Supervisión Inspector
+                            </h3>
+                            <p className="inspector-info-text">
+                                Como inspector, tienes acceso completo a todas las funcionalidades de supervisión educativa. 
+                                Puedes gestionar la asistencia de todos los cursos y paralelos, así como registrar novedades 
+                                disciplinarias para mantener un seguimiento adecuado del comportamiento estudiantil.
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer Info */}
-                <div className="mt-6 text-center text-gray-500 text-sm">
+                <div className="inspector-footer">
                     <p>Sistema EduConecta - Panel de Inspector | Última actualización: {new Date().toLocaleDateString()}</p>
                 </div>
             </div>

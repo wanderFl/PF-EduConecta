@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -9,11 +9,12 @@ export interface AttendanceStatus {
   JUSTIFICADO: 'JUSTIFICADO';
 }
 
+// Mapeo de estados del frontend a enum de Prisma
 export const ATTENDANCE_STATUS = {
-  PRESENTE: 'PRESENTE',
-  AUSENTE: 'AUSENTE', 
-  TARDANZA: 'TARDANZA',
-  JUSTIFICADO: 'JUSTIFICADO'
+  PRESENTE: 'PRESENT',
+  AUSENTE: 'ABSENT_UNJUSTIFIED', 
+  TARDANZA: 'PRESENT', // La tardanza se cuenta como presente pero se puede anotar
+  JUSTIFICADO: 'ABSENT_JUSTIFIED_ACCEPTED'
 } as const;
 
 export type AttendanceStatusType = typeof ATTENDANCE_STATUS[keyof typeof ATTENDANCE_STATUS];

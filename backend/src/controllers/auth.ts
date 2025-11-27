@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient, Role } from '../../generated/prisma';
+import { Role, PrismaClient } from '@prisma/client';
 import { hashPassword, verifyPassword, generateToken } from '../utils/auth';
 import { generateRawToken, hashToken, compareToken } from '../utils/reset';
 import { sendPasswordResetEmail } from '../utils/email';
@@ -62,7 +62,8 @@ export const login = async (req: Request, res: Response) => {
     const token = generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      external_id: user.external_id
     });
 
     // Return user info and token
@@ -70,7 +71,8 @@ export const login = async (req: Request, res: Response) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        external_id: user.external_id
       },
       token
     });
@@ -179,18 +181,43 @@ export const register = async (req: Request, res: Response) => {
 
     } else {
       // Handle other role registrations (DIRECTIVO, DOCENTE)
+      let external_id: string | null = null;
+
+      // Para DOCENTE, intentar buscar el external_id en MySQL
+      if (role === 'DOCENTE') {
+        try {
+          const { ceiafPool } = await import('../ext/ceiafDb');
+          const [rows] = await ceiafPool.query(
+            'SELECT id_docente FROM docentes WHERE email = ? LIMIT 1',
+            [email]
+          ) as any;
+
+          if (rows && rows.length > 0) {
+            external_id = rows[0].id_docente.toString();
+            console.log(`✅ Docente found in MySQL with ID: ${external_id}`);
+          } else {
+            console.warn(`⚠️ No docente found in MySQL with email: ${email}`);
+          }
+        } catch (err) {
+          console.error('Error searching for teacher in MySQL:', err);
+          // No lanzar error, continuar sin external_id
+        }
+      }
+
       const user = await prisma.user.create({
         data: {
           email,
           password_hash,
           role,
+          external_id: external_id,
           is_verified: false
         }
       });
 
       res.status(201).json({
         message: 'User registered successfully. Please check your email for verification.',
-        userId: user.id
+        userId: user.id,
+        external_id: external_id ? 'linked' : 'not_linked'
       });
     }
 

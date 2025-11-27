@@ -1,100 +1,68 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.s3Service = exports.S3Service = void 0;
-const aws_sdk_1 = __importDefault(require("aws-sdk"));
-const uuid_1 = require("uuid");
-// Configurar AWS
-aws_sdk_1.default.config.update({
-    region: process.env.AWS_REGION,
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
-const s3 = new aws_sdk_1.default.S3();
-class S3Service {
-    constructor() {
-        this.bucket = process.env.AWS_BUCKET_NAME || 'educonecta-uploads-dev';
-    }
-    /**
-     * Subir archivo a S3
-     */
-    async uploadFile(file, folder = 'tasks') {
-        try {
-            const fileExtension = file.originalname.split('.').pop();
-            const fileName = `${(0, uuid_1.v4)()}.${fileExtension}`;
-            const key = `${folder}/${fileName}`;
-            const uploadParams = {
-                Bucket: this.bucket,
-                Key: key,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-                ACL: 'private', // Archivo privado, acceso controlado
-            };
-            console.log('Subiendo archivo a S3:', { key, size: file.size, type: file.mimetype });
-            const result = await s3.upload(uploadParams).promise();
-            return {
-                key: key,
-                url: result.Location,
-                bucket: this.bucket,
-            };
-        }
-        catch (error) {
-            console.error('Error uploading file to S3:', error);
-            throw new Error('Error al subir archivo a S3');
-        }
-    }
-    /**
-     * Generar URL presignada para acceso temporal al archivo
-     */
-    async getSignedUrl(key, expiresIn = 3600) {
-        try {
-            const params = {
-                Bucket: this.bucket,
-                Key: key,
-                Expires: expiresIn, // Tiempo en segundos
-            };
-            return s3.getSignedUrl('getObject', params);
-        }
-        catch (error) {
-            console.error('Error generating signed URL:', error);
-            throw new Error('Error al generar URL del archivo');
-        }
-    }
-    /**
-     * Eliminar archivo de S3
-     */
-    async deleteFile(key) {
-        try {
-            const params = {
-                Bucket: this.bucket,
-                Key: key,
-            };
-            await s3.deleteObject(params).promise();
-            console.log('Archivo eliminado de S3:', key);
-        }
-        catch (error) {
-            console.error('Error deleting file from S3:', error);
-            throw new Error('Error al eliminar archivo de S3');
-        }
-    }
-    /**
-     * Verificar si el archivo existe en S3
-     */
-    async fileExists(key) {
-        try {
-            await s3.headObject({
-                Bucket: this.bucket,
-                Key: key,
-            }).promise();
-            return true;
-        }
-        catch (error) {
-            return false;
-        }
-    }
+exports.s3 = void 0;
+exports.buildObjectKey = buildObjectKey;
+exports.buildTaskObjectKey = buildTaskObjectKey;
+exports.getPresignedPutUrl = getPresignedPutUrl;
+exports.buildJustificationKey = buildJustificationKey;
+exports.getPresignedGetUrl = getPresignedGetUrl;
+const client_s3_1 = require("@aws-sdk/client-s3");
+const client_s3_2 = require("@aws-sdk/client-s3");
+const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
+const AWS_REGION = process.env.AWS_REGION;
+const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME;
+if (!AWS_REGION)
+    throw new Error("AWS_REGION is required");
+if (!AWS_BUCKET_NAME)
+    throw new Error("AWS_BUCKET_NAME is required");
+// El SDK detecta credentials por env (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY)
+exports.s3 = new client_s3_2.S3Client({ region: AWS_REGION });
+/**
+ * submissions/{studentId}/{taskId}/{timestamp}_{fileName}
+ */
+function buildObjectKey(studentId, taskId, filename) {
+    const safe = filename.replace(/[^\w.\-]+/g, "_"); // sanitizar
+    const ts = Date.now();
+    return `submissions/${studentId}/${taskId}/${ts}_${safe}`;
 }
-exports.S3Service = S3Service;
-// Instancia singleton del servicio
-exports.s3Service = new S3Service();
+/**
+ * tasks/{teacherId}/{timestamp}_{fileName}
+ */
+function buildTaskObjectKey(teacherId, filename) {
+    const safe = filename.replace(/[^\w.\-]+/g, "_"); // sanitizar
+    const ts = Date.now();
+    return `tasks/${teacherId}/${ts}_${safe}`;
+}
+/**
+ * Devuelve URL firmada (PUT) para subir desde el navegador
+ * y la URL "pública" (no accesible si el bucket es privado, pero sirve como referencia).
+ * Para descargas seguras, luego generamos un GET firmado.
+ */
+async function getPresignedPutUrl(objectKey, contentType) {
+    const put = new client_s3_2.PutObjectCommand({
+        Bucket: AWS_BUCKET_NAME,
+        Key: objectKey,
+        ContentType: contentType || "application/octet-stream",
+    });
+    // V4 presigned URL, 15 minutos
+    const uploadUrl = await (0, s3_request_presigner_1.getSignedUrl)(exports.s3, put, { expiresIn: 15 * 60 });
+    // URL HTTPS (si el bucket es privado, no será accesible públicamente)
+    const fileUrl = `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${encodeURI(objectKey)}`;
+    return { uploadUrl, fileUrl };
+}
+function buildJustificationKey(studentId, ymd, filename) {
+    // ymd = "YYYY-MM-DD"
+    const safe = filename.replace(/[^\w.\-]+/g, "_");
+    const ts = Date.now();
+    return `attendance/${studentId}/${ymd}/${ts}_${safe}`;
+}
+// 🔽 NUEVO: URL firmada para DESCARGA (GET)
+async function getPresignedGetUrl(objectKey) {
+    const get = new client_s3_1.GetObjectCommand({
+        Bucket: AWS_BUCKET_NAME,
+        Key: objectKey,
+    });
+    // URL GET firmada, por ejemplo 10 minutos
+    const downloadUrl = await (0, s3_request_presigner_1.getSignedUrl)(exports.s3, get, { expiresIn: 10 * 60 });
+    return downloadUrl;
+}

@@ -16,6 +16,8 @@ const tasks_1 = __importDefault(require("./routes/tasks"));
 const attendance_1 = __importDefault(require("./routes/attendance"));
 const disciplinaryReports_1 = __importDefault(require("./routes/disciplinaryReports"));
 const communications_1 = __importDefault(require("./routes/communications"));
+const teachers_1 = __importDefault(require("./routes/teachers"));
+const uploads_1 = __importDefault(require("./routes/uploads"));
 // Validate required environment variables
 if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is required');
@@ -58,6 +60,8 @@ app.use('/api/tasks', tasks_1.default);
 app.use('/api/attendance', attendance_1.default);
 app.use('/api/disciplinary-reports', disciplinaryReports_1.default);
 app.use('/api/communications', communications_1.default);
+app.use('/api/teachers', teachers_1.default);
+app.use('/api/uploads', uploads_1.default);
 // Add a route to list all available routes
 app.get('/api/routes', (req, res) => {
     const routes = [];

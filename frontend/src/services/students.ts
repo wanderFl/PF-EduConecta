@@ -1,7 +1,4 @@
-import axios from 'axios';
 import api from './api';
-
-const API_BASE_URL = 'http://localhost:3000/api';
 
 export interface Student {
   id: number;
@@ -57,9 +54,6 @@ export interface AttendanceStats {
   percentage_ausente: number;
 }
 
-// Configurar axios para incluir cookies automáticamente
-axios.defaults.withCredentials = true;
-
 /**
  * Servicio para manejar estudiantes
  */
@@ -69,7 +63,7 @@ export const studentsService = {
    */
   async getAllCourses(): Promise<Course[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/students/courses`);
+      const response = await api.get('/students/courses');
       return response.data.data;
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -95,7 +89,7 @@ export const studentsService = {
    */
   async getStudentsByCourse(courseId: string): Promise<Student[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/students/course/${courseId}`);
+      const response = await api.get(`/students/course/${courseId}`);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching students by course:', error);
@@ -108,7 +102,7 @@ export const studentsService = {
    */
   async getStudentById(studentId: number): Promise<Student> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/students/${studentId}`);
+      const response = await api.get(`/students/${studentId}`);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching student:', error);
@@ -121,7 +115,7 @@ export const studentsService = {
    */
   async searchStudents(query: string): Promise<Student[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/students/search/${query}`);
+      const response = await api.get(`/students/search/${query}`);
       return response.data.data;
     } catch (error) {
       console.error('Error searching students:', error);
@@ -144,7 +138,7 @@ export const attendanceService = {
     justificationFile?: string
   ): Promise<AttendanceRecord> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/students/attendance`, {
+      const response = await api.post('/students/attendance', {
         student_id: studentId,
         date,
         status,
@@ -166,7 +160,7 @@ export const attendanceService = {
     courseId: number
   ): Promise<AttendanceRecord[]> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/students/attendance/bulk`, {
+      const response = await api.post('/students/attendance/bulk', {
         date,
         attendances,
         course_id: courseId
@@ -186,12 +180,12 @@ export const attendanceService = {
     studentIds?: number[]
   ): Promise<AttendanceRecord[]> {
     try {
-      let url = `${API_BASE_URL}/students/attendance/date/${date}`;
+      let url = `/students/attendance/date/${date}`;
       if (studentIds && studentIds.length > 0) {
         url += `?student_ids=${studentIds.join(',')}`;
       }
       
-      const response = await axios.get(url);
+      const response = await api.get(url);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching attendance by date:', error);
@@ -208,7 +202,7 @@ export const attendanceService = {
     endDate?: string
   ): Promise<AttendanceRecord[]> {
     try {
-      let url = `${API_BASE_URL}/students/${studentId}/attendance/history`;
+      let url = `/students/${studentId}/attendance/history`;
       const params = new URLSearchParams();
       
       if (startDate) params.append('start_date', startDate);
@@ -218,7 +212,7 @@ export const attendanceService = {
         url += `?${params.toString()}`;
       }
       
-      const response = await axios.get(url);
+      const response = await api.get(url);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching attendance history:', error);
@@ -235,7 +229,7 @@ export const attendanceService = {
     endDate?: string
   ): Promise<AttendanceStats> {
     try {
-      let url = `${API_BASE_URL}/students/${studentId}/attendance/stats`;
+      let url = `/students/${studentId}/attendance/stats`;
       const params = new URLSearchParams();
       
       if (startDate) params.append('start_date', startDate);
@@ -245,7 +239,7 @@ export const attendanceService = {
         url += `?${params.toString()}`;
       }
       
-      const response = await axios.get(url);
+      const response = await api.get(url);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching attendance stats:', error);

@@ -2,8 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const students_1 = require("../services/students");
+const client_1 = require("@prisma/client");
+const auth_1 = require("../middlewares/auth");
 const attendance_1 = require("../services/attendance");
 const router = (0, express_1.Router)();
+router.use(auth_1.authenticate, (0, auth_1.authorize)(client_1.Role.INSPECTOR));
 // GET /api/students/courses - Obtener todos los cursos
 router.get('/courses', async (req, res) => {
     try {

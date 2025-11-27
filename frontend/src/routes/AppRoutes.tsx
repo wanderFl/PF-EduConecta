@@ -14,6 +14,7 @@ import Comunicados from "../pages/docente/Comunicados";
 import RegistrarCalificaciones from "../pages/docente/RegistrarCalificaciones";
 import CreacionTareas from "../pages/docente/CreacionTareas";
 import CourseSelection from "../pages/docente/CourseSelection";
+import SubjectSelection from "../pages/docente/SubjectSelection";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export const AppRoutes: React.FC = () => (
@@ -36,7 +37,16 @@ export const AppRoutes: React.FC = () => (
                         </ProtectedRoute>
                     }
                 />
-                {/* Dashboard del docente con curso seleccionado */}
+                {/* Selección de materia dentro del curso */}
+                <Route
+                    path="/docente/subjects"
+                    element={
+                        <ProtectedRoute roles={["DOCENTE"]}>
+                            <SubjectSelection />
+                        </ProtectedRoute>
+                    }
+                />
+                {/* Dashboard del docente con curso y materia seleccionados */}
                 <Route
                     path="/docente/dashboard"
                     element={

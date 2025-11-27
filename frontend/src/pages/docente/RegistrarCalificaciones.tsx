@@ -183,12 +183,30 @@ const RegistrarCalificaciones: React.FC = () => {
                                 <h1>Registrar Calificaciones</h1>
                                 <p>Curso: {selectedCourse.name}</p>
                             </div>
-                            <button
-                                onClick={() => navigate("/docente/dashboard")}
-                                className="btn-calificaciones btn-secondary"
-                            >
-                                ← Volver al Dashboard
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    onClick={() => navigate("/docente/tareas")}
+                                    className="btn-calificaciones btn-primary"
+                                    style={{
+                                        backgroundColor: '#667eea',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '12px 24px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontSize: '1rem',
+                                        fontWeight: '600'
+                                    }}
+                                >
+                                    ✨ Crear Nueva Tarea
+                                </button>
+                                <button
+                                    onClick={() => navigate("/docente/dashboard")}
+                                    className="btn-calificaciones btn-secondary"
+                                >
+                                    ← Volver al Dashboard
+                                </button>
+                            </div>
                         </div>
                     </div>
 

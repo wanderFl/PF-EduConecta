@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, authorize } from '../middlewares/auth';
-import { uploadTaskFile, handleUploadError } from '../middlewares/upload';
-import { Role, PrismaClient } from '../../generated/prisma';
+import { uploadTaskFileToS3, handleUploadError } from '../middlewares/upload';
+import { Role, PrismaClient } from '@prisma/client';
 import { ceiafPool } from '../ext/ceiafDb';
-import path from 'path';
-import fs from 'fs';
+import { getPresignedGetUrl } from '../services/s3';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -28,16 +27,16 @@ router.get(
   }
 );
 
-// Endpoint para crear tarea con soporte de archivos adjuntos
+// Endpoint para crear tarea (soporta archivo via FormData que se sube a S3)
 router.post(
   '/docente/tareas/create',
   authenticate,
   authorize(Role.DOCENTE),
-  uploadTaskFile,
+  ...uploadTaskFileToS3,
   handleUploadError,
   async (req: Request, res: Response) => {
     try {
-      const { nombre, instrucciones, puntuacion, fechaVencimiento, cursoId, paralelo, trimestre, aporte } = req.body;
+      const { nombre, instrucciones, puntuacion, fechaVencimiento, cursoId, subjectId, paralelo, trimestre, aporte, fileUrl } = req.body;
       
       console.log('📝 Datos recibidos para crear tarea:', {
         nombre, 
@@ -45,17 +44,18 @@ router.post(
         puntuacion, 
         fechaVencimiento, 
         cursoId,
+        subjectId,
         paralelo,
         trimestre,
         aporte,
-        hasFile: !!req.file
+        hasFile: !!fileUrl
       });
-      
+
       // Validaciones básicas
-      if (!nombre || !fechaVencimiento || !cursoId) {
+      if (!nombre || !fechaVencimiento || !cursoId || !subjectId) {
         return res.status(400).json({
           success: false,
-          message: 'Nombre, fecha de vencimiento y curso son requeridos'
+          message: 'Nombre, fecha de vencimiento, curso y materia son requeridos'
         });
       }
 
@@ -129,16 +129,18 @@ router.post(
         teacherExternalId
       });
 
-      // Procesar archivo adjunto si existe
-      let fileReference = null;
-      if (req.file) {
-        // Guardar la ruta relativa del archivo
-        fileReference = `uploads/tasks/${req.file.filename}`;
-        console.log('Archivo adjunto guardado:', {
-          originalName: req.file.originalname,
-          filename: req.file.filename,
-          path: fileReference,
-          size: req.file.size
+      // El archivo ya fue subido a S3 desde el frontend, solo guardamos la URL
+      const fileReference = fileUrl || null;
+      if (fileReference) {
+        console.log('Archivo adjunto en S3:', fileReference);
+      }
+
+      // Validar subject_external_id
+      const subjectExternalId = parseInt(subjectId, 10);
+      if (isNaN(subjectExternalId) || subjectExternalId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID de materia inválido'
         });
       }
 
@@ -152,7 +154,7 @@ router.post(
           due_date: fechaDate,
           teacher_external_id: teacherExternalId,
           course_external_id: courseExternalId,
-          paralelo: paralelo || null,
+          subject_external_id: subjectExternalId,
           trimestre: trimestreNum,
           aporte: aporteNum
         }
@@ -174,8 +176,7 @@ router.post(
           max_points: task.max_points,
           file_reference: task.file_reference,
           due_date: task.due_date,
-          course_external_id: task.course_external_id,
-          paralelo: task.paralelo
+          course_external_id: task.course_external_id
         }
       });
 
@@ -224,10 +225,22 @@ router.get(
 
       const courseExternalId = parseCourseId(cursoId);
 
-      // Obtener tareas del curso
+      // Obtener teacher_external_id del usuario autenticado
+      const teacherUser = await prisma.user.findUnique({ where: { id: req.user?.userId } });
+      const teacherExternalId = teacherUser && teacherUser.external_id ? parseInt(teacherUser.external_id, 10) : null;
+      
+      if (!teacherExternalId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Usuario no vinculado con un docente'
+        });
+      }
+
+      // Obtener tareas del curso filtradas por el docente autenticado
       const tasks = await prisma.task.findMany({
         where: {
-          course_external_id: courseExternalId
+          course_external_id: courseExternalId,
+          teacher_external_id: teacherExternalId
         },
         include: {
           submissions: true
@@ -270,8 +283,8 @@ router.get(
             grade: submission?.grade ? parseFloat(submission.grade.toString()) : null,
             file_reference: submission?.file_reference || null,
             submission_id: submission?.id || null,
-            comment_student: submission?.comment_student || null,
-            comment_teacher: submission?.comment_teacher || null,
+            comment_student: submission?.student_comment || null,
+            comment_teacher: submission?.teacher_comment || null,
             submitted_at: submission?.submitted_at || null,
             graded_at: submission?.graded_at || null,
             has_submission: !!submission
@@ -374,7 +387,7 @@ router.post(
           where: { id: submission.id },
           data: { 
             grade: gradeNum,
-            comment_teacher: comment || null,
+            teacher_comment: comment || null,
             graded_at: new Date()
           }
         });
@@ -385,7 +398,7 @@ router.post(
             task_id: tareaId,
             student_external_id: parseInt(studentId),
             grade: gradeNum,
-            comment_teacher: comment || null,
+            teacher_comment: comment || null,
             graded_at: new Date()
           }
         });
@@ -397,8 +410,8 @@ router.post(
         submission: {
           id: submission.id,
           grade: parseFloat(submission.grade?.toString() || '0'),
-          comment_teacher: submission.comment_teacher,
-          comment_student: submission.comment_student,
+          comment_teacher: submission.teacher_comment,
+          comment_student: submission.student_comment,
           student_id: submission.student_external_id,
           graded_at: submission.graded_at,
           submitted_at: submission.submitted_at
@@ -415,87 +428,93 @@ router.post(
   }
 );
 
-// Endpoint para descargar archivos de entregas de estudiantes
+// Endpoint para generar URL de descarga de archivos de entregas desde S3
 router.get(
-  '/docente/files/submissions/:filename',
+  '/docente/files/submissions/download',
   authenticate,
   authorize(Role.DOCENTE),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
-      const { filename } = req.params;
+      const { fileRef } = req.query;
       
-      // Construir la ruta segura del archivo de entrega
-      const filePath = path.join(process.cwd(), 'uploads', 'submissions', filename);
-      
-      // Verificar que el archivo existe
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({
+      if (!fileRef || typeof fileRef !== 'string') {
+        return res.status(400).json({
           success: false,
-          message: 'Archivo de entrega no encontrado'
+          message: 'fileRef es requerido'
         });
       }
 
-      // Enviar el archivo
-      res.download(filePath, (err) => {
-        if (err) {
-          console.error('Error downloading submission file:', err);
-          res.status(500).json({
-            success: false,
-            message: 'Error descargando archivo de entrega'
-          });
-        }
+      // Extraer objectKey de la URL completa de S3
+      const marker = '.amazonaws.com/';
+      let objectKey: string;
+
+      if (fileRef.includes(marker)) {
+        const parts = fileRef.split(marker);
+        objectKey = decodeURI(parts[1]);
+      } else {
+        objectKey = fileRef;
+      }
+
+      // Generar URL firmada para descarga
+      const downloadUrl = await getPresignedGetUrl(objectKey);
+
+      res.json({
+        success: true,
+        url: downloadUrl
       });
 
     } catch (error) {
-      console.error('Error accessing submission file:', error);
+      console.error('Error generating download URL:', error);
       res.status(500).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: 'Error generando URL de descarga'
       });
     }
   }
 );
 
-// Endpoint para descargar archivos de tareas
+// Endpoint para generar URL de descarga de archivos de tareas desde S3
 router.get(
-  '/docente/files/tasks/:filename',
+  '/docente/files/tasks/download',
   authenticate,
   authorize(Role.DOCENTE),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
-      const { filename } = req.params;
+      const { fileRef } = req.query;
       
-      // Construir la ruta segura del archivo
-      const filePath = path.join(process.cwd(), 'uploads', 'tasks', filename);
-      
-      // Verificar que el archivo existe
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({
+      if (!fileRef || typeof fileRef !== 'string') {
+        return res.status(400).json({
           success: false,
-          message: 'Archivo no encontrado'
+          message: 'fileRef es requerido'
         });
       }
 
-      // Enviar el archivo
-      res.download(filePath, (err) => {
-        if (err) {
-          console.error('Error downloading file:', err);
-          res.status(500).json({
-            success: false,
-            message: 'Error descargando archivo'
-          });
-        }
+      // Extraer objectKey de la URL completa de S3
+      const marker = '.amazonaws.com/';
+      let objectKey: string;
+
+      if (fileRef.includes(marker)) {
+        const parts = fileRef.split(marker);
+        objectKey = decodeURI(parts[1]);
+      } else {
+        objectKey = fileRef;
+      }
+
+      // Generar URL firmada para descarga
+      const downloadUrl = await getPresignedGetUrl(objectKey);
+
+      res.json({
+        success: true,
+        url: downloadUrl
       });
 
     } catch (error) {
-      console.error('Error accessing file:', error);
+      console.error('Error generating download URL:', error);
       res.status(500).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: 'Error generando URL de descarga'
       });
     }
   }
 );
-
-
 export default router;

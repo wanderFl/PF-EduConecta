@@ -1,5 +1,5 @@
 // Test específico para la petición que está fallando
-const { PrismaClient } = require('../../generated/prisma');
+const { PrismaClient } = require('@prisma/client');
 
 async function testExactPayload() {
   const prisma = new PrismaClient();

@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '../../generated/prisma';
+import { Role, PrismaClient } from '@prisma/client';
+import { authenticate, authorize } from '../middlewares/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
+router.use(authenticate, authorize(Role.INSPECTOR));
 
 // Obtener todos los registros de asistencia con filtros
 router.get('/', async (req, res) => {

@@ -6,13 +6,14 @@ exports.saveBulkAttendance = saveBulkAttendance;
 exports.getAttendanceByDate = getAttendanceByDate;
 exports.getStudentAttendanceHistory = getStudentAttendanceHistory;
 exports.getStudentAttendanceStats = getStudentAttendanceStats;
-const prisma_1 = require("../../generated/prisma");
-const prisma = new prisma_1.PrismaClient();
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+// Mapeo de estados del frontend a enum de Prisma
 exports.ATTENDANCE_STATUS = {
-    PRESENTE: 'PRESENTE',
-    AUSENTE: 'AUSENTE',
-    TARDANZA: 'TARDANZA',
-    JUSTIFICADO: 'JUSTIFICADO'
+    PRESENTE: 'PRESENT',
+    AUSENTE: 'ABSENT_UNJUSTIFIED',
+    TARDANZA: 'PRESENT', // La tardanza se cuenta como presente pero se puede anotar
+    JUSTIFICADO: 'ABSENT_JUSTIFIED_ACCEPTED'
 };
 /**
  * Crear o actualizar registro de asistencia para una fecha específica
