@@ -322,7 +322,7 @@ const TaskListView: React.FC<TaskListViewProps> = ({
                                             href="#"
                                             onClick={(e) => {
                                                 e.preventDefault();
-                                                onDownloadTaskFile(task.file_reference!.split('/').pop()!);
+                                                onDownloadTaskFile(task.file_reference!);
                                             }}
                                             className="download-link"
                                         >
@@ -609,7 +609,7 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({
                                         href="#"
                                         onClick={(e) => {
                                             e.preventDefault();
-                                            onDownloadTask(task.file_reference!.split('/').pop()!);
+                                            onDownloadTask(task.file_reference!);
                                         }}
                                         className="download-link"
                                     >
@@ -632,7 +632,7 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({
                             <div className="detail-section">
                                 <h3 className="detail-section-title">📂 Archivo de Entrega</h3>
                                 <button
-                                    onClick={() => onDownloadSubmission(student.file_reference!.split('/').pop()!)}
+                                    onClick={() => onDownloadSubmission(student.file_reference!)}
                                     className="btn-calificaciones btn-success"
                                 >
                                     📥 Descargar Entrega del Estudiante

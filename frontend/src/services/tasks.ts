@@ -197,19 +197,36 @@ export const taskService = {
     }
   },
 
-  // Descargar archivo de tarea
-  downloadTaskFile: async (filename: string) => {
+  // Descargar archivo de tarea desde S3
+  downloadTaskFile: async (fileRef: string) => {
     try {
-      console.log('📥 Descargando archivo:', filename);
-      const response = await api.get(`/protected/docente/files/tasks/${filename}`, {
-        responseType: 'blob'
+      console.log('📥 Solicitando URL de descarga para:', fileRef);
+      
+      // Obtener URL firmada desde el backend
+      const response = await api.get('/uploads/task-download-url', {
+        params: { fileRef }
       });
       
-      // Crear URL del blob para descarga
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const downloadUrl = response.data.url;
+      console.log('✅ URL firmada obtenida');
+      
+      // Descargar el archivo usando la URL firmada
+      const fileResponse = await fetch(downloadUrl);
+      if (!fileResponse.ok) {
+        throw new Error('Error al descargar archivo desde S3');
+      }
+      
+      const blob = await fileResponse.blob();
+      
+      // Extraer nombre del archivo de la URL
+      const urlParts = fileRef.split('/');
+      const filename = urlParts[urlParts.length - 1].split('_').slice(1).join('_') || 'archivo';
+      
+      // Crear enlace de descarga
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', filename);
+      link.setAttribute('download', decodeURIComponent(filename));
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -230,18 +247,33 @@ export const taskService = {
   },
 
   // Descargar archivo de entrega de estudiante
-  downloadSubmissionFile: async (filename: string) => {
+  downloadSubmissionFile: async (fileRef: string) => {
     try {
-      console.log('📥 Descargando archivo de entrega:', filename);
-      const response = await api.get(`/protected/docente/files/submissions/${filename}`, {
-        responseType: 'blob'
-      });
+      console.log('📥 Descargando archivo de entrega:', fileRef);
       
-      // Crear URL del blob para descarga
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // 1. Obtener URL firmada desde el backend
+      const response = await api.get('/uploads/submission-download-url', {
+        params: { fileRef }
+      });
+      const downloadUrl = response.data.url;
+      
+      // 2. Descargar archivo desde S3 usando la URL firmada
+      const fileResponse = await fetch(downloadUrl);
+      if (!fileResponse.ok) {
+        throw new Error('Error al descargar archivo desde S3');
+      }
+      const blob = await fileResponse.blob();
+      
+      // 3. Extraer el nombre limpio del archivo (sin timestamp)
+      const urlParts = fileRef.split('/');
+      const filenameWithTimestamp = urlParts[urlParts.length - 1];
+      const filename = filenameWithTimestamp.split('_').slice(1).join('_');
+      
+      // 4. Crear enlace de descarga
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', filename);
+      link.setAttribute('download', decodeURIComponent(filename));
       document.body.appendChild(link);
       link.click();
       link.remove();
