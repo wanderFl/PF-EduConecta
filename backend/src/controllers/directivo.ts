@@ -6,6 +6,7 @@ import type { SubjectStudentsPayload, SubjectStudentRow, SubjectStudentsSummary,
   StudentTaskRow, StudentSubjectTasksPayload } from "../types";
 import { getStudentsByCourseId } from "../controllers/ceiafController";
 import { RowDataPacket } from "mysql2";
+
 interface StudentRow extends RowDataPacket {
   nombre: string;
 }
@@ -490,6 +491,8 @@ export const getCourseBehaviorIndicator = async (req: Request, res: Response) =>
 
     const absenceMap = new Map<number, number>();
 
+    // Si quieres contar solo ABSENT_UNJUSTIFIED, cambia ABSENT por ese único estado
+    // const ABSENT = ["ABSENT_UNJUSTIFIED"] as const;
     for (const row of attendanceAgg) {
       if (ABSENT.includes(row.status)) {
         const prev = absenceMap.get(row.student_external_id) ?? 0;
@@ -500,7 +503,7 @@ export const getCourseBehaviorIndicator = async (req: Request, res: Response) =>
     // ============================
     // 4) Novedades disciplinarias
     // ============================
-    const reports = await prisma.disciplinaryReport.groupBy({
+    const groupedReports = await prisma.disciplinaryReport.groupBy({
       by: ["student_external_id", "severity", "category"],
       where: { course_external_id: courseId },
       _count: { _all: true },
@@ -515,7 +518,10 @@ export const getCourseBehaviorIndicator = async (req: Request, res: Response) =>
       }
     >();
 
-    for (const r of reports) {
+    // 🔹 Contador real de novedades del curso
+    let courseTotalReports = 0;
+
+    for (const r of groupedReports) {
       const sid = r.student_external_id;
       let entry = reportMap.get(sid);
 
@@ -528,11 +534,15 @@ export const getCourseBehaviorIndicator = async (req: Request, res: Response) =>
         reportMap.set(sid, entry);
       }
 
+      // r._count._all = cuántas filas reales hay en ese grupo
       entry.total += r._count._all;
       entry.severities[r.severity] =
         (entry.severities[r.severity] ?? 0) + r._count._all;
       entry.categories[r.category] =
         (entry.categories[r.category] ?? 0) + r._count._all;
+
+      // sumar al total del curso
+      courseTotalReports += r._count._all;
     }
 
     // ============================
@@ -559,7 +569,7 @@ export const getCourseBehaviorIndicator = async (req: Request, res: Response) =>
         absences: abs,
         absence_pct: absPct,
         reports: rep?.total ?? 0,
-        most_common_category: mostCommonCategory ?? "—", // ← ahora sí existe
+        most_common_category: mostCommonCategory ?? "—",
         severity_counts: rep?.severities ?? {},
         risk_level: computeRisk(absPct, rep),
       });
@@ -568,7 +578,8 @@ export const getCourseBehaviorIndicator = async (req: Request, res: Response) =>
     return res.json({
       courseId,
       totalAttendanceDays,
-      totalCourseReports: reports.length,
+      // 🔹 ahora es el total real de filas en disciplinary_reports
+      totalCourseReports: courseTotalReports,
       items,
     });
   } catch (err) {
@@ -576,6 +587,9 @@ export const getCourseBehaviorIndicator = async (req: Request, res: Response) =>
     return res.status(500).json({ message: "Error generando indicador" });
   }
 };
+
+
+
 
 // GET /api/directivo/courses/:courseId/behavior/students/:studentId
 export const getStudentBehavior = async (req: Request, res: Response) => {
@@ -588,20 +602,19 @@ export const getStudentBehavior = async (req: Request, res: Response) => {
     }
 
     // ============================
-    // 1. Obtener nombre del estudiante
+    // 1. Nombre del estudiante (MySQL)
     // ============================
     const [rows] = await ceiafPool.query<StudentRow[]>(
-  `SELECT concat(nombres,' ',apellidos) AS nombre
-   FROM estudiantes
-   WHERE id_estudiante = ?`,
-  [studentId]
-);
+      `SELECT CONCAT(nombres,' ',apellidos) AS nombre
+       FROM estudiantes
+       WHERE id_estudiante = ?`,
+      [studentId]
+    );
 
-const studentName = rows[0]?.nombre ?? "Estudiante";
-
+    const studentName = rows[0]?.nombre ?? "Estudiante";
 
     // ============================
-    // 2. Obtener reportes disciplinarios (PostgreSQL)
+    // 2. Reportes disciplinarios (PostgreSQL)
     // ============================
     const reports = await prisma.disciplinaryReport.findMany({
       where: { student_external_id: studentId, course_external_id: courseId },
@@ -610,7 +623,6 @@ const studentName = rows[0]?.nombre ?? "Estudiante";
 
     const totalReports = reports.length;
 
-    // Categoría más común
     const categoryCount: Record<string, number> = {};
     for (const r of reports) {
       categoryCount[r.category] = (categoryCount[r.category] || 0) + 1;
@@ -625,45 +637,48 @@ const studentName = rows[0]?.nombre ?? "Estudiante";
       where: { student_external_id: studentId, course_external_id: courseId },
       orderBy: { date: "asc" },
     });
-
     const totalDays = attendance.length;
+
+    // ❗ SOLO CONTAR ABSENT_UNJUSTIFIED
     const totalAbsences = attendance.filter(
-      (a) =>
-        a.status === "ABSENT_UNJUSTIFIED" ||
-        a.status === "ABSENT_JUSTIFIED_ACCEPTED" ||
-        a.status === "ABSENT_JUSTIFIED_PENDING"
+      (a) => a.status === "ABSENT_UNJUSTIFIED"
     ).length;
 
     const absencePct =
       totalDays === 0 ? 0 : (totalAbsences / totalDays) * 100;
 
     // ============================
-    // 4. Agrupar faltas por mes → gráfico
+    // 4. Faltas por mes → gráfico
     // ============================
     const monthlyMap = new Map<string, number>();
 
     attendance.forEach((a) => {
-      if (
-        a.status === "PRESENT"
-      ) return;
+      // Solo contar ABSENT_UNJUSTIFIED en el gráfico
+      if (a.status !== "ABSENT_UNJUSTIFIED") return;
+
+      // Evitar null-null por datos incompletos
+      if (a.year == null || a.month == null) return;
 
       const monthKey = `${a.year}-${String(a.month).padStart(2, "0")}`;
       monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + 1);
     });
 
     const monthlyAbsences = Array.from(monthlyMap.entries()).map(
-      ([month, n]) => ({ month, absences: n })
+      ([month, absences]) => ({ month, absences })
     );
 
     // ============================
-    // 5. Calcular nivel de riesgo
+    // 5. Nivel de riesgo
     // ============================
     function computeRisk() {
-      if (absencePct > 25 || totalReports > 10) return "ALTO";
-      if (absencePct > 10 || totalReports > 3) return "MEDIO";
+      if (absencePct >= 12 || totalReports >= 4) return "ALTO";
+      if (absencePct >= 6 || totalReports >= 2) return "MEDIO";
       return "BAJO";
     }
 
+    // ============================
+    // 6. Respuesta final
+    // ============================
     return res.json({
       student_id: studentId,
       student_name: studentName,

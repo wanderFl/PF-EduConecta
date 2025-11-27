@@ -75,8 +75,8 @@ const FamilyTaskDetailModal: React.FC<Props> = ({ task, onClose }) => {
             </span>
           </div>
           <div className="family-task-col">
-            <strong>Comentarios:</strong>
-            <span>{task.comments || "—"}</span>
+            <strong>Comentarios Estudiante:</strong>
+            <span>{task.student_comment || "—"}</span>
           </div>
         </div>
 

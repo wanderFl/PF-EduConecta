@@ -1,11 +1,13 @@
-/* backend/scripts/seedAttendanceOct2025.ts
-   Genera asistencia para octubre 2025 (solo lunes-viernes):
+/* backend/scripts/seedAttendanceNov2025.ts
+   Genera asistencia para NOVIEMBRE 2025 (solo lunes-viernes):
    - 80% PRESENT
    - 20% ABSENT_UNJUSTIFIED
+
    Uso:
-     npx ts-node backend/scripts/seedAttendanceOct2025.ts --students=101,202
-     npx ts-node backend/scripts/seedAttendanceOct2025.ts --student=101
+     npx ts-node backend/scripts/seedAttendanceNov2025.ts --students=101,202
+     npx ts-node backend/scripts/seedAttendanceNov2025.ts --student=101
 */
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -22,22 +24,23 @@ function parseArgs(): ArgMap {
 }
 
 function getWeekdaysUTC(year: number, monthIndex0: number): Date[] {
-  // monthIndex0: 0=enero ... 9=octubre
   const days: Date[] = [];
   const start = new Date(Date.UTC(year, monthIndex0, 1));
-  const end = new Date(Date.UTC(year, monthIndex0 + 1, 1)); // límite exclusivo
+  const end = new Date(Date.UTC(year, monthIndex0 + 1, 1));
+
   for (let t = +start; t < +end; t += 24 * 60 * 60 * 1000) {
     const d = new Date(t);
     const dow = d.getUTCDay(); // 0=Dom ... 6=Sáb
     if (dow >= 1 && dow <= 5) {
-      // normaliza a 00:00:00 UTC por prolijidad
-      days.push(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())));
+      days.push(
+        new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+      );
     }
   }
   return days;
 }
 
-// Fisher–Yates shuffle
+// Shuffle Fisher–Yates
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -49,20 +52,22 @@ function shuffle<T>(arr: T[]): T[] {
 
 async function seedForStudent(studentId: number) {
   const YEAR = 2025;
-  const NOV = 10; // 0-based => 9 es octubre
-  const monthStart = new Date(Date.UTC(YEAR, NOV, 1));
-  const monthEnd = new Date(Date.UTC(YEAR, NOV + 1, 1)); // exclusivo
+  const NOV_INDEX = 10; // 0-based → 10 = noviembre
 
-  const weekdays = getWeekdaysUTC(YEAR, NOV);
+  const monthStart = new Date(Date.UTC(YEAR, NOV_INDEX, 1));
+  const monthEnd = new Date(Date.UTC(YEAR, NOV_INDEX + 1, 1));
+
+  const weekdays = getWeekdaysUTC(YEAR, NOV_INDEX);
+
   const total = weekdays.length;
   const absentCount = Math.round(total * 0.20);
   const presentCount = total - absentCount;
 
   const shuffled = shuffle(weekdays);
-  const absentDays = new Set(shuffled.slice(0, absentCount).map(d => d.toISOString().slice(0,10)));
-  const presentDays = shuffled.slice(absentCount); // resto
+  const absentDays = new Set(shuffled.slice(0, absentCount).map(d => d.toISOString().slice(0, 10)));
+  const presentDays = shuffled.slice(absentCount);
 
-  // Limpia registros existentes del mes para este alumno
+  // 🔥 Limpia registros existentes
   await prisma.attendanceRecord.deleteMany({
     where: {
       student_external_id: studentId,
@@ -70,21 +75,24 @@ async function seedForStudent(studentId: number) {
     },
   });
 
-  // Prepara datos
+  // 🔥 Inserción con year = 2025 y month = 11
   const data = [
     ...presentDays.map(d => ({
       student_external_id: studentId,
       date: d,
       status: "PRESENT" as const,
+      year: YEAR,
+      month: 11, // <── noviembre en formato 1-based
     })),
     ...Array.from(absentDays).map(ymd => ({
       student_external_id: studentId,
       date: new Date(ymd + "T00:00:00.000Z"),
       status: "ABSENT_UNJUSTIFIED" as const,
+      year: YEAR,
+      month: 11, // <── también aquí
     })),
   ];
 
-  // Inserta en bloque
   await prisma.attendanceRecord.createMany({
     data,
     skipDuplicates: true,
@@ -104,7 +112,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`⏳ Generando asistencia de OCT-2025 para alumnos: ${studentIds.join(", ")}`);
+  console.log(`⏳ Generando asistencia de NOV-2025 para alumnos: ${studentIds.join(", ")}`);
+
   for (const sid of studentIds) {
     const { presentCount, absentCount, total } = await seedForStudent(sid);
     console.log(`✔ Alumno ${sid}: ${presentCount} PRESENT, ${absentCount} ABSENT_UNJUSTIFIED (total ${total} días hábiles)`);

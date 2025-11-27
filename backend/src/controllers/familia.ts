@@ -287,7 +287,8 @@ export const listStudentGrades = async (req: Request, res: Response) => {
           g.grade === null
             ? null
             : (g.grade as unknown as Prisma.Decimal).toNumber(),
-        comments: g.student_comment ?? "",
+        student_comment: g.student_comment ?? "",
+        teacher_comment: g.teacher_comment ?? "",
         file_url: g.file_reference ?? null,
         instructions: t?.instructions ?? null,
       };

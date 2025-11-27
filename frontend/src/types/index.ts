@@ -132,7 +132,8 @@ export interface GradeRow {
   due_date: string | null;
   submitted_at: string | null;
   grade: number | null;
-  comments: string;
+  student_comment: string;
+  teacher_comment: string;
   file_url: string | null;
   instructions: string | null;
 }

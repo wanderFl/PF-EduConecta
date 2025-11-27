@@ -80,7 +80,7 @@ async function main() {
   });
 
   if (oldTasks.length > 0) {
-    const taskIds = oldTasks.map(t => t.id);
+    const taskIds = oldTasks.map((t) => t.id);
 
     const delSubs = await prisma.submissionGrade.deleteMany({
       where: { task_id: { in: taskIds } },
@@ -104,9 +104,8 @@ async function main() {
 
     for (let i = 0; i < 4; i++) {
       const title = `${subjectName}: ${titles[i]}`;
-      const due = addDays(BASE_DATE, (i * 6) + (subjectId % 3));
+      const due = addDays(BASE_DATE, i * 6 + (subjectId % 3));
 
-      // Opcional: reparto trimestre/aporte "bonito" en vez de 100% random
       const trimestre = randomTrimestre();
       const aporte = randomAporte();
 
@@ -121,6 +120,7 @@ async function main() {
           course_external_id: COURSE_ID,
           trimestre,
           aporte,
+          max_points: 10, // 👈 todas las tareas sobre 10 puntos
         },
         select: { id: true },
       });

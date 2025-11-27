@@ -250,6 +250,9 @@ const GradesPage: React.FC = () => {
                         <th className="td-right" style={{ width: 160 }}>
                           Estado
                         </th>
+                        <th className="td-right" style={{ width: 160 }}>
+                          Comentarios Docente
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -259,7 +262,7 @@ const GradesPage: React.FC = () => {
                           <React.Fragment key={tri}>
                             {/* Fila de TRIMESTRE (igual que Directivo) */}
                             <tr className="tri-header-row">
-                              <td colSpan={6}>
+                              <td colSpan={7}>
                                 {tri === 0
                                   ? "Sin trimestre"
                                   : `${tri}º Trimestre`}
@@ -272,7 +275,7 @@ const GradesPage: React.FC = () => {
                                 <React.Fragment key={ap}>
                                   {/* Mini encabezado de APORTE */}
                                   <tr className="ap-header-row">
-                                    <td colSpan={6}>
+                                    <td colSpan={7}>
                                       <span className="ap-badge">
                                         Aporte {ap}
                                       </span>
@@ -282,7 +285,7 @@ const GradesPage: React.FC = () => {
                                   {list.length === 0 ? (
                                     <tr>
                                       <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="muted"
                                         style={{ padding: 8, fontSize: "0.85rem" }}
                                       >
@@ -295,6 +298,7 @@ const GradesPage: React.FC = () => {
                                         key={g.id}
                                         className="row-clickable"
                                         onClick={() => setSelectedTask(g)}
+                                        style={{ cursor: "pointer" }}
                                       >
                                         <td>
                                          
@@ -313,6 +317,9 @@ const GradesPage: React.FC = () => {
                                         </td>
                                         <td className="td-right">
                                           {computeStatus(g)}
+                                        </td>
+                                        <td className="td-right">
+                                          {g.teacher_comment || "—"}
                                         </td>
                                       </tr>
                                     ))
