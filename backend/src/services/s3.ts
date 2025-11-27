@@ -44,7 +44,8 @@ export async function getPresignedPutUrl(objectKey: string, contentType: string)
   const uploadUrl = await getSignedUrl(s3, put, { expiresIn: 15 * 60 });
 
   // URL HTTPS (si el bucket es privado, no será accesible públicamente)
-  const fileUrl = `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${encodeURI(objectKey)}`;
+  // NO usar encodeURI porque objectKey ya está sanitizado
+  const fileUrl = `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${objectKey}`;
 
   return { uploadUrl, fileUrl };
 }

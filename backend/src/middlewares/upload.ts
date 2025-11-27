@@ -68,6 +68,7 @@ export const createSignedUploadUrl = async (req: Request, res: Response) => {
  * GET /api/uploads/submission-download-url?fileRef=...
  * fileRef = lo que guardaste en SubmissionGrade.file_reference
  *         (en tu caso es la URL completa https://bucket.s3.region.amazonaws.com/...)
+ * Compatible con URLs antiguas (con encodeURI) y nuevas (sin codificación)
  */
 export const getSubmissionDownloadUrl = async (req: Request, res: Response) => {
   try {
@@ -83,14 +84,29 @@ export const getSubmissionDownloadUrl = async (req: Request, res: Response) => {
 
     if (fileRef.includes(marker)) {
       const parts = fileRef.split(marker);
-      objectKey = decodeURI(parts[1]); // lo que viene después del dominio
+      objectKey = parts[1];
     } else {
       // Si en el futuro guardas directamente el key (submissions/...), esto también funciona
       objectKey = fileRef;
     }
 
-    const url = await getPresignedGetUrl(objectKey);
-    return res.json({ url });
+    console.log('🔍 Submission Download - fileRef:', fileRef);
+    console.log('🔍 Submission Download - objectKey extraído:', objectKey);
+
+    // Intentar generar URL firmada con el objectKey directo
+    try {
+      const url = await getPresignedGetUrl(objectKey);
+      return res.json({ url });
+    } catch (firstError) {
+      // Si falla, puede ser una URL antigua con encodeURI
+      // Intentar con encodeURI del objectKey para compatibilidad
+      console.log('⚠️ Primer intento falló, probando con encodeURI para compatibilidad con URLs antiguas');
+      const encodedKey = encodeURI(objectKey);
+      console.log('🔍 Submission Download - objectKey codificado:', encodedKey);
+      
+      const url = await getPresignedGetUrl(encodedKey);
+      return res.json({ url });
+    }
   } catch (e) {
     console.error("getSubmissionDownloadUrl error", e);
     return res.status(500).json({ message: "Error generando URL de descarga" });
@@ -144,8 +160,8 @@ export const uploadTaskFileToS3 = [
         ContentType: req.file.mimetype,
       }));
 
-      // Construir URL del archivo
-      const fileUrl = `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${encodeURI(objectKey)}`;
+      // Construir URL del archivo (NO usar encodeURI porque objectKey ya está sanitizado)
+      const fileUrl = `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${objectKey}`;
 
       // Agregar fileUrl al body para que el controlador lo use
       req.body.fileUrl = fileUrl;
@@ -210,6 +226,7 @@ export const createTeacherTaskUploadUrl = async (req: Request, res: Response) =>
 /**
  * GET /api/uploads/task-download-url?fileRef=...
  * Genera URL firmada para descargar archivo de tarea
+ * Compatible con URLs antiguas (con encodeURI) y nuevas (sin codificación)
  */
 export const getTaskFileDownloadUrl = async (req: Request, res: Response) => {
   try {
@@ -223,13 +240,28 @@ export const getTaskFileDownloadUrl = async (req: Request, res: Response) => {
 
     if (fileRef.includes(marker)) {
       const parts = fileRef.split(marker);
-      objectKey = decodeURI(parts[1]);
+      objectKey = parts[1];
     } else {
       objectKey = fileRef;
     }
 
-    const url = await getPresignedGetUrl(objectKey);
-    return res.json({ url });
+    console.log('🔍 Task Download - fileRef:', fileRef);
+    console.log('🔍 Task Download - objectKey extraído:', objectKey);
+
+    // Intentar generar URL firmada con el objectKey directo
+    try {
+      const url = await getPresignedGetUrl(objectKey);
+      return res.json({ url });
+    } catch (firstError) {
+      // Si falla, puede ser una URL antigua con encodeURI
+      // Intentar con encodeURI del objectKey para compatibilidad
+      console.log('⚠️ Primer intento falló, probando con encodeURI para compatibilidad con URLs antiguas');
+      const encodedKey = encodeURI(objectKey);
+      console.log('🔍 Task Download - objectKey codificado:', encodedKey);
+      
+      const url = await getPresignedGetUrl(encodedKey);
+      return res.json({ url });
+    }
   } catch (e) {
     console.error("getTaskFileDownloadUrl error", e);
     return res.status(500).json({ message: "Error generando URL de descarga" });
