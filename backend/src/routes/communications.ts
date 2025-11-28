@@ -5,7 +5,6 @@ import {
   createConversation,
   listMessages,
   postMessage,
-  toggleArchiveParent,
   searchTeachersForStudent
 } from "../controllers/communications";
 import { Role } from "@prisma/client";
@@ -25,9 +24,6 @@ router.get("/conversations/:id/messages", listMessages);
 
 // (D) Enviar mensaje en una conversación (rol PARENT en este endpoint)
 router.post("/conversations/:id/messages", postMessage);
-
-// (E) Archivar/desarchivar conversación para el padre
-router.post("/conversations/:id/archive", toggleArchiveParent);
 
 // (F) Buscar docentes asignados al estudiante por nombre (conexión a CEIAF)
 router.get("/parent/teachers", searchTeachersForStudent);

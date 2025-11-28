@@ -62,11 +62,6 @@ export async function postConversationMessage(
   return data;
 }
 
-export async function archiveConversation(id: string, archive: boolean): Promise<Conversation> {
-  const { data } = await api.post(`/comm/parent/conversations/${id}/archive`, { archive });
-  return data as Conversation;
-}
-
 export type TeacherSearchResult = {
   teacher_external_id: number;
   teacher_name: string;
