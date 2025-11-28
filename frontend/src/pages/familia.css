@@ -704,3 +704,205 @@ input, select, button { color: #111827; }
     min-height: 60vh;
   }
 }
+
+.grades-layout {
+  display: flex;
+  gap: 20px;
+}
+
+/* Sidebar */
+.grades-sidebar {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grades-main-card {
+  flex: 1;
+}
+
+.subj-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  border: none;
+  text-align: left;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s ease;
+  color: #111827;            /* 👈 texto oscuro siempre por defecto */
+}
+
+.subj-btn:hover {
+  background: #e5e7eb;
+  color: #111827;            /* 👈 asegura que en hover el texto siga oscuro */
+}
+
+.subj-btn-active {
+  background: #4f46e5;
+  color: white;
+  transform: scale(1.03);
+  font-weight: 600;
+}
+
+/* Main panel */
+.grades-main {
+  flex: 1;
+}
+
+/* ====== MODAL OVERLAY ====== */
+.family-task-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+/* ====== MODAL BOX ====== */
+.family-task-modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 620px;
+  border-radius: 14px;
+  padding: 22px 26px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.15);
+  position: relative;
+  animation: modalFadeIn 0.25s ease;
+}
+
+/* Animación */
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ====== CLOSE BUTTON ====== */
+.modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  cursor: pointer;
+  color: #374151;
+  transition: 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: #e5e7eb;
+}
+
+/* ====== TITLE ====== */
+.family-task-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+/* ====== MUTED SUBTITLE ====== */
+.family-task-sub {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 18px;
+}
+
+/* ====== LABEL ====== */
+.family-task-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+/* ====== TEXT BLOCK ====== */
+.family-task-text {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 12px;
+  color: #374151;
+  font-size: 14px;
+  border: 1px solid #e5e7eb;
+  white-space: pre-wrap;
+}
+
+/* ====== ROW (date + grade) ====== */
+.family-task-row {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.family-task-col {
+  flex: 1;
+  background: #f9fafb;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.family-task-col strong {
+  display: block;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.family-task-col span {
+  font-size: 14px;
+  color: #111827;
+}
+
+/* ====== STATUS BADGE ====== */
+.family-task-status {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.family-task-status.ok {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.family-task-status.late {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.family-task-status.none {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ====== DOWNLOAD BUTTON ====== */
+.family-task-download-btn {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+
+.family-task-no-file {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  font-style: italic;
+}

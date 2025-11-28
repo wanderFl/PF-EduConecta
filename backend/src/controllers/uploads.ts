@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import { buildObjectKey, getPresignedPutUrl } from "../utils/s3";
+import { buildObjectKey, getPresignedPutUrl, getPresignedGetUrl } from "../utils/s3";
 
 const prisma = new PrismaClient();
 
@@ -57,5 +57,39 @@ export const createSignedUploadUrl = async (req: Request, res: Response) => {
     }
     console.error("createSignedUploadUrl error", e);
     return res.status(500).json({ message: "Error generando URL de subida" });
+  }
+};
+
+
+/**
+ * GET /api/uploads/submission-download-url?fileRef=...
+ * fileRef = lo que guardaste en SubmissionGrade.file_reference
+ *         (en tu caso es la URL completa https://bucket.s3.region.amazonaws.com/...)
+ */
+export const getSubmissionDownloadUrl = async (req: Request, res: Response) => {
+  try {
+    const fileRef = req.query.fileRef;
+    if (!fileRef || typeof fileRef !== "string") {
+      return res.status(400).json({ message: "fileRef es requerido" });
+    }
+
+    // Si guardaste la URL completa, extraemos el objectKey:
+    // https://bucket.s3.region.amazonaws.com/ESTO_DE_AQUI
+    const marker = ".amazonaws.com/";
+    let objectKey: string;
+
+    if (fileRef.includes(marker)) {
+      const parts = fileRef.split(marker);
+      objectKey = decodeURI(parts[1]); // lo que viene después del dominio
+    } else {
+      // Si en el futuro guardas directamente el key (submissions/...), esto también funciona
+      objectKey = fileRef;
+    }
+
+    const url = await getPresignedGetUrl(objectKey);
+    return res.json({ url });
+  } catch (e) {
+    console.error("getSubmissionDownloadUrl error", e);
+    return res.status(500).json({ message: "Error generando URL de descarga" });
   }
 };

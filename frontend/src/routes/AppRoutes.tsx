@@ -3,7 +3,6 @@ import React from "react";
 import { Routes, Route, BrowserRouter, Outlet } from "react-router-dom";
 import { LoginPage } from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-import { DashboardDirectivo } from "../pages/DashboardDirectivo";
 import { DashboardDocente } from "../pages/DashboardDocente";
 import { DashboardFamilia } from "../pages/DashboardFamilia";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -15,12 +14,28 @@ import MonthlyAttendancePage from "../pages/MonthlyAttendancePage";
 import PinGate from "./PinGate";
 import CommunicationsPage from "../pages/CommunicationsPage";
 import GradesPage from "../pages/GradesPage";
+import DirectivoProvider  from "../contexts/DirectivoProvider";
+import DirectivoSelectCoursePage from "../pages/DirectivoSelectCoursePage";
+import DirectivoDashboard from "../pages/DirectivoDashboard";
+import DirectivoRendimientoPage from "../pages/DirectivoRendimientoPage";
+import DirectivoSubjectPerformancePage from "../pages/DirectivoSubjectPerformancePage";
+import DirectivoStudentSubjectPage from "../pages/DirectivoStudentSubjectPage";
+import DirectivoBehaviorPage from "../pages/DirectivoBehaviorPage";
+import DirectivoStudentBehaviorPage from "../pages/DirectivoStudentBehaviorPage";
 
 const FamiliaLayout: React.FC = () => (
   <ProtectedRoute roles={["FAMILIA"]}>
     <FamilyProvider>
       <Outlet />
     </FamilyProvider>
+  </ProtectedRoute>
+);
+
+const DirectivoLayout: React.FC = () => (
+  <ProtectedRoute roles={["DIRECTIVO"]}>
+    <DirectivoProvider>
+      <Outlet />
+    </DirectivoProvider>
   </ProtectedRoute>
 );
 
@@ -31,14 +46,19 @@ export const AppRoutes: React.FC = () => (
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
             <Route path="/reset-password" element={<ResetPasswordForm />} />
-            <Route
-                path="/directivo"
-                element={
-                    <ProtectedRoute roles={["DIRECTIVO"]}>
-                        <DashboardDirectivo />
-                    </ProtectedRoute>
-                }
-            />
+
+            {/* Grupo Directivo */}
+            <Route path="/directivo" element={<DirectivoLayout />}>
+                <Route index element={<DirectivoSelectCoursePage />} />
+                <Route path="dashboard" element={<DirectivoDashboard />} />
+                {/* Placeholders por ahora */}
+                <Route path="rendimiento" element={<DirectivoRendimientoPage />} />
+                <Route path="grades/subject/:subjectId" element={<DirectivoSubjectPerformancePage />} />
+                <Route path="grades/subject/:subjectId/student/:studentId" element={<DirectivoStudentSubjectPage />} />
+                <Route path="comportamiento"  element={<DirectivoBehaviorPage />} />
+                <Route path="behavior/student/:studentId"  element={<DirectivoStudentBehaviorPage />} />
+            </Route>
+
             <Route
                 path="/docente"
                 element={

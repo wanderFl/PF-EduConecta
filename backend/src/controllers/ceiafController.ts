@@ -51,3 +51,22 @@ export const getTeacherSubject = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Error consultando materia" });
   }
 };
+
+/**
+ * Obtiene todos los estudiantes de un curso específico desde CEIAF.
+ */
+export async function getStudentsByCourseId(courseId: number) {
+  const [rows] = await ceiafPool.query(
+    `SELECT 
+        id_estudiante,
+        CONCAT(nombres, ' ', apellidos) AS nombre_completo
+     FROM estudiantes
+     WHERE id_curso = ?`,
+    [courseId]
+  );
+
+  return rows as Array<{
+    id_estudiante: number;
+    nombre_completo: string;
+  }>;
+}

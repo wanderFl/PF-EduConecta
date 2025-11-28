@@ -30,11 +30,7 @@ async function ensureParentOwnsStudentAndGetCourse(userId: string, studentId: nu
   return { parentId: user.parent_id, idCurso: arr[0].id_curso ?? null };
 }
 
-/**
- * GET /api/familia/tareas?studentId=123[&from=YYYY-MM-DD][&to=YYYY-MM-DD]
- * Devuelve las tareas asignadas al curso del estudiante, y marca si el estudiante ya entregó.
- * - Si from/to no se envían, devuelve TODO (luego podrás usar el weekly en el front).
- */
+
 /**
  * POST /api/familia/tareas
  * Body: { studentId: number, from?: string(YYYY-MM-DD), to?: string(YYYY-MM-DD) }

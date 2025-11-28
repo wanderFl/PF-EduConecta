@@ -219,40 +219,6 @@ export const postMessage = async (req: Request, res: Response) => {
   }
 };
 
-
-/**
- * POST /api/comm/conversations/:id/archive
- * body: { value: boolean }
- * Archiva/desarchiva la conversación para el padre.
- */
-export const toggleArchiveParent = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const { id } = req.params;
-  const { archive } = req.body as { archive: boolean };
-
-  if (!userId) return res.status(401).json({ message: 'No autorizado' });
-
-  // Sólo conversaciones que pertenecen a este padre:
-  const conv = await prisma.communication.findUnique({ where: { id } });
-  if (!conv) return res.status(404).json({ message: 'No existe' });
-
-  // Verifica que el user actual tenga parent_id y coincida con conv.parent_id
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user?.parent_id || user.parent_id !== conv.parent_id) {
-    return res.status(403).json({ message: 'Prohibido' });
-  }
-
-  const updated = await prisma.communication.update({
-    where: { id },
-    data: {
-      archived_by_parent: Boolean(archive),
-      updatedAt: new Date(),
-    },
-  });
-
-  return res.json(updated);
-};
-
 /**
  * GET /api/comm/parent/teachers?studentId=123&q=juan
  * Responde solo docentes del estudiante y que tengan usuario (Role.DOCENTE)

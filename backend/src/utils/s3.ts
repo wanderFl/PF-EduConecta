@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 const AWS_REGION = process.env.AWS_REGION!;
 const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME!;
@@ -46,3 +47,14 @@ export function buildJustificationKey(studentId: number, ymd: string, filename: 
   return `attendance/${studentId}/${ymd}/${ts}_${safe}`;
 }
 
+// 🔽 NUEVO: URL firmada para DESCARGA (GET)
+export async function getPresignedGetUrl(objectKey: string) {
+  const get = new GetObjectCommand({
+    Bucket: AWS_BUCKET_NAME,
+    Key: objectKey,
+  });
+
+  // URL GET firmada, por ejemplo 10 minutos
+  const downloadUrl = await getSignedUrl(s3, get, { expiresIn: 10 * 60 });
+  return downloadUrl;
+}

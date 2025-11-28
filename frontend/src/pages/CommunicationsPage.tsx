@@ -114,7 +114,7 @@ const CommunicationsPage: React.FC = () => {
     <nav className="fam-breadcrumb" style={{ margin: "8px" }}>
             <span className="crumb-link" onClick={() => navigate("/familia")}>Inicio</span>
             <span className="crumb-sep">›</span>
-            <span className="crumb-current">Calendario Mensual de Asistencia</span>
+            <span className="crumb-current">Comunicados</span>
      </nav>
     {/* Encabezado de la sección */}
     <section className="student-info-card" style={{ margin: "16px" }}>
