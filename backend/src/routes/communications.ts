@@ -1,31 +1,73 @@
-import { Router } from 'express';
-import { authenticate, authorize } from '../middlewares/auth';
+import { Router } from "express";
+import { authenticate, authorize } from "../middlewares/auth";
+import { Role } from "@prisma/client";
+
 import {
+  // DOCENTE (tu rama)
+  listTeacherConversations,
+  createTeacherConversation,
+  getConversationMessages,
+  sendMessage,
+  searchTeacherStudents,
+  archiveConversation,
+
+  // FAMILIA (rama dev)
   listParentConversations,
   createConversation,
   listMessages,
   postMessage,
-  searchTeachersForStudent
+  searchTeachersForStudent,
 } from "../controllers/communications";
-import { Role } from "@prisma/client";
 
 const router = Router();
 
-router.use(authenticate, authorize(Role.FAMILIA));
+/* ===========================================================
+   SECCIÓN DOCENTE
+   Todas estas rutas requieren rol DOCENTE
+   Base: /api/communications   (en index.ts)
+   =========================================================== */
+router.use("/teacher", authenticate, authorize(Role.DOCENTE));
 
-// (A) Listar conversaciones del padre (con filtro opcional por tipo)
+// Listar conversaciones del docente
+router.get("/teacher", listTeacherConversations);
+
+// Crear nueva conversación
+router.post("/teacher", createTeacherConversation);
+
+// Buscar estudiantes del docente
+router.get("/teacher/students", searchTeacherStudents);
+
+// Obtener mensajes de una conversación
+router.get("/conversation/:conversationId/messages", getConversationMessages);
+
+// Enviar mensaje en una conversación
+router.post("/conversation/:conversationId/messages", sendMessage);
+
+// Archivar conversación
+router.put("/conversation/:conversationId/archive", archiveConversation);
+
+/* ===========================================================
+   SECCIÓN PADRE / FAMILIA
+   Todas estas rutas requieren rol FAMILIA
+   Base: /api/comm (en index.ts)
+   =========================================================== */
+
+// Todas las rutas de padre deben autenticarse como familia
+router.use("/parent", authenticate, authorize(Role.FAMILIA));
+
+// (A) Listar conversaciones del padre
 router.get("/parent/conversations", listParentConversations);
 
 // (B) Crear conversación (THREAD o NOTICE)
 router.post("/parent/conversations", createConversation);
 
-// (C) Listar mensajes de una conversación (cursor/limit)
+// (C) Listar mensajes con paginación
 router.get("/conversations/:id/messages", listMessages);
 
-// (D) Enviar mensaje en una conversación (rol PARENT en este endpoint)
+// (D) Enviar mensaje (rol PARENT)
 router.post("/conversations/:id/messages", postMessage);
 
-// (F) Buscar docentes asignados al estudiante por nombre (conexión a CEIAF)
+// (E) Buscar docentes del estudiante (solo para padres)
 router.get("/parent/teachers", searchTeachersForStudent);
 
 export default router;
