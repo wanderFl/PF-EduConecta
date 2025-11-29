@@ -32,14 +32,16 @@ export interface AttendanceRecord {
 export interface AttendanceSubmission {
   student_external_id: number;
   status: string;
-  justification_file_reference?: string;
+  justification_file_reference?: string | null;
+  justification_reason?: string | null;
 }
 
+// Valores del enum AttendanceStatus de Prisma
 export const ATTENDANCE_STATUS = {
-  PRESENTE: 'PRESENTE',
-  AUSENTE: 'AUSENTE',
-  TARDANZA: 'TARDANZA',
-  JUSTIFICADO: 'JUSTIFICADO'
+  PRESENT: 'PRESENT',
+  ABSENT_UNJUSTIFIED: 'ABSENT_UNJUSTIFIED',
+  ABSENT_JUSTIFIED_PENDING: 'ABSENT_JUSTIFIED_PENDING',
+  ABSENT_JUSTIFIED_ACCEPTED: 'ABSENT_JUSTIFIED_ACCEPTED'
 } as const;
 
 export type AttendanceStatusType = typeof ATTENDANCE_STATUS[keyof typeof ATTENDANCE_STATUS];
@@ -160,10 +162,10 @@ export const attendanceService = {
     courseId: number
   ): Promise<AttendanceRecord[]> {
     try {
-      const response = await api.post('/students/attendance/bulk', {
+      const response = await api.post('/attendance/bulk', {
+        course_external_id: courseId,
         date,
-        attendances,
-        course_id: courseId
+        records: attendances
       });
       return response.data.data;
     } catch (error) {

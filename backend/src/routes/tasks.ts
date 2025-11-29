@@ -50,19 +50,37 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/tasks/stats - Obtener estadísticas de tareas
+// GET /api/tasks/stats - Obtener estadísticas de tareas (filtradas por el docente autenticado)
 router.get('/stats', async (req, res) => {
   try {
-    const { teacher_id, course_id, start_date, end_date } = req.query;
+    const { course_id, start_date, end_date } = req.query;
     
-    const filters: any = {};
-    
-    if (teacher_id) {
-      filters.teacher_external_id = parseInt(teacher_id as string);
+    // Verificar que el usuario esté autenticado
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
     }
+
+    // Verificar que tenga external_id
+    if (!req.user.external_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Usuario sin external_id configurado'
+      });
+    }
+
+    const filters: any = {
+      // SIEMPRE filtrar por el docente autenticado
+      teacher_external_id: parseInt(req.user.external_id)
+    };
+    
+    console.log('📊 Stats request from teacher:', req.user.external_id, '(userId:', req.user.userId, ')');
     
     if (course_id) {
       filters.course_external_id = parseInt(course_id as string);
+      console.log('📚 Filtering by course:', course_id);
     }
     
     if (start_date) {
@@ -73,17 +91,20 @@ router.get('/stats', async (req, res) => {
       filters.end_date = new Date(end_date as string);
     }
 
+    console.log('🔍 Final filters for stats:', filters);
     const stats = await getTasksStats(filters);
+    console.log('✅ Stats result:', stats);
     
     res.json({
       success: true,
       data: stats
     });
   } catch (error) {
-    console.error('Error fetching tasks stats:', error);
+    console.error('❌ Error fetching tasks stats:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener estadísticas de tareas'
+      message: 'Error al obtener estadísticas de tareas',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

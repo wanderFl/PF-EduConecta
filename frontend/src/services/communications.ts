@@ -33,6 +33,7 @@ export interface StudentSearchResult {
   cedula: string;
   curso: string;
   paralelo: string;
+  parent_id: string | null; // ID del padre de familia que recibirá los mensajes
 }
 
 export interface CreateConversationData {
@@ -78,14 +79,22 @@ export const createTeacherConversation = async (
 
 /**
  * Buscar estudiantes del docente por nombre o cédula
+ * Solo retorna estudiantes de los cursos donde el docente imparte clases
+ * @param query - Texto de búsqueda (nombre o cédula)
+ * @param courseId - ID del curso para filtrar (opcional)
  */
 export const searchTeacherStudents = async (
-  query: string
+  query: string,
+  courseId?: number | null
 ): Promise<StudentSearchResult[]> => {
-  const response = await api.get('/communications/teacher/students', {
-    params: { query }
-  });
-  return response.data;
+  const params: any = { query };
+  if (courseId) {
+    params.courseId = courseId;
+  }
+  
+  const response = await api.get('/communications/teacher/students', { params });
+  // El backend devuelve { students: [...] }
+  return response.data.students || [];
 };
 
 /**

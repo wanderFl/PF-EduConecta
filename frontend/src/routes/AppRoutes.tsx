@@ -8,6 +8,7 @@ import { DashboardFamilia } from "../pages/DashboardFamilia";
 import { DashboardInspector } from "../pages/DashboardInspector";
 import Novedades from "../pages/Inspector/Novedades";
 import AsistenciaInspector from "../pages/Inspector/Asistencia";
+import GestionarFaltas from "../pages/Inspector/GestionarFaltas";
 // Docente sub-dashboards
 import AgendaPage from "../pages/docente/AgendaPage";
 import Comunicados from "../pages/docente/Comunicados";
@@ -125,6 +126,14 @@ export const AppRoutes: React.FC = () => (
                     element={
                         <ProtectedRoute roles={["INSPECTOR"]}>
                             <AsistenciaInspector />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inspector/gestionar-faltas"
+                    element={
+                        <ProtectedRoute roles={["INSPECTOR"]}>
+                            <GestionarFaltas />
                         </ProtectedRoute>
                     }
                 />

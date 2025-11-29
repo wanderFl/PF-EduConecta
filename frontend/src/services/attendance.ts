@@ -1,12 +1,20 @@
 import api from './api';
 
+// Enum de estados de asistencia (debe coincidir con Prisma AttendanceStatus)
+export type AttendanceStatus = 
+  | 'PRESENT' 
+  | 'ABSENT_UNJUSTIFIED' 
+  | 'ABSENT_JUSTIFIED_PENDING' 
+  | 'ABSENT_JUSTIFIED_ACCEPTED';
+
 export interface AttendanceRecord {
   id: string;
   student_external_id: number;
   course_external_id: number;
   date: string;
-  status: 'presente' | 'ausente' | 'atraso';
-  justification_file_reference?: string;
+  status: AttendanceStatus;
+  justification_file_reference?: string | null;
+  justification_reason?: string | null;
   student_name?: string; // Para mostrar el nombre del estudiante
 }
 
@@ -28,9 +36,12 @@ interface BackendStudent {
 
 export interface AttendanceStats {
   total_students: number;
+  total_records: number;
   present_count: number;
-  absent_count: number;
-  late_count: number;
+  absent_unjustified_count: number;
+  absent_justified_pending_count: number;
+  absent_justified_accepted_count: number;
+  total_absent_count: number;
   attendance_percentage: number;
 }
 
@@ -46,8 +57,9 @@ export interface CreateAttendanceData {
   student_external_id: number;
   course_external_id: number;
   date: string;
-  status: 'presente' | 'ausente' | 'atraso';
-  justification_file_reference?: string;
+  status: AttendanceStatus;
+  justification_file_reference?: string | null;
+  justification_reason?: string | null;
 }
 
 export interface BulkAttendanceData {
@@ -55,8 +67,9 @@ export interface BulkAttendanceData {
   date: string;
   records: {
     student_external_id: number;
-    status: 'presente' | 'ausente' | 'atraso';
-    justification_file_reference?: string;
+    status: AttendanceStatus;
+    justification_file_reference?: string | null;
+    justification_reason?: string | null;
   }[];
 }
 
@@ -304,27 +317,30 @@ export const attendanceService = {
 
   getStatusColor: (status: string): string => {
     switch (status) {
-      case 'presente': return 'success';
-      case 'ausente': return 'danger';
-      case 'atraso': return 'warning';
+      case 'PRESENT': return 'success';
+      case 'ABSENT_UNJUSTIFIED': return 'danger';
+      case 'ABSENT_JUSTIFIED_PENDING': return 'warning';
+      case 'ABSENT_JUSTIFIED_ACCEPTED': return 'info';
       default: return 'secondary';
     }
   },
 
   getStatusIcon: (status: string): string => {
     switch (status) {
-      case 'presente': return 'fas fa-check-circle';
-      case 'ausente': return 'fas fa-times-circle';
-      case 'atraso': return 'fas fa-clock';
+      case 'PRESENT': return 'fas fa-check-circle';
+      case 'ABSENT_UNJUSTIFIED': return 'fas fa-times-circle';
+      case 'ABSENT_JUSTIFIED_PENDING': return 'fas fa-clock';
+      case 'ABSENT_JUSTIFIED_ACCEPTED': return 'fas fa-check';
       default: return 'fas fa-question-circle';
     }
   },
 
   getStatusText: (status: string): string => {
     switch (status) {
-      case 'presente': return 'Presente';
-      case 'ausente': return 'Ausente';
-      case 'atraso': return 'Atraso';
+      case 'PRESENT': return 'Presente';
+      case 'ABSENT_UNJUSTIFIED': return 'Ausente (Sin justificar)';
+      case 'ABSENT_JUSTIFIED_PENDING': return 'Ausente (Justificación pendiente)';
+      case 'ABSENT_JUSTIFIED_ACCEPTED': return 'Ausente (Justificado)';
       default: return 'Sin registro';
     }
   },
@@ -344,7 +360,7 @@ export const attendanceService = {
   calculateAttendancePercentage: (records: AttendanceRecord[]): number => {
     if (records.length === 0) return 0;
     
-    const presentCount = records.filter(r => r.status === 'presente').length;
+    const presentCount = records.filter(r => r.status === 'PRESENT').length;
     return Math.round((presentCount / records.length) * 100);
   }
 };

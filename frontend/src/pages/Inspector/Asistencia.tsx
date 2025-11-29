@@ -74,7 +74,7 @@ const AsistenciaInspector: React.FC = () => {
             
             const initialAttendance = studentsData.map(student => ({
                 student,
-                status: ATTENDANCE_STATUS.PRESENTE
+                status: ATTENDANCE_STATUS.PRESENT
             }));
             
             setAttendanceData(initialAttendance);
@@ -125,7 +125,9 @@ const AsistenciaInspector: React.FC = () => {
                 : item
         ));
 
-        if (status === ATTENDANCE_STATUS.AUSENTE || status === ATTENDANCE_STATUS.JUSTIFICADO) {
+        if (status === ATTENDANCE_STATUS.ABSENT_UNJUSTIFIED || 
+            status === ATTENDANCE_STATUS.ABSENT_JUSTIFIED_PENDING || 
+            status === ATTENDANCE_STATUS.ABSENT_JUSTIFIED_ACCEPTED) {
             setShowJustification(prev => ({ ...prev, [studentId]: true }));
         } else {
             setShowJustification(prev => ({ ...prev, [studentId]: false }));
@@ -169,15 +171,30 @@ const AsistenciaInspector: React.FC = () => {
         }
     };
 
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case ATTENDANCE_STATUS.PRESENT:
+                return 'Presente';
+            case ATTENDANCE_STATUS.ABSENT_UNJUSTIFIED:
+                return 'Ausente';
+            case ATTENDANCE_STATUS.ABSENT_JUSTIFIED_PENDING:
+                return 'Justificación Pendiente';
+            case ATTENDANCE_STATUS.ABSENT_JUSTIFIED_ACCEPTED:
+                return 'Justificado';
+            default:
+                return status;
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case ATTENDANCE_STATUS.PRESENTE:
+            case ATTENDANCE_STATUS.PRESENT:
                 return '#28a745';
-            case ATTENDANCE_STATUS.AUSENTE:
+            case ATTENDANCE_STATUS.ABSENT_UNJUSTIFIED:
                 return '#dc3545';
-            case ATTENDANCE_STATUS.TARDANZA:
+            case ATTENDANCE_STATUS.ABSENT_JUSTIFIED_PENDING:
                 return '#ffc107';
-            case ATTENDANCE_STATUS.JUSTIFICADO:
+            case ATTENDANCE_STATUS.ABSENT_JUSTIFIED_ACCEPTED:
                 return '#17a2b8';
             default:
                 return '#6c757d';
@@ -186,12 +203,13 @@ const AsistenciaInspector: React.FC = () => {
 
     const getAttendanceStats = () => {
         const total = attendanceData.length;
-        const presente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.PRESENTE).length;
-        const ausente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.AUSENTE).length;
-        const tardanza = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.TARDANZA).length;
-        const justificado = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.JUSTIFICADO).length;
+        const presente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.PRESENT).length;
+        const ausenteInjustificado = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.ABSENT_UNJUSTIFIED).length;
+        const ausentePendiente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.ABSENT_JUSTIFIED_PENDING).length;
+        const ausenteJustificado = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.ABSENT_JUSTIFIED_ACCEPTED).length;
+        const ausente = ausenteInjustificado + ausentePendiente + ausenteJustificado;
 
-        return { total, presente, ausente, tardanza, justificado };
+        return { total, presente, ausente, ausenteInjustificado, ausentePendiente, ausenteJustificado };
     };
 
     const stats = getAttendanceStats();
@@ -398,6 +416,18 @@ const AsistenciaInspector: React.FC = () => {
                             <div style={{ fontSize: '0.9rem' }}>Ausentes</div>
                         </div>
                         <div style={{
+                            background: '#dc3545',
+                            color: 'white',
+                            padding: '1rem',
+                            borderRadius: '10px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                {stats.ausenteInjustificado}
+                            </div>
+                            <div style={{ fontSize: '0.9rem' }}>Injustificados</div>
+                        </div>
+                        <div style={{
                             background: '#ffc107',
                             color: 'white',
                             padding: '1rem',
@@ -405,9 +435,9 @@ const AsistenciaInspector: React.FC = () => {
                             textAlign: 'center'
                         }}>
                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.tardanza}
+                                {stats.ausentePendiente}
                             </div>
-                            <div style={{ fontSize: '0.9rem' }}>Tardanzas</div>
+                            <div style={{ fontSize: '0.9rem' }}>Pendientes</div>
                         </div>
                         <div style={{
                             background: '#17a2b8',
@@ -417,7 +447,7 @@ const AsistenciaInspector: React.FC = () => {
                             textAlign: 'center'
                         }}>
                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.justificado}
+                                {stats.ausenteJustificado}
                             </div>
                             <div style={{ fontSize: '0.9rem' }}>Justificados</div>
                         </div>
@@ -518,7 +548,7 @@ const AsistenciaInspector: React.FC = () => {
                                                     transition: 'all 0.2s ease'
                                                 }}
                                             >
-                                                {value}
+                                                {getStatusLabel(value)}
                                             </button>
                                         ))}
                                     </div>

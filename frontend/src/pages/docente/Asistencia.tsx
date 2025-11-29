@@ -110,7 +110,7 @@ const Asistencia: React.FC = () => {
             // Inicializar datos de asistencia
             const initialAttendance = studentsData.map(student => ({
                 student,
-                status: ATTENDANCE_STATUS.PRESENTE
+                status: ATTENDANCE_STATUS.PRESENT
             }));
             
             setAttendanceData(initialAttendance);
@@ -165,7 +165,7 @@ const Asistencia: React.FC = () => {
         ));
 
         // Mostrar campo de justificación para ausencias o tardanzas
-        if (status === ATTENDANCE_STATUS.AUSENTE || status === ATTENDANCE_STATUS.JUSTIFICADO) {
+        if (status === ATTENDANCE_STATUS.ABSENT_UNJUSTIFIED || status === ATTENDANCE_STATUS.ABSENT_JUSTIFIED_PENDING) {
             setShowJustification(prev => ({ ...prev, [studentId]: true }));
         } else {
             setShowJustification(prev => ({ ...prev, [studentId]: false }));
@@ -212,13 +212,13 @@ const Asistencia: React.FC = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case ATTENDANCE_STATUS.PRESENTE:
+            case ATTENDANCE_STATUS.PRESENT:
                 return '#28a745';
-            case ATTENDANCE_STATUS.AUSENTE:
+            case ATTENDANCE_STATUS.ABSENT_UNJUSTIFIED:
                 return '#dc3545';
-            case ATTENDANCE_STATUS.TARDANZA:
+            case ATTENDANCE_STATUS.ABSENT_JUSTIFIED_PENDING:
                 return '#ffc107';
-            case ATTENDANCE_STATUS.JUSTIFICADO:
+            case ATTENDANCE_STATUS.ABSENT_JUSTIFIED_ACCEPTED:
                 return '#17a2b8';
             default:
                 return '#6c757d';
@@ -227,10 +227,10 @@ const Asistencia: React.FC = () => {
 
     const getAttendanceStats = () => {
         const total = attendanceData.length;
-        const presente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.PRESENTE).length;
-        const ausente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.AUSENTE).length;
-        const tardanza = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.TARDANZA).length;
-        const justificado = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.JUSTIFICADO).length;
+        const presente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.PRESENT).length;
+        const ausente = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.ABSENT_UNJUSTIFIED).length;
+        const tardanza = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.ABSENT_JUSTIFIED_PENDING).length;
+        const justificado = attendanceData.filter(a => a.status === ATTENDANCE_STATUS.ABSENT_JUSTIFIED_ACCEPTED).length;
 
         return { total, presente, ausente, tardanza, justificado };
     };

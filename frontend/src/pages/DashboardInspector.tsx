@@ -65,6 +65,33 @@ export const DashboardInspector: React.FC = () => {
                         </button>
                     </div>
 
+                    {/* Gestionar Faltas */}
+                    <div className="inspector-card" onClick={() => navigate('/inspector/gestionar-faltas')}>
+                        <div className="inspector-card-header">
+                            <div className="inspector-card-icon orange">
+                                <span>📋</span>
+                            </div>
+                            <div>
+                                <h3 className="inspector-card-title">
+                                    Gestionar Faltas
+                                </h3>
+                                <p className="inspector-card-label">
+                                    Revisar justificaciones pendientes
+                                </p>
+                            </div>
+                        </div>
+                        <p className="inspector-card-description">
+                            Revisa y aprueba o rechaza las justificaciones de ausencias enviadas por los estudiantes. 
+                            Descarga archivos adjuntos y gestiona el estado de las justificaciones.
+                        </p>
+                        <button 
+                            className="inspector-card-button orange"
+                            onClick={(e) => { e.stopPropagation(); navigate('/inspector/gestionar-faltas'); }}
+                        >
+                            Gestionar Justificaciones
+                        </button>
+                    </div>
+
                     {/* Novedades Disciplinarias */}
                     <div className="inspector-card" onClick={() => navigate('/inspector/novedades')}>
                         <div className="inspector-card-header">

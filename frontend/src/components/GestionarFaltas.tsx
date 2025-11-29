@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { attendanceService } from '../services/attendance';
-import type { AttendanceRecord, Student, AttendanceStats } from '../services/attendance';
+import type { AttendanceRecord, Student, AttendanceStats, AttendanceStatus } from '../services/attendance';
 import './GestionarFaltas.css';
 
 interface GestionarFaltasProps {
@@ -35,7 +35,7 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
   // Estado para la gestión de asistencia del día
   const [dailyAttendance, setDailyAttendance] = useState<{
     [studentId: number]: {
-      status: 'presente' | 'ausente' | 'atraso';
+      status: AttendanceStatus;
       justification?: string;
       justification_file?: File;
     }
@@ -73,7 +73,7 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
       // Inicializar el estado de asistencia diaria
       const initialAttendance: typeof dailyAttendance = {};
       studentsData.forEach(student => {
-        initialAttendance[student.id] = { status: 'presente' };
+        initialAttendance[student.id] = { status: 'PRESENT' };
       });
       setDailyAttendance(initialAttendance);
       
@@ -204,7 +204,7 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
   }, [showHistory, loadAttendanceHistory, loadStats]);
 
   // Manejar cambio de estado de asistencia
-  const handleAttendanceChange = (studentId: number, status: 'presente' | 'ausente' | 'atraso') => {
+  const handleAttendanceChange = (studentId: number, status: AttendanceStatus) => {
     setDailyAttendance(prev => ({
       ...prev,
       [studentId]: {
@@ -319,7 +319,7 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
   };
 
   // Actualizar registro existente
-  const updateAttendanceRecord = async (newStatus: 'presente' | 'ausente' | 'atraso') => {
+  const updateAttendanceRecord = async (newStatus: AttendanceStatus) => {
     if (!editingRecord) return;
 
     try {
@@ -495,9 +495,9 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
                         <input
                           type="radio"
                           name={`attendance-${student.id}`}
-                          value="presente"
-                          checked={dailyAttendance[student.id]?.status === 'presente'}
-                          onChange={() => handleAttendanceChange(student.id, 'presente')}
+                          value="PRESENT"
+                          checked={dailyAttendance[student.id]?.status === 'PRESENT'}
+                          onChange={() => handleAttendanceChange(student.id, 'PRESENT')}
                         />
                         <span className="option-icon">
                           <i className="fas fa-check-circle"></i>
@@ -509,9 +509,9 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
                         <input
                           type="radio"
                           name={`attendance-${student.id}`}
-                          value="ausente"
-                          checked={dailyAttendance[student.id]?.status === 'ausente'}
-                          onChange={() => handleAttendanceChange(student.id, 'ausente')}
+                          value="ABSENT_UNJUSTIFIED"
+                          checked={dailyAttendance[student.id]?.status === 'ABSENT_UNJUSTIFIED'}
+                          onChange={() => handleAttendanceChange(student.id, 'ABSENT_UNJUSTIFIED')}
                         />
                         <span className="option-icon">
                           <i className="fas fa-times-circle"></i>
@@ -523,9 +523,9 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
                         <input
                           type="radio"
                           name={`attendance-${student.id}`}
-                          value="atraso"
-                          checked={dailyAttendance[student.id]?.status === 'atraso'}
-                          onChange={() => handleAttendanceChange(student.id, 'atraso')}
+                          value="ABSENT_JUSTIFIED_PENDING"
+                          checked={dailyAttendance[student.id]?.status === 'ABSENT_JUSTIFIED_PENDING'}
+                          onChange={() => handleAttendanceChange(student.id, 'ABSENT_JUSTIFIED_PENDING')}
                         />
                         <span className="option-icon">
                           <i className="fas fa-clock"></i>
@@ -649,7 +649,7 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
                 </div>
                 <div className="stat-content">
                   <h4>Ausentes</h4>
-                  <p className="stat-number">{stats.absent_count}</p>
+                  <p className="stat-number">{stats.total_absent_count}</p>
                 </div>
               </div>
 
@@ -658,8 +658,8 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
                   <i className="fas fa-clock"></i>
                 </div>
                 <div className="stat-content">
-                  <h4>Atrasos</h4>
-                  <p className="stat-number">{stats.late_count}</p>
+                  <h4>Injustificados</h4>
+                  <p className="stat-number">{stats.absent_unjustified_count}</p>
                 </div>
               </div>
 
@@ -814,27 +814,27 @@ const GestionarFaltas: React.FC<GestionarFaltasProps> = ({ className = '' }) => 
                 <label>Nuevo estado:</label>
                 <div className="edit-attendance-options">
                   <button 
-                    onClick={() => updateAttendanceRecord('presente')}
-                    className={`edit-option presente ${editingRecord.status === 'presente' ? 'current' : ''}`}
+                    onClick={() => updateAttendanceRecord('PRESENT')}
+                    className={`edit-option presente ${editingRecord.status === 'PRESENT' ? 'current' : ''}`}
                   >
                     <i className="fas fa-check-circle"></i>
                     Presente
                   </button>
                   
                   <button 
-                    onClick={() => updateAttendanceRecord('ausente')}
-                    className={`edit-option ausente ${editingRecord.status === 'ausente' ? 'current' : ''}`}
+                    onClick={() => updateAttendanceRecord('ABSENT_UNJUSTIFIED')}
+                    className={`edit-option ausente ${editingRecord.status === 'ABSENT_UNJUSTIFIED' ? 'current' : ''}`}
                   >
                     <i className="fas fa-times-circle"></i>
                     Ausente
                   </button>
                   
                   <button 
-                    onClick={() => updateAttendanceRecord('atraso')}
-                    className={`edit-option atraso ${editingRecord.status === 'atraso' ? 'current' : ''}`}
+                    onClick={() => updateAttendanceRecord('ABSENT_JUSTIFIED_PENDING')}
+                    className={`edit-option atraso ${editingRecord.status === 'ABSENT_JUSTIFIED_PENDING' ? 'current' : ''}`}
                   >
                     <i className="fas fa-clock"></i>
-                    Atraso
+                    Justificado Pendiente
                   </button>
                 </div>
               </div>

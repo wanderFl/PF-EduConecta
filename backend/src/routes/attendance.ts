@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Role, PrismaClient } from '@prisma/client';
 import { authenticate, authorize } from '../middlewares/auth';
+import { ceiafPool } from '../ext/ceiafDb';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -133,30 +134,34 @@ router.post('/', async (req, res) => {
 
     let record;
 
-    if (existingRecord) {
-      // Actualizar registro existente
-      record = await prisma.attendanceRecord.update({
-        where: { id: existingRecord.id },
-        data: {
-          status,
-          course_external_id: parseInt(course_external_id),
-          justification_file_reference: justification_file_reference || null
-        }
-      });
-    } else {
-      // Crear nuevo registro
-      record = await prisma.attendanceRecord.create({
-        data: {
-          student_external_id: parseInt(student_external_id),
-          course_external_id: parseInt(course_external_id),
-          date: new Date(date),
-          status,
-          justification_file_reference: justification_file_reference || null
-        }
-      });
-    }
-
-    res.json({
+      if (existingRecord) {
+        // Actualizar registro existente
+        const attendanceDate = new Date(date);
+        record = await prisma.attendanceRecord.update({
+          where: { id: existingRecord.id },
+          data: {
+            status,
+            course_external_id: parseInt(course_external_id),
+            justification_file_reference: justification_file_reference || null,
+            year: attendanceDate.getFullYear(),
+            month: attendanceDate.getMonth() + 1
+          }
+        });
+      } else {
+        // Crear nuevo registro
+        const attendanceDate = new Date(date);
+        record = await prisma.attendanceRecord.create({
+          data: {
+            student_external_id: parseInt(student_external_id),
+            course_external_id: parseInt(course_external_id),
+            date: attendanceDate,
+            status,
+            justification_file_reference: justification_file_reference || null,
+            year: attendanceDate.getFullYear(),
+            month: attendanceDate.getMonth() + 1
+          }
+        });
+      }    res.json({
       success: true,
       data: record,
       message: existingRecord ? 'Registro actualizado exitosamente' : 'Registro creado exitosamente'
@@ -220,7 +225,9 @@ router.post('/bulk', async (req, res) => {
           data: {
             status,
             course_external_id: parseInt(course_external_id),
-            justification_file_reference: justification_file_reference || null
+            justification_file_reference: justification_file_reference || null,
+            year: attendanceDate.getFullYear(),
+            month: attendanceDate.getMonth() + 1
           }
         });
         updatedRecords.push(updated);
@@ -232,7 +239,9 @@ router.post('/bulk', async (req, res) => {
             course_external_id: parseInt(course_external_id),
             date: attendanceDate,
             status,
-            justification_file_reference: justification_file_reference || null
+            justification_file_reference: justification_file_reference || null,
+            year: attendanceDate.getFullYear(),
+            month: attendanceDate.getMonth() + 1
           }
         });
         createdRecords.push(created);
@@ -366,11 +375,13 @@ router.get('/stats', async (req, res) => {
       where
     });
 
-    // Calcular estadísticas
+    // Calcular estadísticas usando los valores correctos del enum AttendanceStatus
     const totalRecords = records.length;
-    const presentCount = records.filter((r: any) => r.status === 'presente').length;
-    const absentCount = records.filter((r: any) => r.status === 'ausente').length;
-    const lateCount = records.filter((r: any) => r.status === 'atraso').length;
+    const presentCount = records.filter((r: any) => r.status === 'PRESENT').length;
+    const absentUnjustifiedCount = records.filter((r: any) => r.status === 'ABSENT_UNJUSTIFIED').length;
+    const absentJustifiedPendingCount = records.filter((r: any) => r.status === 'ABSENT_JUSTIFIED_PENDING').length;
+    const absentJustifiedAcceptedCount = records.filter((r: any) => r.status === 'ABSENT_JUSTIFIED_ACCEPTED').length;
+    const totalAbsentCount = absentUnjustifiedCount + absentJustifiedPendingCount + absentJustifiedAcceptedCount;
 
     // Obtener estudiantes únicos para calcular el total
     const uniqueStudents = new Set(records.map((r: any) => r.student_external_id));
@@ -385,10 +396,11 @@ router.get('/stats', async (req, res) => {
       total_students: totalStudents,
       total_records: totalRecords,
       present_count: presentCount,
-      absent_count: absentCount,
-      late_count: lateCount,
-      attendance_percentage: attendancePercentage,
-      pending_grading: 0 // No aplicable para asistencia, pero mantenemos compatibilidad
+      absent_unjustified_count: absentUnjustifiedCount,
+      absent_justified_pending_count: absentJustifiedPendingCount,
+      absent_justified_accepted_count: absentJustifiedAcceptedCount,
+      total_absent_count: totalAbsentCount,
+      attendance_percentage: attendancePercentage
     };
 
     res.json({
@@ -446,6 +458,139 @@ router.get('/export', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error al exportar reporte de asistencia',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+});
+
+// Obtener justificaciones pendientes
+router.get('/pending-justifications', async (req, res) => {
+  try {
+    const { courseId } = req.query;
+
+    let where: any = {
+      status: 'ABSENT_JUSTIFIED_PENDING'
+    };
+
+    if (courseId) {
+      where.course_external_id = parseInt(courseId as string);
+    }
+
+    // Obtener registros de asistencia con justificación pendiente
+    const records = await prisma.attendanceRecord.findMany({
+      where,
+      orderBy: [
+        { date: 'desc' },
+        { student_external_id: 'asc' }
+      ]
+    });
+
+    // Obtener información de estudiantes desde MySQL CEIAF
+    const recordsWithStudentInfo = await Promise.all(
+      records.map(async (record) => {
+        try {
+          const [studentRows] = await ceiafPool.execute(
+            'SELECT nombres, apellidos FROM estudiantes WHERE id_estudiante = ?',
+            [record.student_external_id]
+          ) as any;
+
+          const student = studentRows[0] || {};
+          
+          return {
+            ...record,
+            student_name: student.nombres && student.apellidos 
+              ? `${student.apellidos} ${student.nombres}`
+              : 'Desconocido'
+          };
+        } catch (error) {
+          console.error(`Error fetching student ${record.student_external_id}:`, error);
+          return {
+            ...record,
+            student_name: 'Desconocido'
+          };
+        }
+      })
+    );
+
+    res.json({
+      success: true,
+      data: recordsWithStudentInfo,
+      count: recordsWithStudentInfo.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching pending justifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener justificaciones pendientes',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+});
+
+// Actualizar estado de justificación (aceptar/rechazar)
+router.put('/:id/justify-status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body; // 'accept' o 'reject'
+
+    if (!action || !['accept', 'reject'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Acción inválida. Use "accept" o "reject"'
+      });
+    }
+
+    // Verificar que el registro existe y tiene status ABSENT_JUSTIFIED_PENDING
+    const existingRecord = await prisma.attendanceRecord.findUnique({
+      where: { id }
+    });
+
+    if (!existingRecord) {
+      return res.status(404).json({
+        success: false,
+        message: 'Registro de asistencia no encontrado'
+      });
+    }
+
+    if (existingRecord.status !== 'ABSENT_JUSTIFIED_PENDING') {
+      return res.status(400).json({
+        success: false,
+        message: 'El registro no tiene una justificación pendiente'
+      });
+    }
+
+    // Actualizar el estado según la acción
+    const newStatus = action === 'accept' 
+      ? 'ABSENT_JUSTIFIED_ACCEPTED' 
+      : 'ABSENT_UNJUSTIFIED';
+
+    const updatedRecord = await prisma.attendanceRecord.update({
+      where: { id },
+      data: { status: newStatus }
+    });
+
+    res.json({
+      success: true,
+      data: updatedRecord,
+      message: action === 'accept' 
+        ? 'Justificación aceptada exitosamente'
+        : 'Justificación rechazada exitosamente'
+    });
+
+  } catch (error: any) {
+    console.error('Error updating justification status:', error);
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        message: 'Registro de asistencia no encontrado'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar estado de justificación',
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }

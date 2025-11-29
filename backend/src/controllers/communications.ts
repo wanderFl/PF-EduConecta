@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { ceiafPool } from '../ext/ceiafDb';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,8 @@ const prisma = new PrismaClient();
 export const listTeacherConversations = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
+    console.log('🔍 listTeacherConversations - userId:', userId);
+    
     if (!userId) {
       return res.status(401).json({ message: 'No autenticado' });
     }
@@ -17,15 +20,20 @@ export const listTeacherConversations = async (req: Request, res: Response) => {
     // Obtener el usuario con external_id
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { external_id: true }
+      select: { external_id: true, email: true }
     });
 
+    console.log('👤 User found:', user);
+
     if (!user || !user.external_id) {
+      console.log('❌ User without external_id');
       return res.status(403).json({ 
         message: 'Tu cuenta no está vinculada con un docente en el sistema del colegio.',
         needsLinking: true 
       });
     }
+    
+    console.log('✅ User has external_id:', user.external_id);
 
     const teacherExternalId = parseInt(user.external_id);
 
@@ -82,13 +90,20 @@ export const createTeacherConversation = async (req: Request, res: Response) => 
 
     const teacherExternalId = parseInt(user.external_id);
 
-    // Crear comunicación
+    // Buscar parent_id asociado al estudiante (opcional)
+    const parentLink = await prisma.parentStudentLink.findFirst({
+      where: { student_external_id: String(student_external_id) },
+      select: { parent_id: true }
+    });
+
+    // Crear comunicación (con o sin parent_id)
     const communication = await prisma.communication.create({
       data: {
         kind: kind || 'THREAD',
         subject: subject || null,
         student_external_id: parseInt(student_external_id),
         teacher_external_id: teacherExternalId,
+        parent_id: parentLink?.parent_id || null, // Opcional: puede ser null
         status: 'OPEN',
         messages: initialMessage ? {
           create: {
@@ -156,13 +171,14 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     const teacherExternalId = parseInt(user.external_id);
 
-    // Crear mensaje y actualizar lastMessageAt
+    // Crear mensaje SIEMPRE como TEACHER (el docente es quien envía)
     const message = await prisma.message.create({
       data: {
         communication_id: conversationId,
         body,
         sender_role: 'TEACHER',
-        sender_teacher_external_id: teacherExternalId
+        sender_teacher_external_id: teacherExternalId,
+        sender_parent_id: null // Explícitamente null porque es el docente quien envía
       },
       include: { attachments: true }
     });
@@ -181,7 +197,9 @@ export const sendMessage = async (req: Request, res: Response) => {
 
 /**
  * Buscar estudiantes del docente
- * GET /api/communications/teacher/students
+ * GET /api/communications/teacher/students?query=nombre&courseId=123
+ * Retorna solo los estudiantes de los cursos donde el docente imparte clases
+ * Si se proporciona courseId, filtra solo por ese curso específico
  */
 export const searchTeacherStudents = async (req: Request, res: Response) => {
   try {
@@ -206,50 +224,75 @@ export const searchTeacherStudents = async (req: Request, res: Response) => {
 
     const teacherExternalId = parseInt(user.external_id);
 
-    // Importar la conexión MySQL
-    const { ceiafPool } = await import('../ext/ceiafDb');
-
     // Usar q o query (el frontend puede enviar cualquiera)
     const searchText = (q || searchQuery) as string | undefined;
+    const searchTerm = searchText && searchText.trim() ? `%${searchText.trim()}%` : '%';
 
-    // Buscar estudiantes del docente desde MySQL
+    // Construir query con filtro opcional por curso
     let sqlQuery = `
       SELECT DISTINCT
-        e.id_estudiante,
-        CONCAT(e.nombres, ' ', e.apellidos) as nombre_completo,
+        e.id_estudiante AS student_external_id,
+        CONCAT(e.nombres, ' ', e.apellidos) AS student_name,
+        e.nombres,
+        e.apellidos,
         e.cedula,
         c.id_curso,
-        c.nombre as curso_nombre,
+        c.nombre AS curso,
         c.nivel,
         c.paralelo
       FROM estudiantes e
-      INNER JOIN cursos c ON e.id_curso = c.id_curso
-      INNER JOIN docente_materia_curso dmc ON c.id_curso = dmc.id_curso
+      INNER JOIN cursos c ON c.id_curso = e.id_curso
+      INNER JOIN docente_materia_curso dmc ON dmc.id_curso = c.id_curso
       WHERE dmc.id_docente = ?
     `;
 
     const params: any[] = [teacherExternalId];
 
-    // Filtrar por curso si se especifica
+    // Filtrar por curso específico si se proporciona
     if (courseId) {
-      sqlQuery += ' AND c.id_curso = ?';
+      sqlQuery += ` AND c.id_curso = ?`;
       params.push(parseInt(courseId as string));
     }
 
-    // Filtrar por búsqueda de texto
-    if (searchText && searchText.trim()) {
-      sqlQuery += ` AND (
-        e.nombres LIKE ? OR 
-        e.apellidos LIKE ? OR 
-        e.cedula LIKE ?
-      )`;
-      const searchTerm = `%${searchText.trim()}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+    sqlQuery += `
+        AND (
+          CONCAT(e.nombres, ' ', e.apellidos) LIKE ? OR
+          e.cedula LIKE ?
+        )
+      ORDER BY e.apellidos, e.nombres
+      LIMIT 50
+    `;
+
+    params.push(searchTerm, searchTerm);
+
+    const [rows] = await ceiafPool.execute(sqlQuery, params) as any;
+
+    // Obtener parent_id para cada estudiante desde PostgreSQL
+    if (rows.length > 0) {
+      const studentIds = rows.map((r: any) => String(r.student_external_id));
+      
+      // Buscar parent_id en ParentStudentLink
+      const parentLinks = await prisma.parentStudentLink.findMany({
+        where: {
+          student_external_id: { in: studentIds }
+        },
+        select: {
+          student_external_id: true,
+          parent_id: true
+        }
+      });
+      
+      // Crear mapa student_id -> parent_id
+      const parentMap = new Map(parentLinks.map(pl => [pl.student_external_id, pl.parent_id]));
+      
+      // Agregar parent_id a cada estudiante
+      const studentsWithParent = rows.map((student: any) => ({
+        ...student,
+        parent_id: parentMap.get(String(student.student_external_id)) || null
+      }));
+      
+      return res.json({ students: studentsWithParent });
     }
-
-    sqlQuery += ' ORDER BY e.apellidos, e.nombres LIMIT 50';
-
-    const [rows] = await ceiafPool.query(sqlQuery, params);
 
     res.json({ students: rows });
   } catch (error) {

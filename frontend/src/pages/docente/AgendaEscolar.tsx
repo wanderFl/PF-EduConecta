@@ -53,11 +53,55 @@ const AgendaEscolar: React.FC = () => {
         }
     }, [navigate]);
 
+    // Efecto para recargar tareas cuando cambia el curso en localStorage
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const courseData = localStorage.getItem('selectedCourseData');
+            if (courseData) {
+                try {
+                    const course = JSON.parse(courseData);
+                    if (selectedCourse?.id !== course.id) {
+                        setSelectedCourse(course);
+                        loadTasks(course.id);
+                    }
+                } catch (err) {
+                    console.error('Error parsing course data:', err);
+                }
+            }
+        };
+
+        // Escuchar cambios en localStorage
+        window.addEventListener('storage', handleStorageChange);
+        
+        // También verificar periódicamente (para cambios en la misma pestaña)
+        const interval = setInterval(() => {
+            const courseData = localStorage.getItem('selectedCourseData');
+            if (courseData) {
+                try {
+                    const course = JSON.parse(courseData);
+                    if (selectedCourse?.id !== course.id) {
+                        setSelectedCourse(course);
+                        loadTasks(course.id);
+                    }
+                } catch (err) {
+                    console.error('Error parsing course data:', err);
+                }
+            }
+        }, 1000);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            clearInterval(interval);
+        };
+    }, [selectedCourse]);
+
     const loadTasks = async (courseId: string) => {
         setLoading(true);
         setError(null);
         try {
+            console.log('📚 Cargando tareas para curso:', courseId);
             const tasksData = await taskService.getTasksByCourse(courseId);
+            console.log('✅ Tareas cargadas del curso', courseId, ':', tasksData.length, 'tarea(s)');
             setTasks(tasksData);
         } catch (err) {
             console.error('Error loading tasks:', err);
@@ -67,7 +111,7 @@ const AgendaEscolar: React.FC = () => {
         }
     };
 
-    // Calcular estadísticas
+    // Calcular estadísticas basadas SOLO en tareas del curso actual
     const calculateStats = () => {
         const totalTasks = tasks.length;
         const totalStudents = tasks.reduce((sum, task) => sum + task.students.length, 0) / (totalTasks || 1);
@@ -81,6 +125,13 @@ const AgendaEscolar: React.FC = () => {
             ? (totalSubmissions / (totalTasks * totalStudents)) * 100 
             : 0;
 
+        console.log('📊 Estadísticas del curso', selectedCourse?.name, ':', {
+            totalTasks,
+            totalStudents: Math.round(totalStudents),
+            totalSubmissions,
+            totalGraded
+        });
+
         return {
             totalTasks,
             totalStudents: Math.round(totalStudents),
@@ -90,7 +141,7 @@ const AgendaEscolar: React.FC = () => {
         };
     };
 
-    // Datos para gráfico de barras: Tareas por estado
+    // Datos para gráfico de barras: Tareas por estado (SOLO del curso actual)
     const getTasksStatusData = () => {
         const now = new Date();
         const upcoming = tasks.filter(t => new Date(t.due_date) > now).length;
@@ -99,6 +150,12 @@ const AgendaEscolar: React.FC = () => {
             const allGraded = t.students.every(s => s.grade !== null && s.grade !== undefined);
             return allGraded && t.students.length > 0;
         }).length;
+
+        console.log('📈 Estado de tareas del curso:', {
+            próximas: upcoming,
+            vencidas: overdue,
+            completadas: completed
+        });
 
         return {
             labels: ['Próximas', 'Vencidas', 'Completadas'],

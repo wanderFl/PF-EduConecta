@@ -12,10 +12,7 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
   const [stats, setStats] = useState<TaskStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterBy, setFilterBy] = useState<'all' | 'course'>('all');
-  const [selectedFilter, setSelectedFilter] = useState<string>('');
-  const [selectedParalelo, setSelectedParalelo] = useState<string>('');
-  const [availableParalelos, setAvailableParalelos] = useState<string[]>([]);
+  const [currentCourseId, setCurrentCourseId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState<{
     start: string;
     end: string;
@@ -24,21 +21,33 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
     end: ''
   });
 
+  // Obtener curso actual del localStorage
+  useEffect(() => {
+    const courseData = localStorage.getItem('selectedCourseData');
+    if (courseData) {
+      try {
+        const course = JSON.parse(courseData);
+        setCurrentCourseId(course.id);
+        console.log('📚 Curso actual del docente:', course.id);
+      } catch (err) {
+        console.error('Error parsing course data:', err);
+      }
+    }
+  }, []);
+
   const loadTasks = useCallback(async () => {
     try {
       setLoading(true);
       let tasksData: Task[];
       
-      // Si hay curso seleccionado, usar filtro específico
-      if (filterBy === 'course' && selectedFilter) {
-        const courseId = parseInt(selectedFilter);
-        if (selectedParalelo) {
-          tasksData = await agendaService.getTasksByCourseAndParalelo(courseId, selectedParalelo);
-        } else {
-          tasksData = await agendaService.getTasksByCourse(courseId);
-        }
+      // Siempre filtrar por el curso actual del docente
+      if (currentCourseId) {
+        console.log('📚 Cargando tareas para curso ID:', currentCourseId);
+        tasksData = await agendaService.getTasksByCourse(currentCourseId);
+        console.log('✅ Tareas cargadas:', tasksData.length);
       } else {
-        tasksData = await agendaService.getAllTasks();
+        // Si no hay curso seleccionado, mostrar array vacío
+        tasksData = [];
       }
       
       setTasks(tasksData);
@@ -48,18 +57,9 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
     } finally {
       setLoading(false);
     }
-  }, [filterBy, selectedFilter, selectedParalelo]);
+  }, [currentCourseId]);
 
-  // Función para cargar paralelos cuando se selecciona un curso
-  const loadParalelos = useCallback(async (courseId: number) => {
-    try {
-      const paralelos = await agendaService.getParalelosByCourse(courseId);
-      setAvailableParalelos(paralelos);
-    } catch (err) {
-      console.error('Error loading paralelos:', err);
-      setAvailableParalelos([]);
-    }
-  }, []);
+
 
   const loadStats = useCallback(async () => {
     try {
@@ -69,8 +69,14 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
         end_date?: string;
       } = {};
       
-      if (filterBy === 'course' && selectedFilter) {
-        filters.course_id = parseInt(selectedFilter);
+      // Siempre usar el curso actual del docente
+      if (currentCourseId) {
+        filters.course_id = currentCourseId;
+        console.log('📊 Cargando estadísticas para curso:', currentCourseId);
+      } else {
+        // Si no hay curso, no cargar estadísticas
+        setStats(null);
+        return;
       }
       
       if (dateRange.start) {
@@ -82,11 +88,13 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
       }
 
       const statsData = await agendaService.getTasksStats(filters);
+      console.log('✅ Estadísticas cargadas:', statsData);
       setStats(statsData);
     } catch (err) {
       console.error('Error loading stats:', err);
+      setStats(null);
     }
-  }, [filterBy, selectedFilter, dateRange]);
+  }, [currentCourseId, dateRange]);
 
   useEffect(() => {
     loadTasks();
@@ -94,36 +102,20 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
   }, [loadTasks, loadStats]);
 
   useEffect(() => {
-    if (filterBy !== 'all' || dateRange.start || dateRange.end) {
+    if (currentCourseId || dateRange.start || dateRange.end) {
       loadStats();
     }
-  }, [filterBy, selectedFilter, dateRange, loadStats]);
+  }, [currentCourseId, dateRange, loadStats]);
 
-  // Efecto para cargar paralelos cuando se selecciona un curso
+  // Efecto para recargar tareas cuando cambie el curso
   useEffect(() => {
-    if (filterBy === 'course' && selectedFilter) {
-      const courseId = parseInt(selectedFilter);
-      if (!isNaN(courseId)) {
-        loadParalelos(courseId);
-      }
-    } else {
-      setAvailableParalelos([]);
-      setSelectedParalelo('');
-    }
-  }, [filterBy, selectedFilter, loadParalelos]);
-
-  // Efecto para recargar tareas cuando cambie el paralelo
-  useEffect(() => {
-    if (selectedParalelo !== '' || (filterBy === 'course' && selectedFilter)) {
+    if (currentCourseId) {
       loadTasks();
     }
-  }, [selectedParalelo, filterBy, selectedFilter, loadTasks]);
+  }, [currentCourseId, loadTasks]);
 
   const filteredTasks = tasks.filter((task: Task) => {
-    if (filterBy === 'all' || !selectedFilter) return true;
-    if (filterBy === 'course') return task.course_external_id === parseInt(selectedFilter);
-    return true;
-  }).filter((task: Task) => {
+    // Ya están filtradas por curso, solo aplicar filtro de fechas
     if (dateRange.start && new Date(task.due_date) < new Date(dateRange.start)) return false;
     if (dateRange.end && new Date(task.due_date) > new Date(dateRange.end)) return false;
     return true;
@@ -139,37 +131,6 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
       13: '3ro BGU'
     };
     return courseNames[courseId] || `Curso ${courseId}`;
-  };
-
-  const getUniqueCourses = () => {
-    const courses = tasks.map(task => ({
-      id: task.course_external_id,
-      name: getCourseName(task.course_external_id)
-    }));
-    
-    const uniqueCourses = courses.filter((course, index, self) => 
-      index === self.findIndex(c => c.id === course.id)
-    );
-
-    // Ordenar cursos según el orden específico: 8vo, 9no, 10mo, 1ro BGU, 2do BGU, 3ro BGU
-    const courseOrder = [8, 9, 10, 11, 12, 13];
-    
-    return uniqueCourses.sort((a, b) => {
-      const indexA = courseOrder.indexOf(a.id);
-      const indexB = courseOrder.indexOf(b.id);
-      
-      // Si ambos cursos están en el orden definido, usar ese orden
-      if (indexA !== -1 && indexB !== -1) {
-        return indexA - indexB;
-      }
-      
-      // Si solo uno está en el orden definido, ese va primero
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      
-      // Si ninguno está en el orden definido, ordenar por ID
-      return a.id - b.id;
-    });
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -221,57 +182,6 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
         {/* Filtros */}
         <div className="filters-container">
           <div className="filter-group">
-            <label>Filtrar por:</label>
-            <select
-              value={filterBy}
-              onChange={(e) => {
-                setFilterBy(e.target.value as 'all' | 'course');
-                setSelectedFilter('');
-              }}
-            >
-              <option value="all">Todas las tareas</option>
-              <option value="course">Por curso</option>
-            </select>
-          </div>
-
-          {filterBy === 'course' && (
-            <div className="filter-group">
-              <label>Curso:</label>
-              <select
-                value={selectedFilter}
-                onChange={(e) => {
-                  setSelectedFilter(e.target.value);
-                  setSelectedParalelo(''); // Limpiar paralelo cuando cambia el curso
-                }}
-              >
-                <option value="">Todos los cursos</option>
-                {getUniqueCourses().map(course => (
-                  <option key={course.id} value={course.id}>
-                    {course.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {filterBy === 'course' && selectedFilter && availableParalelos.length > 0 && (
-            <div className="filter-group">
-              <label>Paralelo:</label>
-              <select
-                value={selectedParalelo}
-                onChange={(e) => setSelectedParalelo(e.target.value)}
-              >
-                <option value="">Todos los paralelos</option>
-                {availableParalelos.map(paralelo => (
-                  <option key={paralelo} value={paralelo}>
-                    {paralelo}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="filter-group">
             <label>Desde:</label>
             <input
               type="date"
@@ -289,19 +199,17 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
             />
           </div>
 
-          <button 
-            onClick={() => {
-              setFilterBy('all');
-              setSelectedFilter('');
-              setSelectedParalelo('');
-              setAvailableParalelos([]);
-              setDateRange({ start: '', end: '' });
-            }}
-            className="clear-filters-button"
-          >
-            <i className="fas fa-times"></i>
-            Limpiar filtros
-          </button>
+          {(dateRange.start || dateRange.end) && (
+            <button 
+              onClick={() => {
+                setDateRange({ start: '', end: '' });
+              }}
+              className="clear-filters-button"
+            >
+              <i className="fas fa-times"></i>
+              Limpiar filtros
+            </button>
+          )}
         </div>
       </div>
 
@@ -352,10 +260,15 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
 
       {/* Lista de tareas */}
       <div className="tasks-container">
-        {filteredTasks.length === 0 ? (
+        {!currentCourseId ? (
+          <div className="no-tasks">
+            <i className="fas fa-info-circle"></i>
+            <p>Selecciona un curso para ver las tareas</p>
+          </div>
+        ) : filteredTasks.length === 0 ? (
           <div className="no-tasks">
             <i className="fas fa-calendar-check"></i>
-            <p>No hay tareas que coincidan con los filtros aplicados</p>
+            <p>No hay tareas creadas para este curso</p>
           </div>
         ) : (
           <div className="tasks-list">
@@ -380,7 +293,7 @@ const AgendaEscolar: React.FC<AgendaEscolarProps> = ({ className = '' }) => {
                     <div className="task-info">
                       <div className="info-item">
                         <i className="fas fa-chalkboard-teacher"></i>
-                        <span>Curso: {getCourseName(task.course_external_id)}{selectedParalelo ? ` - Paralelo ${selectedParalelo}` : ''}</span>
+                        <span>Curso: {getCourseName(task.course_external_id)}</span>
                       </div>
                       <div className="info-item">
                         <i className="fas fa-user"></i>

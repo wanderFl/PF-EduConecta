@@ -7,7 +7,7 @@ type Props = {
   currentUserId: string;
 };
 
-const TeacherConversationPanel: React.FC<Props> = ({ conversation, currentUserId }) => {
+const TeacherConversationPanel: React.FC<Props> = ({ conversation}) => {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -116,7 +116,8 @@ const TeacherConversationPanel: React.FC<Props> = ({ conversation, currentUserId
           </div>
         ) : (
           messages.map((msg) => {
-            const isOwn = msg.sender_role === 'DOCENTE' && msg.sender_id === currentUserId;
+            // El docente es quien envía (sender_role = 'TEACHER')
+            const isTeacher = msg.sender_role === 'TEACHER';
             const time = new Date(msg.created_at);
 
             return (
@@ -124,7 +125,7 @@ const TeacherConversationPanel: React.FC<Props> = ({ conversation, currentUserId
                 key={msg.id}
                 style={{
                   display: 'flex',
-                  justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                  justifyContent: isTeacher ? 'flex-end' : 'flex-start',
                   marginBottom: '1rem'
                 }}
               >
@@ -132,12 +133,12 @@ const TeacherConversationPanel: React.FC<Props> = ({ conversation, currentUserId
                   maxWidth: '70%',
                   padding: '0.75rem 1rem',
                   borderRadius: '12px',
-                  backgroundColor: isOwn ? '#3b82f6' : 'white',
-                  color: isOwn ? 'white' : '#1f2937',
+                  backgroundColor: isTeacher ? '#3b82f6' : 'white',
+                  color: isTeacher ? 'white' : '#1f2937',
                   boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
                 }}>
                   <div style={{ marginBottom: '0.25rem', fontSize: '0.875rem', fontWeight: 500 }}>
-                    {msg.sender_role === 'DOCENTE' ? 'Docente' : 'Padre/Madre'}
+                    {isTeacher ? 'Docente (Tú)' : 'Padre/Madre'}
                   </div>
                   <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                     {msg.body}

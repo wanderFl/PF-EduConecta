@@ -154,11 +154,31 @@ export const agendaService = {
   }): Promise<TaskStats> => {
     try {
       const params = new URLSearchParams();
-      if (filters?.course_id) params.append('course_id', filters.course_id.toString());
-      if (filters?.start_date) params.append('start_date', filters.start_date);
-      if (filters?.end_date) params.append('end_date', filters.end_date);
+      
+      // El teacher_id se obtiene automáticamente del token JWT en el backend
+      // pero debemos asegurarnos de enviar el course_id
+      if (filters?.course_id) {
+        params.append('course_id', filters.course_id.toString());
+      }
+      if (filters?.start_date) {
+        params.append('start_date', filters.start_date);
+      }
+      if (filters?.end_date) {
+        params.append('end_date', filters.end_date);
+      }
 
-      const response = await api.get(`/tasks/stats?${params.toString()}`);
+      const queryString = params.toString();
+      const url = queryString ? `/tasks/stats?${queryString}` : '/tasks/stats';
+      
+      console.log('📊 Solicitando estadísticas con filtros:', { 
+        course_id: filters?.course_id,
+        start_date: filters?.start_date,
+        end_date: filters?.end_date,
+        url 
+      });
+
+      const response = await api.get(url);
+      console.log('✅ Estadísticas recibidas:', response.data.data);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching tasks stats:', error);

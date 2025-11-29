@@ -25,6 +25,11 @@ const Comunicados: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const debounceRef = useRef<number | null>(null);
 
+  // Obtener el curso seleccionado del localStorage
+  const selectedCourseData = localStorage.getItem('selectedCourseData');
+  const courseId = selectedCourseData ? JSON.parse(selectedCourseData).id_curso : null;
+  const courseName = selectedCourseData ? JSON.parse(selectedCourseData).nombre : 'Todos los cursos';
+
   // Cargar conversaciones al iniciar (solo cuando auth esté inicializado)
   useEffect(() => {
     if (initialized && token) {
@@ -52,8 +57,12 @@ const Comunicados: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
+      // Si es error 403, la cuenta no está vinculada
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError?.response?.status === 403) {
+        setHasExternalId(false);
+      }
       setConversations([]);
-      setHasExternalId(false);
     } finally {
       setLoading(false);
     }
@@ -71,12 +80,12 @@ const Comunicados: React.FC = () => {
     setSearching(true);
     debounceRef.current = window.setTimeout(async () => {
       try {
-        const results = await searchTeacherStudents(query.trim());
+        const results = await searchTeacherStudents(query.trim(), courseId);
         setSearchResults(results);
       } catch (error) {
-        // Si es error 400, limpiar resultados silenciosamente (cuenta no vinculada)
+        // Si es error 403, limpiar resultados silenciosamente (cuenta no vinculada)
         const axiosError = error as { response?: { status?: number } };
-        if (axiosError?.response?.status === 400) {
+        if (axiosError?.response?.status === 403) {
           setSearchResults([]);
         } else {
           // Solo mostrar errores que no sean de validación
@@ -122,7 +131,7 @@ const Comunicados: React.FC = () => {
       console.error('Error creating conversation:', error);
       // Manejar errores de validación de external_id
       const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
-      if (axiosError?.response?.status === 400) {
+      if (axiosError?.response?.status === 403) {
         const message = axiosError.response.data?.message || 
           'Tu cuenta no está vinculada con el sistema. Contacta al administrador.';
         alert(message);
@@ -171,6 +180,11 @@ const Comunicados: React.FC = () => {
             </h1>
             <p style={{ margin: '0.5rem 0 0 0', color: '#666' }}>
               Comunicación con padres de familia
+              {courseId && (
+                <span style={{ marginLeft: '0.5rem', color: '#667eea', fontWeight: 600 }}>
+                  • {courseName}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -253,6 +267,15 @@ const Comunicados: React.FC = () => {
                     <strong>{student.student_name}</strong>
                     <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                       {student.curso} - Paralelo {student.paralelo} | Cédula: {student.cedula}
+                      {!student.parent_id && (
+                        <span style={{ 
+                          marginLeft: '0.5rem',
+                          color: '#f59e0b',
+                          fontStyle: 'italic'
+                        }}>
+                          (Sin padre vinculado)
+                        </span>
+                      )}
                     </div>
                   </li>
                 ))}
