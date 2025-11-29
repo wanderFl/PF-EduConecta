@@ -1,6 +1,6 @@
 // src/routes/AppRoutes.tsx
 import React from "react";
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter, Outlet } from "react-router-dom";
 import { LoginPage } from "../pages/LoginPage";
 import { DashboardDirectivo } from "../pages/DashboardDirectivo";
 import { DashboardDocente } from "../pages/DashboardDocente";
