@@ -1,38 +1,88 @@
 // src/types/index.ts
-export type Role = "DIRECTIVO" | "DOCENTE" | "FAMILIA";
+
+// ===== ROLES =====
+export type Role = "DIRECTIVO" | "DOCENTE" | "FAMILIA" | "INSPECTOR";
 
 export interface User {
-    id: string;
-    email: string;
-    role: Role;
+  id: string;
+  email: string;
+  role: Role;
+  external_id?: string | null;
 }
 
 export interface AuthResponse {
-    user: User;
-    token: string;
+  user: User;
+  token: string;
 }
 
 export interface Credentials {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface ApiError {
-    message: string;
+  message: string;
 }
 
-export interface ParentRegistration {
-    full_name: string;
-    email: string;
-    cedula: string;
-    home_address?: string;
-    work_place?: string;
-    security_pin: string;
-    password: string;
-    confirmPassword: string;
+// ==========================================
+// 📌 TIPOS DE TU RAMA (DOCENTE / TAREAS)
+// ==========================================
+
+export interface Course {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
 }
 
-// Datos que devuelve /api/familia/hijos y /buscar-estudiante
+export interface Student {
+  id: number;
+  nombre_completo: string;
+  grade?: number | null;
+  file_reference?: string | null;
+  submission_id?: string | null;
+  comment_student?: string | null;
+  comment_teacher?: string | null;
+  submitted_at?: string | null;
+  graded_at?: string | null;
+  has_submission?: boolean;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  instructions?: string | null;
+  due_date: string;
+  max_points?: number | null;
+  file_reference?: string | null;
+  created_at: string;
+  students: Student[];
+}
+
+export interface TasksResponse {
+  success: boolean;
+  tasks: Task[];
+}
+
+export interface GradeResponse {
+  success: boolean;
+  message: string;
+  submission: {
+    id: string;
+    grade: number;
+    comment_teacher?: string | null;
+    comment_student?: string | null;
+    student_id: number;
+    graded_at?: string | null;
+    submitted_at?: string | null;
+  };
+}
+
+// ==========================================
+// 📌 TIPOS DE DEV (FAMILIA / DIRECTIVO / INSPECTOR)
+// ==========================================
+
+// ---- Estudiantes CEIAF ----
 export interface CeiafStudent {
   id_estudiante: number;
   cedula: string;
@@ -45,19 +95,21 @@ export interface CeiafStudent {
   curso_ano_lectivo?: string | null;
 }
 
+// ---- Tareas para familia ----
 export interface PendingTask {
   id: string;
   title: string;
-  due_date: string; // ISO string (ej. "2025-10-28T00:00:00.000Z")
-  course_name?: string | null; // opcional si se requiere mostrar curso
+  due_date: string;
+  course_name?: string | null;
   teacher_external_id?: number;
   course_external_id?: number;
-  status: "PENDING" | "SUBMITTED"; // indica si fue entregada o no
-  grade?: number | null; // nota obtenida (si ya fue corregida)
-  submission_file?: string | null; // referencia al archivo entregado (si existe)
-  instructions?: string | null; // instrucciones adicionales de la tarea
+  status: "PENDING" | "SUBMITTED";
+  grade?: number | null;
+  submission_file?: string | null;
+  instructions?: string | null;
 }
 
+// ---- Asistencia ----
 export type AttendanceStatus =
   | "PRESENT"
   | "ABSENT_UNJUSTIFIED"
@@ -65,19 +117,19 @@ export type AttendanceStatus =
   | "ABSENT_JUSTIFIED_ACCEPTED";
 
 export interface AttendanceDay {
-  date: string;           // YYYY-MM-DD
+  date: string;
   status: AttendanceStatus;
 }
 
 export interface AttendanceMonthResp {
   year: number;
-  month: number;          // 1-12
-  from: string;           // YYYY-MM-DD
-  to: string;             // YYYY-MM-DD
-  days: AttendanceDay[];  // solo días con registro
+  month: number;
+  from: string;
+  to: string;
+  days: AttendanceDay[];
 }
 
-// --- Comunicados ---
+// ---- Comunicaciones ----
 export type ConversationKind = "THREAD" | "NOTICE";
 export type MessageSender = "PARENT" | "TEACHER";
 
@@ -93,10 +145,9 @@ export interface Conversation {
   createdAt: string;
   updatedAt: string;
   lastMessageAt: string | null;
-  subject?: string | null;              // 👈 opcional
-  lastMessagePreview?: string | null;   // 👈 opcional
-  // opcionalmente: count mensajes/preview si el backend lo expone
-  /** añadidos desde backend */
+  subject?: string | null;
+  lastMessagePreview?: string | null;
+
   student_name?: string;
   teacher_name?: string;
 }
@@ -121,6 +172,7 @@ export interface PaginatedMessages {
   nextCursor?: string | null;
 }
 
+// ---- Calificaciones ----
 export interface GradeRow {
   id: string;
   subject_id: number | null;
@@ -147,6 +199,7 @@ export type CeiafCourse = {
   display_name?: string | null;
 };
 
+// ---- Directivo: resumen por materia ----
 export type GradesBySubjectItem = {
   subject_external_id: number;
   subject_name: string;
@@ -162,20 +215,20 @@ export type GradesBySubjectItem = {
 export type SubjectStudentRow = {
   student_id: number;
   student_name: string;
-  avg: number | null;          // promedio individual (solo sobre entregas con nota)
-  delivered_count: number;     // entregas registradas (SubmissionGrade)
-  late_count: number;          // tareas vencidas sin entrega (ver nota)
+  avg: number | null;
+  delivered_count: number;
+  late_count: number;
 };
 
 export type SubjectStudentsSummary = {
   total_students: number;
-  total_tasks: number;            // # de tareas de esa materia en el curso
-  total_expected_submissions: number; // total_students * total_tasks
-  total_delivered: number;           // sum(delivered_count)
-  overall_delivered_pct: number;     // total_delivered / total_expected_submissions * 100
-  total_late: number;                // sum(late_count)
-  late_pct_over_past_due: number;    // total_late / (total_students * tasksPastDue) * 100
-  low_performance_count: number;     // estudiantes con avg < 7
+  total_tasks: number;
+  total_expected_submissions: number;
+  total_delivered: number;
+  overall_delivered_pct: number;
+  total_late: number;
+  late_pct_over_past_due: number;
+  low_performance_count: number;
 };
 
 export type SubjectStudentsPayload = {
@@ -186,17 +239,16 @@ export type SubjectStudentsPayload = {
   summary: SubjectStudentsSummary;
 };
 
-// types.ts (frontend)
+// ---- Directivo: historial de tareas por estudiante ----
 export interface StudentTaskRow {
   task_id: string;
   title: string;
-  due_date: string;          // viene en ISO
+  due_date: string;
   submitted_at: string | null;
   grade: number | null;
   trimestre: number | null;
   aporte: number | null;
   status: "ENTREGADA" | "NO_ENTREGADA" | "ENTREGADA_TARDE";
-
   instructions: string | null;
   file_url: string | null;
 }
@@ -210,6 +262,7 @@ export interface StudentSubjectTasksPayload {
   items: StudentTaskRow[];
 }
 
+// ---- Comportamiento: cursos ----
 export interface BehaviorItem {
   student_id: number;
   name: string;
@@ -228,10 +281,10 @@ export interface CourseBehaviorPayload {
   items: BehaviorItem[];
 }
 
-// Indicador de comportamiento (detalle estudiante)
+// ---- Comportamiento: detalle estudiante ----
 export interface StudentBehaviorReportRow {
   id: string;
-  date: string; // ISO
+  date: string;
   category: string;
   severity: string;
   title: string;
@@ -239,7 +292,7 @@ export interface StudentBehaviorReportRow {
 }
 
 export interface MonthlyAbsencesPoint {
-  month: string; // "2025-01"
+  month: string;
   absences: number;
 }
 
