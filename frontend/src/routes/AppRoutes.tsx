@@ -3,14 +3,14 @@ import React from "react";
 import { Routes, Route, BrowserRouter, Outlet } from "react-router-dom";
 import { LoginPage } from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
-
+ 
 import { DashboardDocente } from "../pages/DashboardDocente";
 import { DashboardFamilia } from "../pages/DashboardFamilia";
 import { DashboardInspector } from "../pages/DashboardInspector";
 import Novedades from "../pages/Inspector/Novedades";
 import AsistenciaInspector from "../pages/Inspector/Asistencia";
 import GestionarFaltas from "../pages/Inspector/GestionarFaltas";
-
+ 
 // Docente sub-dashboards
 import AgendaPage from "../pages/docente/AgendaPage";
 import Comunicados from "../pages/docente/Comunicados";
@@ -18,19 +18,19 @@ import RegistrarCalificaciones from "../pages/docente/RegistrarCalificaciones";
 import CreacionTareas from "../pages/docente/CreacionTareas";
 import CourseSelection from "../pages/docente/CourseSelection";
 import SubjectSelection from "../pages/docente/SubjectSelection";
-
+ 
 import { ProtectedRoute } from "./ProtectedRoute";
-
+ 
 import ForgotPasswordForm from "../components/auth/ForgotPasswordForm";
 import ResetPasswordForm from "../components/auth/ResetPasswordForm";
-
+ 
 import FamilyProvider from "../contexts/FamilyProvider";
 import WeeklyTasksPage from "../pages/WeeklyTasksPage";
 import MonthlyAttendancePage from "../pages/MonthlyAttendancePage";
 import PinGate from "./PinGate";
 import CommunicationsPage from "../pages/CommunicationsPage";
 import GradesPage from "../pages/GradesPage";
-
+ 
 import DirectivoProvider from "../contexts/DirectivoProvider";
 import DirectivoSelectCoursePage from "../pages/DirectivoSelectCoursePage";
 import DirectivoDashboard from "../pages/DirectivoDashboard";
@@ -39,7 +39,7 @@ import DirectivoSubjectPerformancePage from "../pages/DirectivoSubjectPerformanc
 import DirectivoStudentSubjectPage from "../pages/DirectivoStudentSubjectPage";
 import DirectivoBehaviorPage from "../pages/DirectivoBehaviorPage";
 import DirectivoStudentBehaviorPage from "../pages/DirectivoStudentBehaviorPage";
-
+ 
 const FamiliaLayout: React.FC = () => (
   <ProtectedRoute roles={["FAMILIA"]}>
     <FamilyProvider>
@@ -47,7 +47,7 @@ const FamiliaLayout: React.FC = () => (
     </FamilyProvider>
   </ProtectedRoute>
 );
-
+ 
 const DirectivoLayout: React.FC = () => (
   <ProtectedRoute roles={["DIRECTIVO"]}>
     <DirectivoProvider>
@@ -55,7 +55,7 @@ const DirectivoLayout: React.FC = () => (
     </DirectivoProvider>
   </ProtectedRoute>
 );
-
+ 
 export const AppRoutes: React.FC = () => (
   <BrowserRouter>
     <Routes>
@@ -64,7 +64,7 @@ export const AppRoutes: React.FC = () => (
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordForm />} />
       <Route path="/reset-password" element={<ResetPasswordForm />} />
-
+ 
       {/* ===== Grupo Directivo (con layout y contexto) ===== */}
       <Route path="/directivo" element={<DirectivoLayout />}>
         {/* Selección de curso al entrar */}
@@ -85,7 +85,7 @@ export const AppRoutes: React.FC = () => (
           element={<DirectivoStudentBehaviorPage />}
         />
       </Route>
-
+ 
       {/* ===== Grupo Docente ===== */}
       {/* Selección de curso */}
       <Route
@@ -96,7 +96,7 @@ export const AppRoutes: React.FC = () => (
           </ProtectedRoute>
         }
       />
-
+ 
       {/* Selección de materia dentro del curso */}
       <Route
         path="/docente/subjects"
@@ -106,7 +106,7 @@ export const AppRoutes: React.FC = () => (
           </ProtectedRoute>
         }
       />
-
+ 
       {/* Dashboard del docente con curso y materia seleccionados */}
       <Route
         path="/docente/dashboard"
@@ -116,7 +116,7 @@ export const AppRoutes: React.FC = () => (
           </ProtectedRoute>
         }
       />
-
+ 
       {/* Rutas específicas de docente */}
       <Route
         path="/docente/agenda"
@@ -150,7 +150,7 @@ export const AppRoutes: React.FC = () => (
           </ProtectedRoute>
         }
       />
-
+ 
       {/* ===== Grupo Familia con un solo FamilyProvider compartido ===== */}
       <Route path="/familia" element={<FamiliaLayout />}>
         <Route index element={<DashboardFamilia />} />
@@ -163,7 +163,7 @@ export const AppRoutes: React.FC = () => (
         </Route>
         <Route path="calificaciones" element={<GradesPage />} />
       </Route>
-
+ 
       {/* ===== Grupo Inspector ===== */}
       <Route
         path="/inspector"
@@ -205,7 +205,7 @@ export const AppRoutes: React.FC = () => (
           </ProtectedRoute>
         }
       />
-
+ 
       {/* Catch-all */}
       <Route path="*" element={<LoginPage />} />
     </Routes>

@@ -193,10 +193,10 @@ model AttendanceRecord {
 model Communication {
   id                  String            @id @default(uuid())
   kind                CommunicationKind @default(THREAD) // THREAD o NOTICE
-  subject             String? // solo se usa si kind = NOTICE
+  subject             String?           // solo se usa si kind = NOTICE
   student_external_id Int
   teacher_external_id Int
-  parent_id           String? // lo dejamos opcional para flexibilidad
+  parent_id           String?           // lo dejamos opcional para flexibilidad
   is_behavioral_note  Boolean           @default(false)
 
   status        CommunicationStatus @default(OPEN)
@@ -222,7 +222,7 @@ model Message {
   body                       String
   sender_role                SenderRole
   sender_parent_id           String? // si sender_role = PARENT
-  sender_teacher_external_id Int? // si sender_role = TEACHER
+  sender_teacher_external_id Int?    // si sender_role = TEACHER
   createdAt                  DateTime   @default(now())
   editedAt                   DateTime?
   deletedAt                  DateTime?
@@ -254,8 +254,8 @@ model MessageAttachment {
 
 model DisciplinaryReport {
   id                    String @id @default(uuid())
-  student_external_id   Int // ID del estudiante en MySQL
-  course_external_id    Int // ID del curso en MySQL  
+  student_external_id   Int    // ID del estudiante en MySQL
+  course_external_id    Int    // ID del curso en MySQL  
   inspector_external_id String // ID del usuario inspector
 
   // Contenido de la novedad

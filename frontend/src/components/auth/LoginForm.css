@@ -4,42 +4,40 @@
     display: flex;
     min-height: 100vh;
     width: 100%;
-    overflow: hidden; /* Previene scroll horizontal */
 }
 
 .login-left {
-    flex: 6;
+    flex: 7;
     background-color: #2F6FB6;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    min-width: 600px; /* Asegura un ancho mínimo */
+    padding: 3rem;
 }
 
 .login-right {
-    flex: 4;
+    flex: 5;
     background-color: white;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    min-width: 400px; /* Asegura un ancho mínimo */
+    padding: 3rem;
+    min-width: 500px;
 }
 
 .login-card {
     background-color: rgba(198,217,243,0.9);
-    border-radius: 12px;
-    padding: 2.5rem;
+    border-radius: 15px;
+    padding: 3rem;
     width: 100%;
     max-width: 480px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     animation: slideIn 0.3s ease-out;
 }
 
 .login-logo {
-    width: 100px; /* Logo más grande */
+    width: 100px;
     height: auto;
     margin: 0 auto 1.5rem;
     display: block;
@@ -49,8 +47,9 @@
     color: #B7891D;
     font-family: 'Merriweather', serif;
     text-align: center;
-    font-size: 2rem; /* Título más grande */
-    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
 }
 
 .login-subtitle {
@@ -59,56 +58,51 @@
     text-align: center;
     font-size: 1.4rem;
     margin-bottom: 2.5rem;
+    font-weight: 600;
 }
 
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: 1.8rem;
+    gap: 2rem;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.75rem;
 }
 
 .form-group label {
     font-family: 'Montserrat', sans-serif;
     color: #234f8a;
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .form-group input {
-    padding: 1rem 1.2rem;
+    padding: 1rem 1.5rem;
     border: 2px solid #c0d4f0;
-    border-radius: 25px;
+    border-radius: 30px;
     font-family: 'Montserrat', sans-serif;
     font-size: 1rem;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s;
+    min-height: 50px;
 }
 
 .form-group input:focus {
     outline: none;
     border-color: #2F6FB6;
-    box-shadow: 0 0 0 3px rgba(47,111,182,0.1);
+    box-shadow: 0 0 0 4px rgba(47,111,182,0.1);
 }
 
 .password-input {
     position: relative;
 }
 
-.form-links {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: -0.5rem;
-}
-
 .password-toggle {
     position: absolute;
-    right: 1.2rem;
+    right: 1.5rem;
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -116,17 +110,19 @@
     cursor: pointer;
     padding: 0.5rem;
     color: #234f8a;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
-.forgot-password, .register-link {
+.forgot-password {
     color: #234f8a;
+    text-align: right;
     font-size: 1rem;
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: color 0.2s;
+    font-weight: 500;
 }
 
-.forgot-password:hover, .register-link:hover {
+.forgot-password:hover {
     color: #B7891D;
     text-decoration: underline;
 }
@@ -134,22 +130,22 @@
 .submit-button {
     background-color: #A97D14;
     color: white;
-    padding: 1rem 2rem;
+    padding: 1rem 2.5rem;
     border: none;
-    border-radius: 25px;
+    border-radius: 30px;
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.1rem;
     font-weight: 600;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(169,125,20,0.2);
-    margin-top: 1rem;
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1);
+    min-height: 55px;
 }
 
 .submit-button:hover {
     background-color: #8f640f;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(169,125,20,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(169, 125, 20, 0.3);
 }
 
 .submit-button:active {
@@ -159,38 +155,37 @@
 .submit-button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
 }
 
 .error-message {
     color: #dc2626;
-    font-size: 0.95rem;
+    font-size: 1rem;
     text-align: center;
-    padding: 0.8rem;
+    padding: 0.75rem;
     background-color: rgba(220,38,38,0.1);
     border-radius: 8px;
-    margin-bottom: 1rem;
+    border-left: 4px solid #dc2626;
 }
 
 .ceiaf-logo {
-    max-width: 280px; /* Logo más grande */
+    max-width: 300px;
     height: auto;
-    margin-bottom: 2.5rem;
+    margin-bottom: 3rem;
 }
 
 .ceiaf-slogan {
     font-family: 'Merriweather', serif;
     color: #B7891D;
     text-align: center;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     line-height: 1.6;
+    font-weight: 400;
 }
 
 @keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
     }
     to {
         opacity: 1;
@@ -198,38 +193,40 @@
     }
 }
 
-/* Media query para pantallas grandes */
-@media (min-width: 1400px) {
-    .login-card {
-        max-width: 520px;
-        padding: 3rem;
-    }
-
-    .login-logo {
-        width: 120px;
-    }
-
-    .login-title {
-        font-size: 2.2rem;
-    }
-
-    .ceiaf-logo {
-        max-width: 320px;
-    }
-}
-
-/* Media query para pantallas medianas */
+/* Web-first responsive design */
 @media (max-width: 1200px) {
-    .login-left {
-        min-width: 500px;
-    }
-
     .login-right {
-        min-width: 350px;
+        min-width: 450px;
+        padding: 2.5rem;
+    }
+    
+    .login-card {
+        max-width: 450px;
+        padding: 2.5rem;
     }
 }
 
-/* Solo aplicar diseño móvil en pantallas muy pequeñas */
+@media (max-width: 1000px) {
+    .login-left {
+        flex: 6;
+        padding: 2rem;
+    }
+    
+    .login-right {
+        flex: 6;
+        min-width: 400px;
+        padding: 2rem;
+    }
+    
+    .ceiaf-logo {
+        max-width: 250px;
+    }
+    
+    .ceiaf-slogan {
+        font-size: 1.3rem;
+    }
+}
+
 @media (max-width: 900px) {
     .login-container {
         flex-direction: column;
@@ -243,16 +240,30 @@
 
     .login-right {
         order: -1;
-        padding: 2rem 1rem;
+        padding: 2rem;
+    }
+    
+    .login-left {
+        padding: 2rem;
+        min-height: 300px;
     }
 
     .login-card {
-        margin: 1rem;
+        margin: 0;
         max-width: 100%;
+        padding: 2rem;
+    }
+    
+    .login-title {
+        font-size: 1.8rem;
+    }
+    
+    .login-subtitle {
+        font-size: 1.2rem;
     }
 }
 
-/* Mejoras de accesibilidad */
+/* Accessibility improvements */
 :focus {
     outline: 3px solid #2F6FB6;
     outline-offset: 2px;

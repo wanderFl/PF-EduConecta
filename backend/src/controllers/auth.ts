@@ -1,25 +1,15 @@
 import { Request, Response } from 'express';
-import { PrismaClient, Role } from '@prisma/client';
+import { Role, PrismaClient } from '@prisma/client';
 import { hashPassword, verifyPassword, generateToken } from '../utils/auth';
-import { 
-  isValidEcuadorianCedula, 
-  passwordsMatch, 
-  normalizeEmail, 
-  isValidPin 
-} from '../utils/validators';
 import { generateRawToken, hashToken, compareToken } from '../utils/reset';
 import { sendPasswordResetEmail } from '../utils/email';
 
-//tiempo expiración token en minutos
-const RESET_TTL_MINUTES = 30;
-// Instancia de Prisma Client
 const prisma = new PrismaClient();
 
 export const login = async (req: Request, res: Response) => {
   try {
-    let { email, password } = req.body;
+    const { email, password } = req.body;
 
-    email = normalizeEmail(email);
     if (!email || !password) {
       return res.status(400).json({ 
         message: 'Email and password are required' 
@@ -36,11 +26,20 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
+    // Verify password
+    console.log('Attempting password verification for user:', {
+      email: user.email,
+      providedPassword: password,
+      storedHash: user.password_hash
+    });
+
     const isValidPassword = await verifyPassword(
       password, 
       user.password_hash
     );
     
+    console.log('Password verification result:', isValidPassword);
+
     if (!isValidPassword) {
       return res.status(401).json({ 
         message: 'Invalid credentials' 
@@ -63,7 +62,8 @@ export const login = async (req: Request, res: Response) => {
     const token = generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      external_id: user.external_id
     });
 
     // Return user info and token
@@ -71,7 +71,8 @@ export const login = async (req: Request, res: Response) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        external_id: user.external_id
       },
       token
     });
@@ -83,6 +84,7 @@ export const login = async (req: Request, res: Response) => {
     });
   }
 };
+
 
 //Verificar el cambio para registrar usuario
 export const register = async (req: Request, res: Response) => {
@@ -117,30 +119,107 @@ export const register = async (req: Request, res: Response) => {
     // Hash password
     const password_hash = await hashPassword(password);
 
-    // Create new user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password_hash,
-        role,
-        is_verified: false // Requires email verification
+    // Handle parent registration specifically
+    if (role === 'FAMILIA') {
+      const { 
+        full_name, 
+        cedula, 
+        home_address, 
+        work_place, 
+        security_pin 
+      } = req.body;
+
+      // Validate parent-specific fields
+      if (!full_name || !security_pin) {
+        return res.status(400).json({
+          message: 'Full name and security PIN are required for family registration'
+        });
       }
-    });
 
-    // Generate verification token (you would implement email sending here)
-    const verificationToken = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role
-    });
+      // Hash security PIN
+      const security_pin_hash = await hashPassword(security_pin);
 
-    // In a real application, you would send an email here
-    // await sendVerificationEmail(user.email, verificationToken);
+      // Check if cedula already exists (if provided)
+      if (cedula) {
+        const existingParent = await prisma.parent.findUnique({
+          where: { cedula }
+        });
 
-    res.status(201).json({
-      message: 'User registered successfully. Please check your email for verification.',
-      userId: user.id
-    });
+        if (existingParent) {
+          return res.status(400).json({
+            message: 'A parent with this cedula already exists'
+          });
+        }
+      }
+
+      // Create parent record first
+      const parent = await prisma.parent.create({
+        data: {
+          full_name,
+          cedula: cedula || null,
+          home_address: home_address || null,
+          work_place: work_place || null,
+          security_pin_hash
+        }
+      });
+
+      // Create user record linked to parent
+      const user = await prisma.user.create({
+        data: {
+          email,
+          password_hash,
+          role,
+          parent_id: parent.id,
+          is_verified: false
+        }
+      });
+
+      res.status(201).json({
+        message: 'Parent registered successfully. Please check your email for verification.',
+        userId: user.id
+      });
+
+    } else {
+      // Handle other role registrations (DIRECTIVO, DOCENTE)
+      let external_id: string | null = null;
+
+      // Para DOCENTE, intentar buscar el external_id en MySQL
+      if (role === 'DOCENTE') {
+        try {
+          const { ceiafPool } = await import('../ext/ceiafDb');
+          const [rows] = await ceiafPool.query(
+            'SELECT id_docente FROM docentes WHERE email = ? LIMIT 1',
+            [email]
+          ) as any;
+
+          if (rows && rows.length > 0) {
+            external_id = rows[0].id_docente.toString();
+            console.log(`✅ Docente found in MySQL with ID: ${external_id}`);
+          } else {
+            console.warn(`⚠️ No docente found in MySQL with email: ${email}`);
+          }
+        } catch (err) {
+          console.error('Error searching for teacher in MySQL:', err);
+          // No lanzar error, continuar sin external_id
+        }
+      }
+
+      const user = await prisma.user.create({
+        data: {
+          email,
+          password_hash,
+          role,
+          external_id: external_id,
+          is_verified: false
+        }
+      });
+
+      res.status(201).json({
+        message: 'User registered successfully. Please check your email for verification.',
+        userId: user.id,
+        external_id: external_id ? 'linked' : 'not_linked'
+      });
+    }
 
   } catch (error) {
     console.error('Registration error:', error);
@@ -150,202 +229,121 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const registerParent = async (req: Request, res: Response) => {
+export const forgotPassword = async (req: Request, res: Response) => {
   try {
-    let { 
-      full_name, 
-      email, 
-      cedula, 
-      home_address, 
-      work_place, 
-      security_pin, 
-      password,
-      confirm_password
-    } = req.body;
+    const { email } = req.body;
 
-    // Normaliza email
-    email = normalizeEmail(email);
-
-    // ✅ Validaciones de campos requeridos
-    if (!full_name || !email || !cedula || !security_pin || !password || !confirm_password) {
-      console.log('error de validacion de campos');
+    if (!email) {
       return res.status(400).json({
-        message: 'Nombre, correo, cédula, PIN, contraseña y confirmación son requeridos'
+        message: 'Email is required'
       });
     }
 
-    // ✅ Validación de cédula ecuatoriana
-    if (!isValidEcuadorianCedula(cedula)) {
-      return res.status(400).json({ message: 'Cédula ecuatoriana inválida' });
-    }
-
-    // ✅ Passwords iguales
-    if (!passwordsMatch(password, confirm_password)) {
-      return res.status(400).json({ message: 'Las contraseñas no coinciden' });
-    }
-
-    // ✅ PIN numérico 4–6 dígitos
-    if (!isValidPin(security_pin)) {
-      return res.status(400).json({ message: 'PIN inválido (debe ser numérico de 4 a 6 dígitos)' });
-    }
-
-    // ✅ Unicidad: email y cédula
-    const [existingUser, existingParent] = await Promise.all([
-      prisma.user.findUnique({ where: { email } }),
-      prisma.parent.findUnique({ where: { cedula } }),
-    ]);
-
-    if (existingUser) {
-      return res.status(400).json({ message: 'Ya existe un usuario con este correo electrónico' });
-    }
-    if (existingParent) {
-      return res.status(400).json({ message: 'Ya existe un registro con esta cédula' });
-    }
-
-    // Hashes
-    const [password_hash, pin_hash] = await Promise.all([
-      hashPassword(password),
-      hashPassword(security_pin),
-    ]);
-
-    // Create user and parent in a transaction
-    const result = await prisma.$transaction(async (prisma) => {
-      // Create parent first
-      const parent = await prisma.parent.create({
-        data: {
-          full_name,
-          cedula,
-          home_address,
-          work_place,
-          security_pin_hash: pin_hash
-        }
-      });
-
-      // Then create user with parent reference
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password_hash,
-          role: Role.FAMILIA,
-          is_verified: true, // Since we have cedula verification
-          is_active: true,
-          parent_id: parent.id
-        }
-      });
-
-      return { user, parent };
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email }
     });
 
-    // Generate JWT token
-    const token = generateToken({
-      userId: result.user.id,
-      email: result.user.email,
-      role: result.user.role
+    // Always respond with success to prevent email enumeration
+    if (!user) {
+      return res.json({
+        message: 'If the email exists, a password reset link has been sent.'
+      });
+    }
+
+    // Delete any existing reset tokens for this user
+    await prisma.passwordReset.deleteMany({
+      where: { userId: user.id }
     });
 
-    // Return user info and token
-    res.status(201).json({
-      user: {
-        id: result.user.id,
-        email: result.user.email,
-        role: result.user.role
-      },
-      token
+    // Generate new reset token
+    const rawToken = generateRawToken();
+    const hashedToken = await hashToken(rawToken);
+
+    // Store hashed token in database
+    await prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        tokenHash: hashedToken,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+      }
+    });
+
+    // Send email with raw token
+    await sendPasswordResetEmail(user.email, rawToken);
+
+    res.json({
+      message: 'If the email exists, a password reset link has been sent.'
     });
 
   } catch (error) {
-    console.error('Parent registration error:', error);
-    
-    // Provide more detailed error message for debugging
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : 'Unknown error occurred';
-      
+    console.error('Forgot password error:', error);
     res.status(500).json({
-      message: 'Ocurrió un error durante el registro',
-      error: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      message: 'An error occurred while processing your request'
     });
   }
 };
 
-export const forgotPassword = async (req: Request, res: Response) => {
-  try {
-    let { email } = req.body as { email?: string };
-    if (!email) return res.status(400).json({ message: 'Email requerido' });
-    email = normalizeEmail(email);
-
-    const user = await prisma.user.findUnique({ where: { email } });
-    // Para no filtrar si existe o no el correo, siempre respondemos 200.
-    if (user) {
-      const raw = generateRawToken();
-      const tokenHash = await hashToken(raw);
-      const expiresAt = new Date(Date.now() + RESET_TTL_MINUTES * 60 * 1000);
-
-      // Invalida tokens anteriores pendientes
-      await prisma.passwordReset.updateMany({
-        where: { userId: user.id, used: false, expiresAt: { gt: new Date() } },
-        data: { used: true },
-      });
-
-      await prisma.passwordReset.create({
-        data: { userId: user.id, tokenHash, expiresAt, used: false }
-      });
-
-      const resetUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/reset-password?token=${raw}&email=${encodeURIComponent(email)}`;
-      await sendPasswordResetEmail(email, resetUrl, RESET_TTL_MINUTES);
-
-      // En dev, puedes devolver el token para probar rápido
-      if (process.env.NODE_ENV !== 'production') {
-        return res.status(200).json({ message: 'Enviado', dev_token: raw });
-      }
-    }
-    return res.status(200).json({ message: 'Si el correo existe, recibirás instrucciones' });
-  } catch (e) {
-    console.error('forgotPassword error', e);
-    return res.status(500).json({ message: 'Error solicitando recuperación' });
-  }
-};
-
-/**
- * Resetea contraseña usando token de un solo uso
- */
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { email, token, password, confirm_password } = req.body as {
-      email?: string; token?: string; password?: string; confirm_password?: string;
-    };
+    const { token, password } = req.body;
 
-    if (!email || !token || !password || !confirm_password) {
-      return res.status(400).json({ message: 'Campos requeridos: email, token, password y confirm_password' });
-    }
-    if (password !== confirm_password) {
-      return res.status(400).json({ message: 'Las contraseñas no coinciden' });
+    if (!token || !password) {
+      return res.status(400).json({
+        message: 'Token and password are required'
+      });
     }
 
-    const normalizedEmail = normalizeEmail(email);
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    if (!user) return res.status(400).json({ message: 'Token inválido' });
-
-    // Busca token válido y no usado
-    const pr = await prisma.passwordReset.findFirst({
-      where: { userId: user.id, used: false, expiresAt: { gt: new Date() } },
-      orderBy: { expiresAt: 'desc' }
+    // Find all reset records (not expired)
+    const resetRecords = await prisma.passwordReset.findMany({
+      where: {
+        expiresAt: {
+          gt: new Date()
+        }
+      },
+      include: {
+        user: true
+      }
     });
-    if (!pr) return res.status(400).json({ message: 'Token inválido o expirado' });
 
-    const ok = await compareToken(token, pr.tokenHash);
-    if (!ok) return res.status(400).json({ message: 'Token inválido' });
+    // Find matching token
+    let validRecord = null;
+    for (const record of resetRecords) {
+      const isValid = await compareToken(token, record.tokenHash);
+      if (isValid) {
+        validRecord = record;
+        break;
+      }
+    }
 
-    const password_hash = await hashPassword(password);
+    if (!validRecord) {
+      return res.status(400).json({
+        message: 'Invalid or expired reset token'
+      });
+    }
 
-    await prisma.$transaction([
-      prisma.user.update({ where: { id: user.id }, data: { password_hash } }),
-      prisma.passwordReset.update({ where: { id: pr.id }, data: { used: true } })
-    ]);
+    // Hash new password
+    const newPasswordHash = await hashPassword(password);
 
-    return res.status(200).json({ message: 'Contraseña actualizada con éxito' });
-  } catch (e) {
-    console.error('resetPassword error', e);
-    return res.status(500).json({ message: 'Error al resetear la contraseña' });
+    // Update user password
+    await prisma.user.update({
+      where: { id: validRecord.userId },
+      data: { password_hash: newPasswordHash }
+    });
+
+    // Delete the used reset token
+    await prisma.passwordReset.delete({
+      where: { id: validRecord.id }
+    });
+
+    res.json({
+      message: 'Password has been reset successfully'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      message: 'An error occurred while resetting your password'
+    });
   }
 };
