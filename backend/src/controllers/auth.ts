@@ -120,36 +120,36 @@ export const login = async (req: Request, res: Response) => {
 
 
 
-    // Generate JWT token
-
-    const token = generateToken({
-
+    // CORRECCIÓN: Preparar el payload del token incluyendo external_id si es docente
+    const tokenPayload: any = {
       userId: user.id,
-
       email: user.email,
-
       role: user.role
+    };
 
-    });
+    if (user.role === Role.DOCENTE) {
+      tokenPayload.external_id = user.external_id;
+    }
 
+    // Generate JWT token con el payload completo
+    const token = generateToken(tokenPayload);
 
+    // Prepare user response object
+    const userResponse: any = {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    };
+
+    // If role is DOCENTE, include external_id
+    if (user.role === Role.DOCENTE) {
+      userResponse.external_id = user.external_id;
+    }
 
     // Return user info and token
-
     res.json({
-
-      user: {
-
-        id: user.id,
-
-        email: user.email,
-
-        role: user.role
-
-      },
-
+      user: userResponse,
       token
-
     });
 
 

@@ -38,13 +38,13 @@ router.post("/teacher", createTeacherConversation);
 router.get("/teacher/students", searchTeacherStudents);
 
 // Obtener mensajes de una conversación
-router.get("/conversation/:conversationId/messages", getConversationMessages);
+router.get("/conversation/:conversationId/messages", authenticate,authorize(Role.DOCENTE),getConversationMessages);
 
 // Enviar mensaje en una conversación
-router.post("/conversation/:conversationId/messages", sendMessage);
+router.post("/conversation/:conversationId/messages", authenticate,authorize(Role.DOCENTE),sendMessage);
 
 // Archivar conversación
-router.put("/conversation/:conversationId/archive", archiveConversation);
+router.put("/conversation/:conversationId/archive", authenticate,authorize(Role.DOCENTE),archiveConversation);
 
 /* ===========================================================
    SECCIÓN PADRE / FAMILIA
@@ -62,10 +62,10 @@ router.get("/parent/conversations", listParentConversations);
 router.post("/parent/conversations", createConversation);
 
 // (C) Listar mensajes con paginación
-router.get("/conversations/:id/messages", listMessages);
+router.get("/conversations/:id/messages",authenticate,authorize(Role.FAMILIA), listMessages);
 
 // (D) Enviar mensaje (rol PARENT)
-router.post("/conversations/:id/messages", postMessage);
+router.post("/conversations/:id/messages", authenticate,authorize(Role.FAMILIA), postMessage);
 
 // (E) Buscar docentes del estudiante (solo para padres)
 router.get("/parent/teachers", searchTeachersForStudent);

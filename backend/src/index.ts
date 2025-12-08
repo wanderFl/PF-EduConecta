@@ -84,7 +84,7 @@ app.get("/api/communications-status", (req, res) => {
 app.use("/api/auth", authRoutes);
 
 // En dev estaba montado así (da /api/protected, /api/loquesea definido en el router)
-app.use("/api", protectedRoutes);
+app.use("/api/protected", protectedRoutes);
 
 // Rutas que añadiste tú (docente, admin, etc.)
 app.use("/api/students", studentsRoutes);
