@@ -23,8 +23,8 @@ enum AttendanceStatus {
 }
 
 enum CommunicationKind {
-  THREAD  // chat tipo WhatsApp
-  NOTICE  // comunicado / anuncio
+  THREAD // chat tipo WhatsApp
+  NOTICE // comunicado / anuncio
 }
 
 enum SenderRole {
@@ -54,9 +54,9 @@ model User {
 
   passwordResets PasswordReset[]
 
-  @@map("users")
   @@index([role])
   @@index([external_id])
+  @@map("users")
 }
 
 // PASSWORD RESET: tokens para reset de contraseña
@@ -114,9 +114,9 @@ model Task {
   file_reference      String?
   teacher_external_id Int
   course_external_id  Int
-  trimestre           Int?     // Trimestre (1, 2, 3)
-  aporte              Int?     // Aporte (1, 2)
-  subject_external_id Int?     // Materia externa (CEIAF)
+  trimestre           Int? // Trimestre (1, 2, 3)
+  aporte              Int? // Aporte (1, 2)
+  subject_external_id Int? // Materia externa (CEIAF)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -196,8 +196,8 @@ model Communication {
   subject             String?           // solo se usa si kind = NOTICE
   student_external_id Int
   teacher_external_id Int
-  parent_id           String?          // lo dejamos opcional para flexibilidad
-  is_behavioral_note  Boolean          @default(false)
+  parent_id           String?           // lo dejamos opcional para flexibilidad
+  is_behavioral_note  Boolean           @default(false)
 
   status        CommunicationStatus @default(OPEN)
   createdAt     DateTime            @default(now())
@@ -253,21 +253,21 @@ model MessageAttachment {
 }
 
 model DisciplinaryReport {
-  id                     String   @id @default(uuid())
-  student_external_id    Int      // ID del estudiante en MySQL
-  course_external_id     Int      // ID del curso en MySQL  
-  inspector_external_id  String   // ID del usuario inspector
+  id                    String @id @default(uuid())
+  student_external_id   Int    // ID del estudiante en MySQL
+  course_external_id    Int    // ID del curso en MySQL  
+  inspector_external_id String // ID del usuario inspector
 
   // Contenido de la novedad
   title       String
-  description String   @db.Text
-  severity    String   // LEVE, MODERADA, GRAVE
-  category    String   // COMPORTAMIENTO, ACADEMICO, ASISTENCIA, UNIFORME, OTROS
+  description String @db.Text
+  severity    String // LEVE, MODERADA, GRAVE
+  category    String // COMPORTAMIENTO, ACADEMICO, ASISTENCIA, UNIFORME, OTROS
 
   // Estado y seguimiento
   status           String    @default("ENVIADA") // ENVIADA, LEIDA, RESPONDIDA
   parent_viewed_at DateTime?
-  parent_response  String?  @db.Text
+  parent_response  String?   @db.Text
 
   // Metadatos
   incident_date DateTime
