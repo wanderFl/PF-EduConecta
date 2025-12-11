@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import { buildObjectKey, getPresignedPutUrl, getPresignedGetUrl } from "../utils/s3";
+import { buildObjectKey, buildConversationObjectKey, getPresignedPutUrl, getPresignedGetUrl } from "../utils/s3";
 
 const prisma = new PrismaClient();
 
@@ -62,11 +62,11 @@ export const createSignedUploadUrl = async (req: Request, res: Response) => {
 
 
 /**
- * GET /api/uploads/submission-download-url?fileRef=...
- * fileRef = lo que guardaste en SubmissionGrade.file_reference
- *         (en tu caso es la URL completa https://bucket.s3.region.amazonaws.com/...)
+ * GET /api/uploads/download-url?fileRef=...
+ * Genera URL firmada para descargar cualquier archivo (Tareas o Conversaciones)
+ * fileRef = URL completa o objectKey
  */
-export const getSubmissionDownloadUrl = async (req: Request, res: Response) => {
+export const getFileDownloadUrl = async (req: Request, res: Response) => {
   try {
     const fileRef = req.query.fileRef;
     if (!fileRef || typeof fileRef !== "string") {
@@ -89,7 +89,51 @@ export const getSubmissionDownloadUrl = async (req: Request, res: Response) => {
     const url = await getPresignedGetUrl(objectKey);
     return res.json({ url });
   } catch (e) {
-    console.error("getSubmissionDownloadUrl error", e);
+    console.error("getFileDownloadUrl error", e);
     return res.status(500).json({ message: "Error generando URL de descarga" });
+  }
+};
+
+// Alias para mantener compatibilidad con rutas existentes de tareas
+export const getSubmissionDownloadUrl = getFileDownloadUrl;
+
+export const createSignedConversationUploadUrl = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { studentId, conversationId, filename, contentType } = req.body as {
+      studentId?: number | string;
+      conversationId?: string;
+      filename?: string;
+      contentType?: string;
+    };
+
+    if (!userId || !studentId || !conversationId || !filename || !contentType) {
+      return res.status(400).json({ message: "Datos incompletos" });
+    }
+    const sid = Number(studentId);
+    if (!Number.isInteger(sid)) {
+      return res.status(400).json({ message: "studentId inválido" });
+    }
+
+    // Validar vínculo padre ↔ estudiante
+    await ensureParentStudentLink(userId, sid);
+
+    // Validar existencia de la conversación
+    const conv = await prisma.communication.findUnique({ where: { id: conversationId } });
+    if (!conv) return res.status(404).json({ message: "Conversación no encontrada" });
+
+    if (conv.student_external_id !== sid) {
+      return res.status(403).json({ message: "La conversación no corresponde al estudiante" });
+    }
+
+    const objectKey = buildConversationObjectKey(sid, conversationId!, filename);
+    const { uploadUrl, fileUrl } = await getPresignedPutUrl(objectKey, contentType);
+
+    return res.json({ uploadUrl, fileUrl, objectKey });
+  } catch (e: any) {
+    console.error("createSignedConversationUploadUrl error:", e);
+    if (e.message === "NO_PARENT") return res.status(403).json({ message: "Usuario no es padre" });
+    if (e.message === "NOT_LINKED") return res.status(403).json({ message: "No tienes permiso sobre este estudiante" });
+    return res.status(500).json({ message: "Error generando URL de subida" });
   }
 };

@@ -47,6 +47,12 @@ export function buildJustificationKey(studentId: number, ymd: string, filename: 
   return `attendance/${studentId}/${ymd}/${ts}_${safe}`;
 }
 
+export function buildConversationObjectKey(studentId: number, conversationId: string, filename: string) {
+  const safe = filename.replace(/[^\w.\-]+/g, "_");
+  const ts = Date.now();
+  return `conversations/${studentId}/${conversationId}/${ts}_${safe}`;
+}
+
 // 🔽 NUEVO: URL firmada para DESCARGA (GET)
 export async function getPresignedGetUrl(objectKey: string) {
   const get = new GetObjectCommand({
