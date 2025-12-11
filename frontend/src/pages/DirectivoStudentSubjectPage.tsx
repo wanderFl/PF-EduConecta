@@ -57,13 +57,14 @@ const DirectivoStudentSubjectPage: React.FC = () => {
     });
   }, [payload]);
 
-  const formatDate = (iso: string | null) => {
+  const formatDate = (iso: string | null, forceUtc = false) => {
     if (!iso) return "—";
     const d = new Date(iso);
     return d.toLocaleDateString("es-EC", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
+      timeZone: forceUtc ? "UTC" : undefined,
     });
   };
 
@@ -207,7 +208,7 @@ const DirectivoStudentSubjectPage: React.FC = () => {
                                           {/* O puedes dejar vacío o repetir el aporte si quieres */}
                                         </td>
                                         <td>{r.title}</td>
-                                        <td className="td-right">{formatDate(r.due_date)}</td>
+                                        <td className="td-right">{formatDate(r.due_date, true)}</td>
                                         <td className="td-right">
                                           {r.submitted_at ? formatDate(r.submitted_at) : "—"}
                                         </td>

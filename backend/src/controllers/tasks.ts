@@ -88,6 +88,7 @@ export const getStudentTasks = async (req: Request, res: Response) => {
         teacher_external_id: t.teacher_external_id,
         course_external_id: t.course_external_id,
         instructions: t.instructions ?? null,
+        file_reference: t.file_reference ?? null,
         status: sub ? 'SUBMITTED' : 'PENDING',
         grade: sub?.grade ?? null,
         submission_file: sub?.file_reference ?? null,

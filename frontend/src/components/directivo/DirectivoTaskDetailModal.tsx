@@ -11,13 +11,14 @@ interface Props {
 const DirectivoTaskDetailModal: React.FC<Props> = ({ task, onClose }) => {
   if (!task) return null;
 
-  const formatDate = (iso: string | null) => {
+  const formatDate = (iso: string | null, forceUtc = false) => {
     if (!iso) return "—";
     const d = new Date(iso);
     return d.toLocaleDateString("es-EC", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
+      timeZone: forceUtc ? "UTC" : undefined,
     });
   };
   const handleOpenFile = async () => {
@@ -52,7 +53,7 @@ const DirectivoTaskDetailModal: React.FC<Props> = ({ task, onClose }) => {
         <div className="dir-modal-body">
           <div className="dir-modal-row">
             <span className="label">Fecha entrega:</span>
-            <span>{formatDate(task.due_date)}</span>
+            <span>{formatDate(task.due_date, true)}</span>
           </div>
           <div className="dir-modal-row">
             <span className="label">Fecha envío:</span>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import type { PendingTask } from "../../types";
 import { getSignedUploadUrl, submitTaskDelivery } from "../../services/familia";
+import { getFileDownloadUrl } from "../../services/uploads";
 import { useFamily } from "../../contexts/useFamily";
 
 type Props = {
@@ -21,7 +22,8 @@ const TaskSubmissionModal: React.FC<Props> = ({ open, task, onClose, onSubmitted
   const formattedDate = useMemo(() => {
     if (!task) return "";
     const d = new Date(task.due_date);
-    return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: undefined });
+    // Usar UTC para evitar desfase de zona horaria si la fecha viene como YYYY-MM-DD o midnight UTC
+    return d.toLocaleDateString(undefined, { dateStyle: "medium", timeZone: "UTC" });
   }, [task]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,6 +41,18 @@ const TaskSubmissionModal: React.FC<Props> = ({ open, task, onClose, onSubmitted
   const handleClose = () => {
     reset();
     onClose();
+  };
+
+  const handleDownloadTaskFile = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!task?.file_reference) return;
+    try {
+      const url = await getFileDownloadUrl(task.file_reference);
+      window.open(url, "_blank");
+    } catch (err) {
+      console.error("Error descargando archivo de tarea:", err);
+      alert("No se pudo descargar el archivo adjunto.");
+    }
   };
 
   // Flujo completo: URL firmada -> PUT S3 -> registrar entrega
@@ -111,6 +125,24 @@ const TaskSubmissionModal: React.FC<Props> = ({ open, task, onClose, onSubmitted
               <div className="ts-label">Instrucciones</div>
               <div className="ts-text">
                 {task.instructions ?? "Adjunta el archivo solicitado y agrega comentarios si es necesario."}
+              </div>
+            </div>
+
+            <div className="ts-field">
+              <div className="ts-label">Archivo Adjunto</div>
+              <div className="ts-text">
+                {task.file_reference ? (
+                  <button 
+                    type="button"
+                    className="ts-btn secondary small" 
+                    onClick={handleDownloadTaskFile}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                  >
+                    📥 Descargar material de apoyo
+                  </button>
+                ) : (
+                  <span className="muted" style={{ fontStyle: "italic", color: "#666" }}>Sin archivo adjunto</span>
+                )}
               </div>
             </div>
 

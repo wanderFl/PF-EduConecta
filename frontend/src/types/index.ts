@@ -107,6 +107,7 @@ export interface PendingTask {
   grade?: number | null;
   submission_file?: string | null;
   instructions?: string | null;
+  file_reference?: string | null;
 }
  
 // ---- Asistencia ----
