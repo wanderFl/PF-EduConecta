@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { ceiafPool } from '../ext/ceiafDb';
 
+import { sendNotification } from "../services/notificationSender";
+
 const prisma = new PrismaClient();
 
 // Obtener cursos y paralelos desde MySQL
@@ -109,6 +111,29 @@ export const createDisciplinaryReport = async (req: Request, res: Response) => {
       )
     );
     
+    // NOTIFICACIÓN: Novedad de Disciplina
+    (async () => {
+      try {
+        for (const report of reports) {
+          const link = await prisma.parentStudentLink.findFirst({
+            where: { student_external_id: String(report.student_external_id) },
+            include: { parent: { include: { user: true } } }
+          });
+          if (link?.parent?.user?.id) {
+            sendNotification(
+              link.parent.user.id,
+              "Novedad de Disciplina",
+              `Se ha registrado una novedad: ${title} (${severity})`,
+              "DISCIPLINARY_REPORT",
+              { reportId: report.id, severity }
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Error sending disciplinary notification:", e);
+      }
+    })();
+
     res.status(201).json({
       message: `Se crearon ${reports.length} reporte(s) exitosamente`,
       reports

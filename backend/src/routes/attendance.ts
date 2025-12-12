@@ -3,6 +3,8 @@ import { Role, PrismaClient } from '@prisma/client';
 import { authenticate, authorize } from '../middlewares/auth';
 import { ceiafPool } from '../ext/ceiafDb';
 
+import { sendNotification } from "../services/notificationSender";
+
 const router = Router();
 const prisma = new PrismaClient();
 router.use(authenticate, authorize(Role.INSPECTOR));
@@ -161,7 +163,32 @@ router.post('/', async (req, res) => {
             month: attendanceDate.getMonth() + 1
           }
         });
-      }    res.json({
+      }
+
+      // NOTIFICACIÓN: Alerta de Inasistencia
+      if (status === 'ABSENT_UNJUSTIFIED') {
+        (async () => {
+          try {
+            const link = await prisma.parentStudentLink.findFirst({
+              where: { student_external_id: String(student_external_id) },
+              include: { parent: { include: { user: true } } }
+            });
+            if (link?.parent?.user?.id) {
+              sendNotification(
+                link.parent.user.id,
+                "Alerta de Inasistencia",
+                `Se ha registrado una falta injustificada para el estudiante.`,
+                "ATTENDANCE_ALERT",
+                { studentId: student_external_id, date }
+              );
+            }
+          } catch (e) {
+            console.error("Error sending attendance notification:", e);
+          }
+        })();
+      }
+
+    res.json({
       success: true,
       data: record,
       message: existingRecord ? 'Registro actualizado exitosamente' : 'Registro creado exitosamente'
@@ -569,6 +596,28 @@ router.put('/:id/justify-status', async (req, res) => {
       where: { id },
       data: { status: newStatus }
     });
+
+    // NOTIFICACIÓN: Resolución de Justificación
+    (async () => {
+      try {
+        const link = await prisma.parentStudentLink.findFirst({
+          where: { student_external_id: String(existingRecord.student_external_id) },
+          include: { parent: { include: { user: true } } }
+        });
+        if (link?.parent?.user?.id) {
+          const resolution = action === 'accept' ? 'Aceptada' : 'Rechazada';
+          sendNotification(
+            link.parent.user.id,
+            "Resolución de Justificación",
+            `La justificación ha sido ${resolution}.`,
+            "JUSTIFICATION_RESOLUTION",
+            { recordId: id, status: newStatus }
+          );
+        }
+      } catch (e) {
+        console.error("Error sending justification resolution notification:", e);
+      }
+    })();
 
     res.json({
       success: true,

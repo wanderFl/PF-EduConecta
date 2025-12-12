@@ -699,3 +699,37 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 
 };
+
+export const registerDeviceToken = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+    const { token, platform } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!token || !platform) {
+      return res.status(400).json({ message: 'Token and platform are required' });
+    }
+
+    await prisma.deviceToken.upsert({
+      where: { fcm_token: token },
+      update: {
+        user_id: userId,
+        platform,
+        updatedAt: new Date()
+      },
+      create: {
+        user_id: userId,
+        fcm_token: token,
+        platform
+      }
+    });
+
+    return res.status(200).json({ message: 'Device token registered' });
+  } catch (error) {
+    console.error('Error registering device token:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};

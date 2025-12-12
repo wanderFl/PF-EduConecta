@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { PrismaClient, CommunicationKind, SenderRole, Role } from "@prisma/client";
 import { ceiafPool, getStudentTeachersLikeName } from "../ext/ceiafDb";
 
+import { sendNotification } from "../services/notificationSender";
+
 const prisma = new PrismaClient();
 
 /**
@@ -119,6 +121,28 @@ export const createTeacherConversation = async (req: Request, res: Response) => 
         messages: true,
       },
     });
+
+    // NOTIFICACIÓN: Nuevo Comunicado
+    if (parentLink?.parent_id) {
+      (async () => {
+        try {
+          const parentUser = await prisma.user.findUnique({
+            where: { parent_id: parentLink.parent_id },
+          });
+          if (parentUser) {
+            sendNotification(
+              parentUser.id,
+              "Nuevo Comunicado",
+              `Has recibido un nuevo mensaje del docente.`,
+              "NEW_COMMUNICATION",
+              { communicationId: communication.id, studentId: student_external_id }
+            );
+          }
+        } catch (e) {
+          console.error("Error sending notification for communication:", e);
+        }
+      })();
+    }
 
     res.status(201).json(communication);
   } catch (error) {

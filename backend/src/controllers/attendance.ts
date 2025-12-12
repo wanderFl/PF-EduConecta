@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { getPresignedPutUrl, buildJustificationKey } from "../utils/s3";
 
+import { sendNotification } from "../services/notificationSender";
+
 const prisma = new PrismaClient();
 
 async function ensureParentStudentLink(userId: string, studentId: number) {
@@ -156,6 +158,28 @@ export const submitJustification = async (req: Request, res: Response) => {
         justification_file_reference: file_reference,
       },
     });
+
+    // NOTIFICACIÓN: Nueva Solicitud de Justificación (a Inspectores)
+    (async () => {
+      try {
+        // Buscar usuarios con rol INSPECTOR
+        const inspectors = await prisma.user.findMany({
+          where: { role: "INSPECTOR" },
+        });
+        
+        for (const inspector of inspectors) {
+          sendNotification(
+            inspector.id,
+            "Nueva Solicitud de Justificación",
+            `Se ha recibido una justificación para el estudiante ID ${sid}.`,
+            "JUSTIFICATION_REQUEST",
+            { studentId: sid, date }
+          );
+        }
+      } catch (e) {
+        console.error("Error sending justification request notification:", e);
+      }
+    })();
 
     return res.status(201).json({ message: "Justificación enviada", record });
   } catch (e) {

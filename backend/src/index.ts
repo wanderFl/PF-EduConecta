@@ -145,9 +145,16 @@ app.use(
   }
 );
 
+import { createServer } from "http";
+import { initSocket } from "./socket";
+import "./jobs/reminderJobs"; // Inicializar cron jobs
+
 // Default to 3000 to match frontend dev defaults and compiled/dist behavior
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+initSocket(httpServer);
+
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

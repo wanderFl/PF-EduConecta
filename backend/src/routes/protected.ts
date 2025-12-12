@@ -27,6 +27,8 @@ router.get(
   }
 );
 
+import { sendNotification } from "../services/notificationSender";
+
 // Endpoint para crear tarea (soporta archivo via FormData que se sube a S3)
 router.post(
   '/docente/tareas/create',
@@ -403,6 +405,28 @@ router.post(
           }
         });
       }
+
+      // NOTIFICACIÓN: Nueva Calificación
+      (async () => {
+        try {
+          const link = await prisma.parentStudentLink.findFirst({
+            where: { student_external_id: String(studentId) },
+            include: { parent: { include: { user: true } } }
+          });
+
+          if (link?.parent?.user?.id) {
+            sendNotification(
+              link.parent.user.id,
+              "Nueva Calificación",
+              `Se ha calificado la tarea "${task.title}". Nota: ${gradeNum}`,
+              "GRADE_UPDATED",
+              { taskId: tareaId, studentId, grade: gradeNum }
+            );
+          }
+        } catch (notifError) {
+          console.error("Error sending notification for grade:", notifError);
+        }
+      })();
 
       res.json({
         success: true,

@@ -13,8 +13,11 @@ import {
   getTasksStats
 } from '../services/tasks';
 import { authenticate, authorize } from '../middlewares/auth';
+import { PrismaClient } from '@prisma/client';
+import { sendNotification } from '../services/notificationSender';
 
 const router = Router();
+const prisma = new PrismaClient();
 
 // Middleware de autenticación para todas las rutas
 router.use(authenticate, authorize(Role.DOCENTE));
@@ -305,6 +308,41 @@ router.post('/', async (req, res) => {
 
     const task = await createTask(taskData);
     
+    // NOTIFICACIÓN: Nueva Tarea Asignada
+    (async () => {
+      try {
+        // Importar ceiafPool dinámicamente
+        const { ceiafPool } = require('../ext/ceiafDb');
+        const [students] = await ceiafPool.query(
+          'SELECT id_estudiante FROM estudiantes WHERE id_curso = ?',
+          [taskData.course_external_id]
+        );
+        
+        if (Array.isArray(students)) {
+          const studentIds = students.map((s: any) => String(s.id_estudiante));
+          
+          const links = await prisma.parentStudentLink.findMany({
+            where: { student_external_id: { in: studentIds } },
+            include: { parent: { include: { user: true } } }
+          });
+          
+          for (const link of links) {
+            if (link.parent?.user?.id) {
+              sendNotification(
+                link.parent.user.id,
+                "Nueva Tarea Asignada",
+                `Se ha asignado la tarea "${task.title}" en el curso.`,
+                "NEW_TASK",
+                { taskId: task.id, courseId: taskData.course_external_id }
+              );
+            }
+          }
+        }
+      } catch (notifError) {
+        console.error("Error sending notifications for new task:", notifError);
+      }
+    })();
+
     res.status(201).json({
       success: true,
       data: task,

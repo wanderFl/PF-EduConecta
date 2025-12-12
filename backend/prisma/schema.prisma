@@ -53,10 +53,25 @@ model User {
   is_verified Boolean  @default(false)
 
   passwordResets PasswordReset[]
+  deviceTokens   DeviceToken[]
 
   @@index([role])
   @@index([external_id])
   @@map("users")
+}
+
+// DEVICE TOKENS: FCM tokens para notificaciones push
+model DeviceToken {
+  id        String   @id @default(uuid())
+  user_id   String
+  fcm_token String   @unique
+  platform  String   // 'web', 'android', 'ios'
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("device_tokens")
 }
 
 // PASSWORD RESET: tokens para reset de contraseña
