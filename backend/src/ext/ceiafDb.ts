@@ -4,20 +4,21 @@ import 'dotenv/config';
 const { DATABASE_CEIAF_URL } = process.env;
 
 if (!DATABASE_CEIAF_URL) {
-  throw new Error('DATABASE_CEIAF_URL no está definida en .env');
+  console.warn('⚠️  DATABASE_CEIAF_URL no está definida en .env - algunas funcionalidades estarán limitadas');
 }
 
 /**
  * Crea un pool de conexiones a MySQL (Railway).
  * Si Railway exige SSL, descomenta la sección ssl.
  */
-export const ceiafPool = mysql.createPool({
+export const ceiafPool = DATABASE_CEIAF_URL ? mysql.createPool({
   uri: DATABASE_CEIAF_URL,
   // ssl: { rejectUnauthorized: true }, // <- habilítalo si te da error de SSL
   waitForConnections: true,
   connectionLimit: 5,
   queueLimit: 0,
-});
+  connectTimeout: 10000, // 10 segundos de timeout
+}) : null as any;
 /**
  * Obtiene el nombre de la materia “principal” de un docente.
  * Criterio: la asignación (docente_materia_curso) con ano_lectivo más reciente.

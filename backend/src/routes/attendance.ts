@@ -513,31 +513,51 @@ router.get('/pending-justifications', async (req, res) => {
     });
 
     // Obtener información de estudiantes desde MySQL CEIAF
-    const recordsWithStudentInfo = await Promise.all(
-      records.map(async (record) => {
-        try {
-          const [studentRows] = await ceiafPool.execute(
-            'SELECT nombres, apellidos FROM estudiantes WHERE id_estudiante = ?',
-            [record.student_external_id]
-          ) as any;
+    let recordsWithStudentInfo;
+    
+    // Verificar si el pool de conexiones está disponible
+    if (!ceiafPool) {
+      console.warn('⚠️  CEIAF database not configured');
+      recordsWithStudentInfo = records.map(record => ({
+        ...record,
+        student_name: `Estudiante ID: ${record.student_external_id}`
+      }));
+    } else {
+      try {
+        recordsWithStudentInfo = await Promise.all(
+          records.map(async (record) => {
+            try {
+              const [studentRows] = await ceiafPool.execute(
+                'SELECT nombres, apellidos FROM estudiantes WHERE id_estudiante = ?',
+                [record.student_external_id]
+              ) as any;
 
-          const student = studentRows[0] || {};
-          
-          return {
-            ...record,
-            student_name: student.nombres && student.apellidos 
-              ? `${student.apellidos} ${student.nombres}`
-              : 'Desconocido'
-          };
-        } catch (error) {
-          console.error(`Error fetching student ${record.student_external_id}:`, error);
-          return {
-            ...record,
-            student_name: 'Desconocido'
-          };
-        }
-      })
-    );
+              const student = studentRows[0] || {};
+              
+              return {
+                ...record,
+                student_name: student.nombres && student.apellidos 
+                  ? `${student.apellidos} ${student.nombres}`
+                  : 'Desconocido'
+              };
+            } catch (error) {
+              console.error(`Error fetching student ${record.student_external_id}:`, error);
+              return {
+                ...record,
+                student_name: 'Desconocido'
+              };
+            }
+          })
+        );
+      } catch (poolError) {
+        // Si falla la conexión a MySQL CEIAF, devolver datos sin nombres de estudiantes
+        console.error('Error connecting to CEIAF database:', poolError);
+        recordsWithStudentInfo = records.map(record => ({
+          ...record,
+          student_name: `Estudiante ID: ${record.student_external_id}`
+        }));
+      }
+    }
 
     res.json({
       success: true,
@@ -559,7 +579,7 @@ router.get('/pending-justifications', async (req, res) => {
 router.put('/:id/justify-status', async (req, res) => {
   try {
     const { id } = req.params;
-    const { action } = req.body; // 'accept' o 'reject'
+    const { action, inspectorComment } = req.body; // 'accept' o 'reject' y comentario opcional
 
     if (!action || !['accept', 'reject'].includes(action)) {
       return res.status(400).json({
@@ -594,7 +614,10 @@ router.put('/:id/justify-status', async (req, res) => {
 
     const updatedRecord = await prisma.attendanceRecord.update({
       where: { id },
-      data: { status: newStatus }
+      data: { 
+        status: newStatus,
+        inspector_comment: inspectorComment || null
+      }
     });
 
     // NOTIFICACIÓN: Resolución de Justificación

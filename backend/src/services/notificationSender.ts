@@ -4,19 +4,27 @@ import { getIO } from "../socket";
 
 // Inicializar Firebase Admin (Asegúrate de tener las credenciales configuradas)
 // En producción, usa variables de entorno para las credenciales
+let firebaseInitialized = false;
 if (!admin.apps.length) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Reemplazo crítico para manejar los saltos de línea en variables de entorno
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-    console.log('✅ Firebase Admin inicializado correctamente');
+    // Solo inicializar si todas las credenciales están presentes
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          // Reemplazo crítico para manejar los saltos de línea en variables de entorno
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+      });
+      firebaseInitialized = true;
+      console.log('✅ Firebase Admin inicializado correctamente');
+    } else {
+      console.log('⚠️  Firebase Admin no configurado (credenciales faltantes en .env)');
+    }
   } catch (error) {
     console.error('❌ Error inicializando Firebase Admin:', error);
+    console.log('⚠️  Notificaciones push deshabilitadas');
   }
 }
 

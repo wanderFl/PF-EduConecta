@@ -50,12 +50,27 @@ function getTransporter(): nodemailer.Transporter {
  * Verifica la conexión SMTP al iniciar el servidor (opcional, pero útil).
  */
 export async function verifySmtpConnection(): Promise<void> {
-  const t = getTransporter();
   try {
+    // Verificar que la configuración esté completa antes de intentar conectar
+    const {
+      SMTP_HOST,
+      SMTP_PORT,
+      SMTP_USER,
+      SMTP_PASS,
+      SMTP_FROM,
+    } = process.env;
+
+    if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+      console.log('[SMTP] Configuración incompleta - emails deshabilitados ⚠️');
+      return;
+    }
+
+    const t = getTransporter();
     await t.verify();
     console.log('[SMTP] Conexión verificada correctamente ✔️');
   } catch (err) {
     console.error('[SMTP] Error verificando conexión ❌', err);
+    console.log('[SMTP] Emails deshabilitados ⚠️');
   }
 }
 

@@ -190,6 +190,7 @@ model AttendanceRecord {
   status                       AttendanceStatus
   justification_file_reference String?
   justification_reason         String?
+  inspector_comment            String?          // comentario del inspector al aceptar/rechazar
   course_external_id           Int? // curso al que pertenece ese día
 
   // Claves de tiempo

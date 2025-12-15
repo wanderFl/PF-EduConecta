@@ -10,6 +10,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src", "src/temporal/test-connection.ts"],
+  "include": ["src"],
   "exclude": ["node_modules"]
 }

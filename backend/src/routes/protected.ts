@@ -541,4 +541,130 @@ router.get(
     }
   }
 );
+
+// PUT /protected/docente/tareas/:taskId - Actualizar tarea
+router.put(
+  '/docente/tareas/:taskId',
+  authenticate,
+  authorize(Role.DOCENTE),
+  ...uploadTaskFileToS3,
+  handleUploadError,
+  async (req: Request, res: Response) => {
+    try {
+      const { taskId } = req.params;
+      const { title, instructions, due_date, max_points, trimestre, aporte, removeFile, fileUrl } = req.body;
+
+      // Verificar que la tarea existe y pertenece al docente
+      const task = await prisma.task.findUnique({
+        where: { id: taskId }
+      });
+
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          message: 'Tarea no encontrada'
+        });
+      }
+
+      // Verificar que el docente autenticado es el creador de la tarea
+      const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+      if (!teacherExternalId || task.teacher_external_id !== teacherExternalId) {
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permisos para editar esta tarea'
+        });
+      }
+
+      // Actualizar la tarea
+      const taskData: any = {};
+      if (title !== undefined) taskData.title = title;
+      if (instructions !== undefined) taskData.instructions = instructions;
+      if (due_date !== undefined) taskData.due_date = new Date(due_date);
+      if (max_points !== undefined) taskData.max_points = parseFloat(max_points);
+      if (trimestre !== undefined) taskData.trimestre = trimestre ? parseInt(trimestre) : null;
+      if (aporte !== undefined) taskData.aporte = aporte ? parseInt(aporte) : null;
+
+      // Manejo de archivos
+      if (removeFile === 'true') {
+        // Eliminar archivo existente
+        taskData.file_reference = null;
+      } else if (fileUrl) {
+        // Nuevo archivo subido
+        taskData.file_reference = fileUrl;
+      }
+
+      const updatedTask = await prisma.task.update({
+        where: { id: taskId },
+        data: taskData
+      });
+
+      res.json({
+        success: true,
+        data: updatedTask,
+        message: 'Tarea actualizada exitosamente'
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al actualizar la tarea'
+      });
+    }
+  }
+);
+
+// DELETE /protected/docente/tareas/:taskId - Eliminar tarea
+router.delete(
+  '/docente/tareas/:taskId',
+  authenticate,
+  authorize(Role.DOCENTE),
+  async (req: Request, res: Response) => {
+    try {
+      const { taskId } = req.params;
+
+      // Verificar que la tarea existe y pertenece al docente
+      const task = await prisma.task.findUnique({
+        where: { id: taskId }
+      });
+
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          message: 'Tarea no encontrada'
+        });
+      }
+
+      // Verificar que el docente autenticado es el creador de la tarea
+      const teacherExternalId = req.user?.external_id ? parseInt(req.user.external_id) : null;
+      if (!teacherExternalId || task.teacher_external_id !== teacherExternalId) {
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permisos para eliminar esta tarea'
+        });
+      }
+
+      // Eliminar las entregas asociadas primero
+      await prisma.submissionGrade.deleteMany({
+        where: { task_id: taskId }
+      });
+
+      // Eliminar la tarea
+      await prisma.task.delete({
+        where: { id: taskId }
+      });
+
+      res.json({
+        success: true,
+        message: 'Tarea eliminada exitosamente'
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al eliminar la tarea'
+      });
+    }
+  }
+);
+
 export default router;
