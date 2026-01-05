@@ -9,15 +9,17 @@ if (!DATABASE_CEIAF_URL) {
 
 /**
  * Crea un pool de conexiones a MySQL (Railway).
- * Si Railway exige SSL, descomenta la sección ssl.
+ * Configurado con SSL para compatibilidad con Railway.
  */
 export const ceiafPool = DATABASE_CEIAF_URL ? mysql.createPool({
   uri: DATABASE_CEIAF_URL,
-  // ssl: { rejectUnauthorized: true }, // <- habilítalo si te da error de SSL
+  ssl: { rejectUnauthorized: false }, // Railway requiere SSL
   waitForConnections: true,
-  connectionLimit: 5,
+  connectionLimit: 3, // Reducido para Railway free tier
   queueLimit: 0,
-  connectTimeout: 10000, // 10 segundos de timeout
+  connectTimeout: 15000, // 15 segundos de timeout
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
 }) : null as any;
 /**
  * Obtiene el nombre de la materia “principal” de un docente.

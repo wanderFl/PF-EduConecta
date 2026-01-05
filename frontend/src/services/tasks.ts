@@ -291,5 +291,108 @@ export const taskService = {
       }
       throw new Error('Error descargando el archivo de entrega.');
     }
+  },
+
+  // Actualizar tarea existente
+  updateTask: async (taskId: string, taskData: {
+    title: string;
+    instructions: string;
+    due_date: string;
+    max_points: number;
+    trimestre: number | null;
+    aporte: number | null;
+    file?: File | null;
+    removeFile?: boolean;
+  }) => {
+    try {
+      console.log('📝 Actualizando tarea:', taskId, taskData);
+
+      // Si hay archivo o se quiere remover, usar FormData
+      if (taskData.file || taskData.removeFile) {
+        const form = new FormData();
+        form.append('title', taskData.title);
+        form.append('instructions', taskData.instructions || '');
+        form.append('due_date', taskData.due_date);
+        form.append('max_points', String(taskData.max_points));
+        
+        if (taskData.trimestre) {
+          form.append('trimestre', String(taskData.trimestre));
+        }
+        if (taskData.aporte) {
+          form.append('aporte', String(taskData.aporte));
+        }
+        if (taskData.file) {
+          form.append('archivo', taskData.file);
+        }
+        if (taskData.removeFile) {
+          form.append('removeFile', 'true');
+        }
+
+        const response = await api.put(`/protected/docente/tareas/${taskId}`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        console.log('✅ Tarea actualizada:', response.data);
+        return response.data;
+      } else {
+        // Sin archivos, enviar JSON normal
+        const response = await api.put(`/protected/docente/tareas/${taskId}`, {
+          title: taskData.title,
+          instructions: taskData.instructions,
+          due_date: taskData.due_date,
+          max_points: taskData.max_points,
+          trimestre: taskData.trimestre,
+          aporte: taskData.aporte
+        });
+        
+        console.log('✅ Tarea actualizada:', response.data);
+        return response.data;
+      }
+    } catch (error) {
+      console.error('❌ Error updating task:', error);
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { status: number, data: unknown } };
+        
+        if (axiosError.response.status === 401) {
+          throw new Error('No estás autenticado. Por favor, inicia sesión de nuevo.');
+        } else if (axiosError.response.status === 404) {
+          throw new Error('Tarea no encontrada.');
+        } else if (axiosError.response.status === 403) {
+          throw new Error('No tienes permisos para editar esta tarea.');
+        } else if (axiosError.response.status === 400) {
+          const errorData = axiosError.response.data as { message?: string };
+          throw new Error(errorData.message || 'Datos inválidos para actualizar la tarea.');
+        }
+      }
+      throw error;
+    }
+  },
+
+  // Eliminar tarea
+  deleteTask: async (taskId: string) => {
+    try {
+      console.log('🗑️ Eliminando tarea:', taskId);
+      
+      const response = await api.delete(`/protected/docente/tareas/${taskId}`);
+      
+      console.log('✅ Tarea eliminada:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error deleting task:', error);
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response: { status: number, data: unknown } };
+        
+        if (axiosError.response.status === 401) {
+          throw new Error('No estás autenticado. Por favor, inicia sesión de nuevo.');
+        } else if (axiosError.response.status === 404) {
+          throw new Error('Tarea no encontrada.');
+        } else if (axiosError.response.status === 403) {
+          throw new Error('No tienes permisos para eliminar esta tarea.');
+        }
+      }
+      throw error;
+    }
   }
 };

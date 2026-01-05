@@ -54,7 +54,58 @@ export const listTeacherConversations = async (req: Request, res: Response) => {
       orderBy: { lastMessageAt: "desc" },
     });
 
-    res.json(communications);
+    // Obtener nombres de estudiantes desde MySQL CEIAF
+    let communicationsWithNames = communications;
+    
+    if (ceiafPool) {
+      try {
+        communicationsWithNames = await Promise.all(
+          communications.map(async (comm) => {
+            try {
+              const [studentRows] = await ceiafPool.execute(
+                'SELECT nombres, apellidos FROM estudiantes WHERE id_estudiante = ?',
+                [comm.student_external_id]
+              ) as any;
+
+              const student = studentRows[0] || {};
+              const lastMessage = comm.messages[0];
+              
+              return {
+                ...comm,
+                student_name: student.nombres && student.apellidos 
+                  ? `${student.apellidos} ${student.nombres}`
+                  : `Estudiante ID: ${comm.student_external_id}`,
+                lastMessagePreview: lastMessage ? lastMessage.body.substring(0, 50) + '...' : null
+              };
+            } catch (error) {
+              console.error(`Error fetching student ${comm.student_external_id}:`, error);
+              return {
+                ...comm,
+                student_name: `Estudiante ID: ${comm.student_external_id}`,
+                lastMessagePreview: comm.messages[0] ? comm.messages[0].body.substring(0, 50) + '...' : null
+              };
+            }
+          })
+        );
+      } catch (poolError) {
+        console.error('Error connecting to CEIAF database:', poolError);
+        // Devolver sin nombres si falla la conexión
+        communicationsWithNames = communications.map(comm => ({
+          ...comm,
+          student_name: `Estudiante ID: ${comm.student_external_id}`,
+          lastMessagePreview: comm.messages[0] ? comm.messages[0].body.substring(0, 50) + '...' : null
+        }));
+      }
+    } else {
+      // Si no hay pool, usar IDs
+      communicationsWithNames = communications.map(comm => ({
+        ...comm,
+        student_name: `Estudiante ID: ${comm.student_external_id}`,
+        lastMessagePreview: comm.messages[0] ? comm.messages[0].body.substring(0, 50) + '...' : null
+      }));
+    }
+
+    res.json(communicationsWithNames);
   } catch (error) {
     console.error("Error listing teacher conversations:", error);
     res.status(500).json({ message: "Error al obtener conversaciones" });

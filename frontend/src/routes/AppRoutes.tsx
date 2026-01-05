@@ -16,6 +16,7 @@ import AgendaPage from "../pages/docente/AgendaPage";
 import Comunicados from "../pages/docente/Comunicados";
 import RegistrarCalificaciones from "../pages/docente/RegistrarCalificaciones";
 import CreacionTareas from "../pages/docente/CreacionTareas";
+import GestionarTareas from "../pages/docente/GestionarTareas";
 import CourseSelection from "../pages/docente/CourseSelection";
 import SubjectSelection from "../pages/docente/SubjectSelection";
  
@@ -147,6 +148,14 @@ export const AppRoutes: React.FC = () => (
         element={
           <ProtectedRoute roles={["DOCENTE"]}>
             <CreacionTareas />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/docente/gestionar-tareas"
+        element={
+          <ProtectedRoute roles={["DOCENTE"]}>
+            <GestionarTareas />
           </ProtectedRoute>
         }
       />

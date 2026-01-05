@@ -61,29 +61,36 @@ export const DashboardDocente: React.FC = () => {
 
             // Cargar tareas pendientes de calificar
             const courseIdNum = course.id.replace(/\D/g, ''); // Extraer solo números del ID
-            const tasksData = await taskService.getTasksByCourse(courseIdNum);
+            const tasksResponse = await taskService.getTasksByCourse(courseIdNum);
             
             // Obtener estudiantes pendientes de calificar
             const pending: TaskSubmission[] = [];
-            if (tasksData && Array.isArray(tasksData)) {
-                tasksData.forEach((task: TaskWithSubmissions) => {
-                    if (task.estudiantes) {
-                        const ungraded = task.estudiantes.filter(
-                            (student: TaskSubmission) => 
-                                student.estado === 'ENTREGADO' && student.calificacion === null
+            
+            // El backend devuelve { success: true, tasks: [...] }
+            const tasksData = tasksResponse?.tasks || [];
+            
+            if (Array.isArray(tasksData)) {
+                tasksData.forEach((task: any) => {
+                    if (task.students && Array.isArray(task.students)) {
+                        // Filtrar estudiantes que han entregado pero no están calificados
+                        const ungraded = task.students.filter(
+                            (student: any) => 
+                                student.has_submission && 
+                                (student.grade === null || student.grade === undefined)
                         );
-                        ungraded.forEach((student: TaskSubmission) => {
+                        ungraded.forEach((student: any) => {
                             pending.push({
-                                ...student,
-                                id_estudiante: student.id_estudiante,
-                                nombre_estudiante: `${task.nombre_tarea} - ${student.nombre_estudiante}`,
-                                estado: 'Pendiente de calificar',
+                                id_estudiante: student.id,
+                                nombre_estudiante: student.nombre_completo || `Estudiante ${student.id}`,
+                                estado: `${task.title} - Pendiente de calificar`,
                                 calificacion: null
                             });
                         });
                     }
                 });
             }
+            
+            console.log('📚 Tareas pendientes de calificar:', pending);
             setPendingGrades(pending.slice(0, 3)); // Solo los 3 primeros
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -116,6 +123,12 @@ export const DashboardDocente: React.FC = () => {
             description: "Crear, asignar y gestionar tareas y actividades académicas",
             path: "/docente/tareas",
             icon: "📚"
+        },
+        {
+            title: "Gestionar Tareas",
+            description: "Ver, editar y eliminar tareas creadas para este curso",
+            path: "/docente/gestionar-tareas",
+            icon: "✏️"
         }
     ];
 

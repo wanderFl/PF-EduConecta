@@ -24,6 +24,9 @@ const GestionarFaltas: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showCommentModal, setShowCommentModal] = useState<boolean>(false);
+  const [currentAction, setCurrentAction] = useState<{ id: string; action: "accept" | "reject" } | null>(null);
+  const [inspectorComment, setInspectorComment] = useState<string>("");
 
   const loadCourses = useCallback(async () => {
     try {
@@ -97,15 +100,26 @@ const GestionarFaltas: React.FC = () => {
     }
   };
 
-  const handleUpdateStatus = async (id: string, action: "accept" | "reject") => {
+  const openCommentModal = (id: string, action: "accept" | "reject") => {
+    setCurrentAction({ id, action });
+    setInspectorComment("");
+    setShowCommentModal(true);
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!currentAction) return;
+
     try {
-      setProcessingId(id);
+      setProcessingId(currentAction.id);
       setError("");
       setSuccess("");
 
       const response = await api.put(
-        `/attendance/${id}/justify-status`,
-        { action }
+        `/attendance/${currentAction.id}/justify-status`,
+        { 
+          action: currentAction.action,
+          inspectorComment: inspectorComment.trim() || null
+        }
       );
 
       if (response.data.success) {
@@ -116,6 +130,11 @@ const GestionarFaltas: React.FC = () => {
         } else {
           loadJustifications();
         }
+        
+        // Cerrar modal y limpiar
+        setShowCommentModal(false);
+        setCurrentAction(null);
+        setInspectorComment("");
         
         // Limpiar mensaje de éxito después de 3 segundos
         setTimeout(() => setSuccess(""), 3000);
@@ -336,7 +355,7 @@ const GestionarFaltas: React.FC = () => {
                       <td style={{ padding: "1rem", textAlign: "center" }}>
                         <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
                           <button
-                            onClick={() => handleUpdateStatus(justification.id, "accept")}
+                            onClick={() => openCommentModal(justification.id, "accept")}
                             disabled={processingId === justification.id}
                             style={{
                               backgroundColor: "#27ae60",
@@ -352,7 +371,7 @@ const GestionarFaltas: React.FC = () => {
                             ✓ Aceptar
                           </button>
                           <button
-                            onClick={() => handleUpdateStatus(justification.id, "reject")}
+                            onClick={() => openCommentModal(justification.id, "reject")}
                             disabled={processingId === justification.id}
                             style={{
                               backgroundColor: "#e74c3c",
@@ -391,6 +410,105 @@ const GestionarFaltas: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Comment Modal */}
+      {showCommentModal && currentAction && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => {
+            setShowCommentModal(false);
+            setCurrentAction(null);
+            setInspectorComment("");
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "2rem",
+              borderRadius: "8px",
+              maxWidth: "500px",
+              width: "90%",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0, color: "#2c3e50", marginBottom: "1rem" }}>
+              {currentAction.action === "accept" ? "Aceptar" : "Rechazar"} Justificación
+            </h3>
+            <p style={{ color: "#7f8c8d", marginBottom: "1rem" }}>
+              {currentAction.action === "accept"
+                ? "¿Desea agregar algún comentario al aceptar esta justificación?"
+                : "Por favor, agregue un comentario explicando el motivo del rechazo:"}
+            </p>
+            <textarea
+              value={inspectorComment}
+              onChange={(e) => setInspectorComment(e.target.value)}
+              placeholder={currentAction.action === "reject" ? "Comentario (obligatorio)" : "Comentario (opcional)"}
+              style={{
+                width: "100%",
+                minHeight: "100px",
+                padding: "0.75rem",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "0.875rem",
+                fontFamily: "inherit",
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+            />
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => {
+                  setShowCommentModal(false);
+                  setCurrentAction(null);
+                  setInspectorComment("");
+                }}
+                style={{
+                  backgroundColor: "#95a5a6",
+                  color: "#fff",
+                  border: "none",
+                  padding: "0.75rem 1.5rem",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdateStatus}
+                disabled={currentAction.action === "reject" && !inspectorComment.trim()}
+                style={{
+                  backgroundColor: currentAction.action === "accept" ? "#27ae60" : "#e74c3c",
+                  color: "#fff",
+                  border: "none",
+                  padding: "0.75rem 1.5rem",
+                  borderRadius: "4px",
+                  cursor:
+                    currentAction.action === "reject" && !inspectorComment.trim()
+                      ? "not-allowed"
+                      : "pointer",
+                  fontSize: "0.875rem",
+                  opacity: currentAction.action === "reject" && !inspectorComment.trim() ? 0.5 : 1,
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

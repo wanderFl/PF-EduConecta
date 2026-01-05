@@ -23,8 +23,7 @@ const Novedades: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedParalelo, setSelectedParalelo] = useState('');
+  const [selectedCourseParalelo, setSelectedCourseParalelo] = useState(''); // formato: "cursoId|paralelo"
   const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,12 +52,16 @@ const Novedades: React.FC = () => {
   };
 
   const loadStudents = useCallback(async () => {
+    if (!selectedCourseParalelo) return;
+    
+    const [courseId, paralelo] = selectedCourseParalelo.split('|');
+    
     try {
       setLoading(true);
       const response = await api.get('/disciplinary-reports/students', {
         params: {
-          courseId: selectedCourse,
-          paralelo: selectedParalelo
+          courseId,
+          paralelo
         }
       });
       setStudents(response.data.students);
@@ -68,7 +71,7 @@ const Novedades: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCourse, selectedParalelo]);
+  }, [selectedCourseParalelo]);
 
   // Cargar cursos al montar
   useEffect(() => {
@@ -77,13 +80,13 @@ const Novedades: React.FC = () => {
 
   // Cargar estudiantes cuando se selecciona curso y paralelo
   useEffect(() => {
-    if (selectedCourse && selectedParalelo) {
+    if (selectedCourseParalelo) {
       loadStudents();
     } else {
       setStudents([]);
       setSelectedStudents([]);
     }
-  }, [selectedCourse, selectedParalelo, loadStudents]);
+  }, [selectedCourseParalelo, loadStudents]);
 
   const handleStudentToggle = (studentId: number) => {
     setSelectedStudents(prev =>
@@ -114,12 +117,14 @@ const Novedades: React.FC = () => {
       return;
     }
 
+    const [courseId, paralelo] = selectedCourseParalelo.split('|');
+
     try {
       setSubmitting(true);
       await api.post('/disciplinary-reports', {
         student_external_ids: selectedStudents,
-        course_external_id: selectedCourse,
-        paralelo: selectedParalelo,
+        course_external_id: courseId,
+        paralelo,
         ...formData
       });
 
@@ -134,8 +139,7 @@ const Novedades: React.FC = () => {
         incident_date: new Date().toISOString().split('T')[0]
       });
       setSelectedStudents([]);
-      setSelectedCourse('');
-      setSelectedParalelo('');
+      setSelectedCourseParalelo('');
       setStudents([]);
     } catch (error: unknown) {
       console.error('Error submitting report:', error);
@@ -145,13 +149,6 @@ const Novedades: React.FC = () => {
       setSubmitting(false);
     }
   };
-
-  const uniqueCourses = [...new Map(courses.map(c => [c.id_curso, c])).values()];
-  const uniqueParalelos = selectedCourse
-    ? [...new Set(courses
-        .filter(c => c.id_curso === parseInt(selectedCourse))
-        .map(c => c.paralelo))]
-    : [];
 
   return (
     <div className="novedades-container">
@@ -172,35 +169,19 @@ const Novedades: React.FC = () => {
           
           <div className="filters-grid">
             <div className="form-group">
-              <label>Curso:</label>
+              <label>Curso y Paralelo:</label>
               <select
-                value={selectedCourse}
-                onChange={(e) => {
-                  setSelectedCourse(e.target.value);
-                  setSelectedParalelo('');
-                }}
+                value={selectedCourseParalelo}
+                onChange={(e) => setSelectedCourseParalelo(e.target.value)}
                 disabled={loading}
               >
                 <option value="">Seleccione un curso</option>
-                {uniqueCourses.map(course => (
-                  <option key={course.id_curso} value={course.id_curso}>
-                    {course.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Paralelo:</label>
-              <select
-                value={selectedParalelo}
-                onChange={(e) => setSelectedParalelo(e.target.value)}
-                disabled={!selectedCourse || loading}
-              >
-                <option value="">Seleccione un paralelo</option>
-                {uniqueParalelos.map(paralelo => (
-                  <option key={paralelo} value={paralelo}>
-                    {paralelo}
+                {courses.map(course => (
+                  <option 
+                    key={`${course.id_curso}-${course.paralelo}`} 
+                    value={`${course.id_curso}|${course.paralelo}`}
+                  >
+                    {course.nombre} - Paralelo {course.paralelo} ({course.nivel})
                   </option>
                 ))}
               </select>
