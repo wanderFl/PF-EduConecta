@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import {
-  listTeacherConversations,
+import { 
+  listTeacherConversations, 
   createTeacherConversation,
   searchTeacherStudents,
   type TeacherConversation,
@@ -10,6 +10,7 @@ import {
 } from "../../services/communications";
 import TeacherConversationList from "../../components/comm/TeacherConversationList";
 import TeacherConversationPanel from "../../components/comm/TeacherConversationPanel";
+import "../familia.css";
 
 const Comunicados: React.FC = () => {
   const navigate = useNavigate();
@@ -144,229 +145,177 @@ const Comunicados: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '2rem'
+      background: '#f7f8fb',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       {/* Header */}
       <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        padding: '1rem 2rem',
-        marginBottom: '2rem',
-        borderRadius: '15px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        padding: '12px 24px',
+        background: '#1e4db7',
+        color: '#fff',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             width: '40px',
             height: '40px',
-            background: '#667eea',
-            borderRadius: '10px',
+            borderRadius: '8px',
+            background: '#fff',
+            color: '#1e4db7',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white',
-            fontWeight: 'bold',
-            marginRight: '1rem'
+            fontWeight: '700',
+            fontSize: '1.2rem'
           }}>
             💬
           </div>
           <div>
-            <h1 style={{ margin: '0', color: '#333', fontSize: '1.8rem' }}>
+            <div style={{
+              fontWeight: '600',
+              fontSize: '1.1rem',
+              color: '#fff'
+            }}>
               Comunicados
-            </h1>
-            <p style={{ margin: '0.5rem 0 0 0', color: '#666' }}>
-              Comunicación con padres de familia
-              {courseId && (
-                <span style={{ marginLeft: '0.5rem', color: '#667eea', fontWeight: 600 }}>
-                  • {courseName}
-                </span>
-              )}
-            </p>
+            </div>
+            <div style={{
+              fontSize: '0.9rem',
+              color: '#d7e3ff',
+              marginTop: '2px'
+            }}>
+              {courseId ? courseName : 'Comunicación con padres de familia'}
+            </div>
           </div>
         </div>
         
         <button
-          onClick={() => navigate('/docente')}
+          onClick={() => navigate('/docente/dashboard')}
           style={{
-            padding: '0.5rem 1rem',
-            border: '2px solid #667eea',
+            background: '#fff',
+            color: '#1e4db7',
+            border: '1px solid #d7e3ff',
+            padding: '8px 16px',
             borderRadius: '8px',
-            backgroundColor: '#667eea',
-            color: 'white',
-            fontSize: '1rem',
+            fontWeight: '700',
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
+            fontSize: '0.9rem',
+            transition: 'all 0.3s ease'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#f0f4ff'}
+          onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
         >
-          ← Volver
+          ← Volver al Dashboard
         </button>
       </div>
 
-      {/* Búsqueda o mensaje de advertencia */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        padding: '1.5rem',
-        marginBottom: '2rem',
-        borderRadius: '15px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
-      }}>
-        {hasExternalId ? (
-          // Si tiene external_id, mostrar búsqueda normal
-          <>
-            <h3 style={{ marginTop: '0', color: '#333' }}>Buscar Estudiante</h3>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Busca por nombre o cédula del estudiante..."
-              style={{
-                width: '100%',
-                padding: '0.8rem',
-                border: '2px solid #e9ecef',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                outline: 'none'
-              }}
-            />
-            
-            {searching && (
-              <div style={{ marginTop: '1rem', color: '#666' }}>Buscando...</div>
-            )}
+      <nav className="fam-breadcrumb" style={{ margin: "8px" }}>
+        <span className="crumb-link" onClick={() => navigate('/docente')}>Inicio</span>
+        <span className="crumb-sep">›</span>
+        <span className="crumb-current">Comunicados</span>
+      </nav>
 
-            {searchResults.length > 0 && (
-              <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: '1rem 0 0 0',
-                maxHeight: '300px',
-                overflowY: 'auto'
-              }}>
-                {searchResults.map((student) => (
-                  <li
-                    key={student.student_external_id}
-                    onClick={() => handleCreateConversation(student)}
-                    style={{
-                      padding: '0.75rem',
-                      background: 'white',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      marginBottom: '0.5rem',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f4ff'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                  >
-                    <strong>{student.student_name}</strong>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      {student.curso} - Paralelo {student.paralelo} | Cédula: {student.cedula}
-                      {!student.parent_id && (
-                        <span style={{ 
-                          marginLeft: '0.5rem',
-                          color: '#f59e0b',
-                          fontStyle: 'italic'
-                        }}>
-                          (Sin padre vinculado)
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        ) : (
-          // Si NO tiene external_id, mostrar mensaje informativo
-          <div style={{
-            textAlign: 'center',
-            padding: '2rem'
-          }}>
-            <div style={{
-              fontSize: '3rem',
-              marginBottom: '1rem'
-            }}>⚠️</div>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#d97706' }}>Cuenta no vinculada</h3>
-            <p style={{ margin: '0', color: '#666', lineHeight: '1.6' }}>
-              Tu cuenta no está vinculada con un docente en el sistema del colegio.
-              <br />
-              Para poder usar el sistema de mensajería y buscar estudiantes,
-              <br />
-              contacta al administrador para que vincule tu cuenta.
-            </p>
-            <div style={{
-              marginTop: '1.5rem',
-              padding: '1rem',
-              background: '#fef3c7',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              color: '#92400e'
-            }}>
-              <strong>Nota:</strong> Tu correo debe estar registrado en la base de datos del colegio.
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Layout de dos columnas */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '350px 1fr',
-        gap: '1rem',
-        height: 'calc(100vh - 350px)',
-        minHeight: '500px'
-      }}>
-        {/* Lista de conversaciones */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '15px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <div style={{
-            padding: '1rem',
-            borderBottom: '2px solid #e5e7eb',
-            backgroundColor: '#f9fafb'
-          }}>
-            <h3 style={{ margin: 0 }}>Conversaciones</h3>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {loading ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-                Cargando...
-              </div>
-            ) : (
-              <TeacherConversationList
-                items={conversations}
-                selectedId={selectedConv?.id || null}
-                onSelect={setSelectedConv}
-              />
-            )}
-          </div>
+      {/* Encabezado de la sección */}
+      <section className="student-info-card" style={{ margin: "16px" }}>
+        <div className="sic-title">Comunicados</div>
+        <div className="muted">
+          {hasExternalId 
+            ? "Comunícate con los padres de familia de tus estudiantes." 
+            : "Tu cuenta necesita vinculación para usar mensajería."}
         </div>
+      </section>
 
-        {/* Panel de conversación */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '15px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          overflow: 'hidden'
-        }}>
+      {/* Layout tipo WhatsApp */}
+      <div className="comm-layout" style={{ margin: "0 16px 16px" }}>
+        {/* LADO IZQUIERDO: búsqueda + lista */}
+        <aside className="comm-sidebar">
+          {hasExternalId ? (
+            <>
+              <div className="comms-search-wrap">
+                <input
+                  type="search"
+                  className="conv-search"
+                  placeholder="Buscar estudiante por nombre o cédula..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+
+                {searching && (
+                  <div className="empty">Buscando...</div>
+                )}
+
+                {query && searchResults.length > 0 && (
+                  <div className="search-results">
+                    {searchResults.map((student) => (
+                      <button
+                        key={student.student_external_id}
+                        type="button"
+                        className="search-result-item"
+                        onClick={() => handleCreateConversation(student)}
+                      >
+                        <div className="sr-title">{student.student_name}</div>
+                        <div className="muted">
+                          {student.curso} - Paralelo {student.paralelo} | Cédula: {student.cedula}
+                          {!student.parent_id && ' (Sin padre vinculado)'}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {query && !searching && searchResults.length === 0 && (
+                  <div className="empty">No se encontraron estudiantes.</div>
+                )}
+              </div>
+
+              {/* Lista de conversaciones */}
+              {loading ? (
+                <div className="empty">Cargando...</div>
+              ) : (
+                <TeacherConversationList
+                  items={conversations}
+                  selectedId={selectedConv?.id || null}
+                  onSelect={setSelectedConv}
+                />
+              )}
+            </>
+          ) : (
+            // Mensaje de cuenta no vinculada
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+              <h3 style={{ margin: '0 0 1rem 0', color: '#d97706' }}>Cuenta no vinculada</h3>
+              <p style={{ margin: '0', color: '#666', lineHeight: '1.6', fontSize: '0.9rem' }}>
+                Tu cuenta no está vinculada con un docente en el sistema del colegio.
+                <br />
+                Contacta al administrador para que vincule tu cuenta.
+              </p>
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1rem',
+                background: '#fef3c7',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                color: '#92400e'
+              }}>
+                <strong>Nota:</strong> Tu correo debe estar registrado en la base de datos del colegio.
+              </div>
+            </div>
+          )}
+        </aside>
+
+        {/* LADO DERECHO: panel de conversación */}
+        <section className="comm-main">
           <TeacherConversationPanel 
             conversation={selectedConv} 
             currentUserId={user?.id || ''}
           />
-        </div>
+        </section>
       </div>
     </div>
   );
