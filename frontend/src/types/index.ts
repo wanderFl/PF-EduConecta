@@ -311,3 +311,14 @@ export interface StudentBehaviorPayload {
   reports: StudentBehaviorReportRow[];
   monthly_absences: MonthlyAbsencesPoint[];
 }
+
+export interface DisciplinaryReport {
+  id: string;
+  title: string;
+  description: string;
+  severity: string;
+  category: string;
+  status: string;
+  incident_date: string;
+  created_at: string;
+}
