@@ -168,6 +168,47 @@ router.post(
         fileReference: task.file_reference
       });
 
+      // NOTIFICACIÓN: Nueva Tarea Asignada
+      (async () => {
+        try {
+          console.log("🔍 [Protected] Iniciando notificación para tarea:", task.id);
+          
+          // 1. Buscar estudiantes del curso en MySQL
+          const [students] = await ceiafPool.query(
+            'SELECT id_estudiante FROM estudiantes WHERE id_curso = ?',
+            [courseExternalId]
+          ) as any;
+
+          if (Array.isArray(students) && students.length > 0) {
+            const studentIds = students.map((s: any) => String(s.id_estudiante));
+            
+            // 2. Buscar Padres vinculados en Prisma
+            const links = await prisma.parentStudentLink.findMany({
+              where: { student_external_id: { in: studentIds } },
+              include: { parent: { include: { user: true } } }
+            });
+
+            console.log(`✅ [Protected] Encontrados ${links.length} padres para notificar.`);
+
+            for (const link of links) {
+              if (link.parent?.user?.id) {
+                sendNotification(
+                  link.parent.user.id,
+                  "Nueva Tarea Asignada",
+                  `Se ha asignado la tarea "${task.title}" en el curso.`,
+                  "NEW_TASK",
+                  { taskId: task.id, courseId: courseExternalId }
+                );
+              }
+            }
+          } else {
+             console.warn("⚠️ No se encontraron estudiantes en el curso:", courseExternalId);
+          }
+        } catch (notifError) {
+          console.error("❌ Error enviando notificaciones desde protected:", notifError);
+        }
+      })();
+
       res.status(201).json({
         success: true,
         message: 'Tarea creada exitosamente',

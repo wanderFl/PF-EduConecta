@@ -11,9 +11,12 @@ export const initSocket = (httpServer: HttpServer) => {
         "http://localhost:5174",
         "http://localhost:5175",
         "http://localhost:3000",
+        "http://127.0.0.1:5173"
       ],
+      methods: ["GET", "POST"],
       credentials: true,
     },
+    transports: ['polling', 'websocket']
   });
 
   io.on("connection", (socket: Socket) => {
