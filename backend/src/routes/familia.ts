@@ -6,7 +6,7 @@ import { getStudentTasks } from '../controllers/tasks';
 import { submitTask } from '../controllers/submissions';
 import { createSignedUploadUrl, createSignedConversationUploadUrl } from "../controllers/uploads";
 import { getMonthlyAttendance, createJustificationUploadUrl, submitJustification } from "../controllers/attendance";
-import { listStudentGrades } from "../controllers/familia";
+import { listStudentGrades, getStudentReports } from "../controllers/familia";
 import {  getSubmissionDownloadUrl, getFileDownloadUrl } from "../controllers/uploads";
 
 
@@ -31,6 +31,7 @@ router.post('/calificaciones', listStudentGrades);
 router.get("/submission-download-url", getSubmissionDownloadUrl);
 router.get("/download-url", getFileDownloadUrl);
 router.get("/materias/:studentId", listStudentSubjects);
+router.get("/reportes/:studentId", getStudentReports);
 
 
 export default router;

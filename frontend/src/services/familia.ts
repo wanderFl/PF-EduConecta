@@ -1,5 +1,5 @@
 import api from "./api";
-import type { CeiafStudent, PendingTask, AttendanceMonthResp, GradeRow } from "../types";
+import type { CeiafStudent, PendingTask, AttendanceMonthResp, GradeRow, DisciplinaryReport } from "../types";
 
 // Obtener hijos vinculados al padre
 export const getLinkedChildren = async (): Promise<CeiafStudent[]> => {
@@ -141,3 +141,9 @@ export async function getStudentSubjects(studentId: number): Promise<{id_materia
   const { data } = await api.get(`/familia/materias/${studentId}`);
   return Array.isArray(data) ? data : [];
 }
+
+// Obtener reportes disciplinarios
+export const getStudentReports = async (studentId: number): Promise<DisciplinaryReport[]> => {
+  const { data } = await api.get(`/familia/reportes/${studentId}`);
+  return Array.isArray(data) ? data : [];
+};

@@ -6,6 +6,7 @@ const items = [
   { key: "calificaciones", label: "Calificaciones", icon: "📝" },
   { key: "comunicados", label: "Comunicados", icon: "💬" },
   { key: "asistencia", label: "Asistencia", icon: "📊" },
+  { key: "reportes", label: "Reportes", icon: "📋" },
 ];
 
 const ActionGrid: React.FC = () => {
@@ -16,6 +17,7 @@ const ActionGrid: React.FC = () => {
     if (key === "asistencia") return navigate("/familia/asistencia");
     if (key === "comunicados") return navigate("/familia/comunicados");
     if (key === "calificaciones") return navigate("/familia/calificaciones");
+    if (key === "reportes") return navigate("/familia/reportes");
     // Otros: implementar pronto…
   };
 

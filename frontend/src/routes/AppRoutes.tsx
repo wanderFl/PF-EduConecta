@@ -31,6 +31,7 @@ import MonthlyAttendancePage from "../pages/MonthlyAttendancePage";
 import PinGate from "./PinGate";
 import CommunicationsPage from "../pages/CommunicationsPage";
 import GradesPage from "../pages/GradesPage";
+import FamilyReportsPage from "../pages/FamilyReportsPage";
  
 import DirectivoProvider from "../contexts/DirectivoProvider";
 import DirectivoSelectCoursePage from "../pages/DirectivoSelectCoursePage";
@@ -171,6 +172,7 @@ export const AppRoutes: React.FC = () => (
           <Route path="comunicados" element={<CommunicationsPage />} />
         </Route>
         <Route path="calificaciones" element={<GradesPage />} />
+        <Route path="reportes" element={<FamilyReportsPage />} />
       </Route>
  
       {/* ===== Grupo Inspector ===== */}

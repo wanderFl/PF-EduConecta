@@ -348,3 +348,44 @@ export const listStudentSubjects = async (req: Request, res: Response) => {
   }
 };
 
+// GET /api/familia/reportes/:studentId
+export const getStudentReports = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const studentId = Number(req.params.studentId);
+
+    if (!userId || !studentId) {
+       return res.status(400).json({ message: 'Faltan datos requeridos' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.parent_id) {
+       return res.status(403).json({ message: 'No es un usuario de familia válido' });
+    }
+
+    // Verify parent-student link
+    const link = await prisma.parentStudentLink.findUnique({
+      where: {
+        parent_id_student_external_id: {
+          parent_id: user.parent_id,
+          student_external_id: String(studentId),
+        },
+      },
+    });
+
+    if (!link) {
+      return res.status(403).json({ message: 'No tiene permiso para ver reportes de este estudiante' });
+    }
+
+    const reports = await prisma.disciplinaryReport.findMany({
+      where: { student_external_id: studentId },
+      orderBy: { incident_date: 'desc' }
+    });
+
+    return res.json(reports);
+  } catch (error) {
+    console.error('GET /familia/reportes error:', error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+

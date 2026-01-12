@@ -92,6 +92,7 @@ export const sendNotification = async (
           const failedTokens: string[] = [];
           response.responses.forEach((resp: admin.messaging.SendResponse, idx: number) => {
             if (!resp.success) {
+              console.error(`❌ FCM Failure Details (${idx}):`, resp.error?.code, resp.error?.message);
               failedTokens.push(fcmTokens[idx]);
             }
           });

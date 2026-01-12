@@ -311,23 +311,38 @@ router.post('/', async (req, res) => {
     // NOTIFICACIÓN: Nueva Tarea Asignada
     (async () => {
       try {
+        console.log("🔍 Iniciando proceso de notificación para tarea:", task.id);
+
         // Importar ceiafPool dinámicamente
         const { ceiafPool } = require('../ext/ceiafDb');
+        
+        // 1. Buscar estudiantes del curso
+        console.log("🔍 Buscando estudiantes en curso externo:", taskData.course_external_id);
         const [students] = await ceiafPool.query(
           'SELECT id_estudiante FROM estudiantes WHERE id_curso = ?',
           [taskData.course_external_id]
         );
         
-        if (Array.isArray(students)) {
+        if (Array.isArray(students) && students.length > 0) {
           const studentIds = students.map((s: any) => String(s.id_estudiante));
+          console.log(`✅ Encontrados ${studentIds.length} estudiantes. IDs:`, studentIds);
           
+          // 2. Buscar Padres vinculados a esos estudiantes
           const links = await prisma.parentStudentLink.findMany({
             where: { student_external_id: { in: studentIds } },
             include: { parent: { include: { user: true } } }
           });
           
+          console.log(`✅ Encontrados ${links.length} vínculos con padres.`);
+
+          if (links.length === 0) {
+            console.warn("⚠️ No se encontraron padres vinculados para estos estudiantes.");
+          }
+
           for (const link of links) {
             if (link.parent?.user?.id) {
+              console.log(`🔔 Enviando a User ID: ${link.parent.user.id} (Email: ${link.parent.user.email})`);
+              
               sendNotification(
                 link.parent.user.id,
                 "Nueva Tarea Asignada",
@@ -335,14 +350,18 @@ router.post('/', async (req, res) => {
                 "NEW_TASK",
                 { taskId: task.id, courseId: taskData.course_external_id }
               );
+            } else {
+               console.warn("⚠️ Vínculo encontrado pero usuario/padre incorrecto:", link);
             }
           }
+        } else {
+             console.warn("⚠️ No se encontraron estudiantes en la DB SQL (ceiafPool) para el curso:", taskData.course_external_id);
         }
       } catch (notifError) {
-        console.error("Error sending notifications for new task:", notifError);
+        console.error("❌ Error crítico enviando notificaciones:", notifError);
       }
     })();
-
+    console.log('✅ Tarea creada y notificaciones en proceso para tarea ID:', task.id);
     res.status(201).json({
       success: true,
       data: task,
