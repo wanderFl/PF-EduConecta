@@ -1,4 +1,4 @@
-import { ceiafPool } from '../ext/ceiafDb';
+import { ceiafPool, executeQuery } from '../ext/ceiafDb';
 
 export interface TeacherCourse {
   id_curso: number;
@@ -33,8 +33,12 @@ export interface CourseWithSubjects {
  */
 export async function getTeacherCourses(teacherExternalId: number): Promise<TeacherCourse[]> {
   try {
-    // Consulta que obtiene cursos únicos donde el docente tiene asignaciones
-    const [rows] = await ceiafPool.query(`
+    if (!ceiafPool) {
+      throw new Error('MySQL CEIAF no disponible');
+    }
+
+    console.log('✅ Fetching courses for teacher:', teacherExternalId);
+    const rows = await executeQuery(`
       SELECT DISTINCT
         c.id_curso,
         c.nombre,
@@ -51,8 +55,8 @@ export async function getTeacherCourses(teacherExternalId: number): Promise<Teac
     `, [teacherExternalId]);
 
     return rows as TeacherCourse[];
-  } catch (error) {
-    console.error('Error fetching teacher courses:', error);
+  } catch (error: any) {
+    console.error('❌ Error fetching teacher courses:', error.message);
     throw new Error('Error al obtener cursos del docente');
   }
 }
@@ -65,6 +69,10 @@ export async function getTeacherSubjectsByCourse(
   courseId: number
 ): Promise<TeacherSubject[]> {
   try {
+    if (!ceiafPool) {
+      throw new Error('MySQL CEIAF no disponible');
+    }
+
     const [rows] = await ceiafPool.query(`
       SELECT 
         m.id_materia,
@@ -83,7 +91,7 @@ export async function getTeacherSubjectsByCourse(
     return rows as TeacherSubject[];
   } catch (error) {
     console.error('Error fetching teacher subjects by course:', error);
-    throw new Error('Error al obtener materias del docente en el curso');
+    throw new Error('Error al obtener materias del docente');
   }
 }
 
@@ -158,6 +166,10 @@ export async function verifyTeacherCourseAccess(
   courseId: number
 ): Promise<boolean> {
   try {
+    if (!ceiafPool) {
+      return false;
+    }
+
     const [rows] = await ceiafPool.query(`
       SELECT COUNT(*) as count
       FROM docente_materia_curso

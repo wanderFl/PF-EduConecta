@@ -88,3 +88,35 @@ export const registerDeviceToken = async (token: string, platform: "web" | "andr
   // Backend route suggestion: POST /api/auth/device-token
   return api.post("/auth/device-token", { token, platform });
 };
+
+// Servicio de notificaciones
+export const notificationService = {
+  async getNotifications() {
+    try {
+      const response = await api.get("/notifications");
+      return response.data;
+    } catch (error: any) {
+      // Silenciar error 404 (endpoint no implementado aún)
+      if (error?.response?.status !== 404) {
+        console.error("Error fetching notifications:", error);
+      }
+      return [];
+    }
+  },
+
+  async markAsRead(notificationId: string) {
+    try {
+      await api.post(`/notifications/mark-read/${notificationId}`);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  },
+
+  async markAllAsRead() {
+    try {
+      await api.post("/notifications/mark-all-read");
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
+  }
+};

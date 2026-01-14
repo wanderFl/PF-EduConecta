@@ -1,4 +1,4 @@
-import { ceiafPool } from '../ext/ceiafDb';
+import { ceiafPool, executeQuery } from '../ext/ceiafDb';
 
 export interface Student {
   id: number;
@@ -23,6 +23,10 @@ export interface CourseStudents {
  */
 export async function getStudentsByCourse(courseId: string): Promise<Student[]> {
   try {
+    if (!ceiafPool) {
+      throw new Error('MySQL CEIAF no disponible');
+    }
+
     // Si el courseId es numérico, usar directamente el id_curso
     const numericCourseId = parseInt(courseId);
     
@@ -159,7 +163,11 @@ export async function searchStudents(query: string): Promise<Student[]> {
  */
 export async function getAllCourses() {
   try {
-    const [rows] = await ceiafPool.query(`
+    if (!ceiafPool) {
+      throw new Error('MySQL CEIAF no disponible');
+    }
+
+    const rows = await executeQuery(`
       SELECT 
         id_curso,
         nombre,
@@ -172,7 +180,7 @@ export async function getAllCourses() {
 
     return rows as any[];
   } catch (error) {
-    console.error('Error fetching courses:', error);
+    console.error('❌ Error fetching courses:', error);
     throw new Error('Error al obtener cursos');
   }
 }

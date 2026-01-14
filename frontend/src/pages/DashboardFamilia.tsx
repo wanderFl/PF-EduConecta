@@ -9,6 +9,7 @@ import ActionGrid from "../components/familia/ActionGrid";
 import PendingTasksPanel from "../components/familia/PendingTasksPanel";
 import AddChildModal from "../components/familia/AddChildModal";
 import { useFamily } from "../contexts/useFamily";
+import { PerformanceReport } from "../components/AI/PerformanceReport";
 import "./familia.css";
 
 export const DashboardFamilia: React.FC = () => {
@@ -61,6 +62,14 @@ export const DashboardFamilia: React.FC = () => {
           {selected ? (
             <>
               <StudentInfoCard student={selected} />
+              
+              {/* Reporte de Rendimiento con IA */}
+              <div style={{ marginTop: '20px' }}>
+                <PerformanceReport 
+                  studentExternalId={String(selected.id_estudiante)}
+                />
+              </div>
+              
               <ActionGrid/>
             </>
           ) : (

@@ -151,12 +151,7 @@ const Novedades: React.FC = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f7f8fb',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div className="novedades-container">
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -165,7 +160,8 @@ const Novedades: React.FC = () => {
         padding: '12px 24px',
         background: '#1e4db7',
         color: '#fff',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        marginBottom: '24px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
@@ -220,7 +216,7 @@ const Novedades: React.FC = () => {
         </button>
       </div>
 
-      <div style={{ flex: 1, padding: '24px', overflow: 'auto' }}>
+      <div className="novedades-content">
         {/* Sección de filtros */}
         <div className="filters-section">
           <h2>Seleccionar Estudiantes</h2>

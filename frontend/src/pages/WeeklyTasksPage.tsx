@@ -7,6 +7,7 @@ import { getLinkedChildren, getStudentTasks } from "../services/familia";
 import type { CeiafStudent, PendingTask } from "../types";
 import { startOfWeekMonday, getWeekRangeFrom, addWeeks, formatDayHeader } from "../utils/dates";
 import TaskSubmissionModal from "../components/familia/TaskSubmissionModal";
+import { TaskRecommendations } from "../components/AI/TaskRecommendations";
 import "./familia.css";
 
 const WeeklyTasksPage: React.FC = () => {
@@ -62,18 +63,22 @@ const WeeklyTasksPage: React.FC = () => {
   const prevWeek = () => setWeekStart((d) => addWeeks(d, -1));
   const nextWeek = () => setWeekStart((d) => addWeeks(d, +1));
 
-  // Agrupar por día YYYY-MM-DD y aplicar filtro
+  // Aplicar filtro de tareas
+  const filteredTasks = useMemo(() => {
+    return filter === "PENDING" ? tasks.filter((t) => t.status === "PENDING") : tasks;
+  }, [tasks, filter]);
+
+  // Agrupar por día YYYY-MM-DD
   const byDay = useMemo(() => {
-    const filtered = filter === "PENDING" ? tasks.filter((t) => t.status === "PENDING") : tasks;
     const map = new Map<string, PendingTask[]>();
-    filtered.forEach((t) => {
+    filteredTasks.forEach((t) => {
       const dateKey = new Date(t.due_date).toISOString().slice(0, 10);
       const arr = map.get(dateKey) ?? [];
       arr.push(t);
       map.set(dateKey, arr);
     });
     return map;
-  }, [tasks, filter]);
+  }, [filteredTasks]);
 
   return (
     <div className="fam-layout">
@@ -154,20 +159,30 @@ const WeeklyTasksPage: React.FC = () => {
               );
             })}
           </section>
+
+          {/* Recomendaciones de IA para organizar tareas */}
+          {selectedStudent && filteredTasks.length > 0 && (
+            <div style={{ marginTop: '20px' }}>
+              <TaskRecommendations 
+                studentExternalId={String(selectedStudent.id_estudiante)}
+              />
+            </div>
+          )}
         </div>
         <div className="fam-sidebar" />
       </div>
+      
       {/* Modal de entrega (visual) */}
       <TaskSubmissionModal
-  open={modalOpen}
-  task={selectedTask}
-  onClose={closeTaskModal}
-  onSubmitted={async () => {
-    if (!selectedStudent) return;
-    const list = await getStudentTasks(selectedStudent.id_estudiante, from, to);
-    setTasks(list);
-  }}
-/>
+        open={modalOpen}
+        task={selectedTask}
+        onClose={closeTaskModal}
+        onSubmitted={async () => {
+          if (!selectedStudent) return;
+          const list = await getStudentTasks(selectedStudent.id_estudiante, from, to);
+          setTasks(list);
+        }}
+      />
     </div>
   );
 };

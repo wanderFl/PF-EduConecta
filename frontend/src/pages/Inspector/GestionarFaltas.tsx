@@ -2,8 +2,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { studentsService, type Course } from "../../services/students";
-import { DashboardNavbar } from "../../components/layout/DashboardNavbar";
-import "./inspector.css";
 
 interface PendingJustification {
   id: string;
@@ -165,149 +163,212 @@ const GestionarFaltas: React.FC = () => {
   };
 
   return (
-    <div className="inspector-container">
-      <DashboardNavbar
-        title="EduConecta"
-        subtitle="Gestionar Faltas"
-        icon="📋"
-      />
-
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="inspector-header">
-          <div className="inspector-header-content">
-            <button
-              onClick={() => navigate("/inspector/dashboard")}
-              className="inspector-back-btn"
-            >
-              ← Volver al Dashboard
-            </button>
-            <div className="inspector-title-section">
-              <div className="inspector-icon">📋</div>
-              <div>
-                <h1 className="inspector-title">Gestionar Faltas</h1>
-                <p className="inspector-subtitle">
-                  Revisar y aprobar justificaciones de ausencias
-                </p>
-              </div>
+    <div style={{
+      minHeight: '100vh',
+      background: '#f7f8fb',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Header estilo familia */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 24px',
+        background: '#1e4db7',
+        color: '#fff',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '8px',
+            background: '#fff',
+            color: '#1e4db7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '700',
+            fontSize: '1.2rem'
+          }}>
+            📋
+          </div>
+          <div>
+            <div style={{
+              fontWeight: '600',
+              fontSize: '1.1rem',
+              color: '#fff'
+            }}>
+              Gestionar Faltas
+            </div>
+            <div style={{
+              fontSize: '0.9rem',
+              color: '#d7e3ff',
+              marginTop: '2px'
+            }}>
+              Revisar y aprobar justificaciones de ausencias
             </div>
           </div>
         </div>
-
-        {/* Course Selector */}
-        <div
+        
+        <button
+          onClick={() => navigate("/inspector/dashboard")}
           style={{
-            backgroundColor: "#fff",
-            padding: "1.5rem",
-            borderRadius: "8px",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-            marginBottom: "1.5rem",
+            background: '#fff',
+            color: '#1e4db7',
+            border: '1px solid #d7e3ff',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#f3f7ff';
+            e.currentTarget.style.borderColor = '#1e4db7';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#fff';
+            e.currentTarget.style.borderColor = '#d7e3ff';
           }}
         >
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "500",
-              color: "#2c3e50",
-            }}
-          >
+          ← Volver al Dashboard
+        </button>
+      </div>
+
+      {/* Contenedor principal */}
+      <div style={{
+        flex: 1,
+        maxWidth: '1200px',
+        width: '100%',
+        margin: '0 auto',
+        padding: '24px'
+      }}>
+
+        {/* Selector de curso */}
+        <div style={{
+          background: '#fff',
+          padding: '20px',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb',
+          marginBottom: '20px'
+        }}>
+          <label style={{
+            display: 'block',
+            marginBottom: '12px',
+            fontWeight: '600',
+            color: '#111827',
+            fontSize: '1rem'
+          }}>
             Filtrar por Curso:
           </label>
           <select
             value={selectedCourse}
             onChange={(e) => handleCourseChange(e.target.value)}
             style={{
-              width: "100%",
-              padding: "0.75rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "1rem",
-              cursor: "pointer",
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid #d7e3ff',
+              borderRadius: '8px',
+              fontSize: '0.95rem',
+              background: 'white',
+              color: '#111827',
+              cursor: 'pointer'
             }}
             disabled={loading}
           >
             <option value="">Todos los cursos</option>
             {courses.map((course) => (
               <option key={course.id_curso} value={course.id_curso}>
-                {course.nombre}
+                {course.nombre} - Paralelo {course.paralelo} ({course.nivel})
               </option>
             ))}
           </select>
         </div>
 
-        {/* Messages */}
+        {/* Mensajes */}
         {error && (
-          <div
-            style={{
-              backgroundColor: "#fee",
-              color: "#c33",
-              padding: "1rem",
-              borderRadius: "4px",
-              marginBottom: "1rem",
-            }}
-          >
+          <div style={{
+            background: '#fff',
+            border: '1px solid #ef4444',
+            color: '#ef4444',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            fontSize: '0.95rem'
+          }}>
             {error}
           </div>
         )}
 
         {success && (
-          <div
-            style={{
-              backgroundColor: "#efe",
-              color: "#383",
-              padding: "1rem",
-              borderRadius: "4px",
-              marginBottom: "1rem",
-            }}
-          >
+          <div style={{
+            background: '#fff',
+            border: '1px solid #10b981',
+            color: '#10b981',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            fontSize: '0.95rem'
+          }}>
             {success}
           </div>
         )}
 
-        {/* Justifications Table */}
-        <div
-          style={{
-            backgroundColor: "#fff",
-            borderRadius: "8px",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-            overflow: "hidden",
-          }}
-        >
+        {/* Tabla de justificaciones */}
+        <div style={{
+          background: '#fff',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          border: '1px solid #e5e7eb',
+          overflow: 'hidden'
+        }}>
           {loading ? (
-            <div style={{ padding: "2rem", textAlign: "center" }}>
-              <p>Cargando justificaciones...</p>
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <div style={{ 
+                width: '50px', 
+                height: '50px', 
+                border: '3px solid #e5e7eb',
+                borderTop: '3px solid #1e4db7',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px'
+              }} />
+              <p style={{ color: '#6b7280', margin: 0 }}>Cargando justificaciones...</p>
             </div>
           ) : justifications.length === 0 ? (
-            <div style={{ padding: "2rem", textAlign: "center", color: "#7f8c8d" }}>
-              <p>No hay justificaciones pendientes</p>
+            <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+              <p style={{ margin: 0 }}>No hay justificaciones pendientes</p>
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                }}
-              >
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse'
+              }}>
                 <thead>
-                  <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "2px solid #dee2e6" }}>
-                    <th style={{ padding: "1rem", textAlign: "left", fontWeight: "600" }}>
+                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#111827', fontSize: '0.9rem' }}>
                       Estudiante
                     </th>
-                    <th style={{ padding: "1rem", textAlign: "left", fontWeight: "600" }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#111827', fontSize: '0.9rem' }}>
                       Curso
                     </th>
-                    <th style={{ padding: "1rem", textAlign: "left", fontWeight: "600" }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#111827', fontSize: '0.9rem' }}>
                       Fecha
                     </th>
-                    <th style={{ padding: "1rem", textAlign: "left", fontWeight: "600" }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#111827', fontSize: '0.9rem' }}>
                       Motivo
                     </th>
-                    <th style={{ padding: "1rem", textAlign: "center", fontWeight: "600" }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '600', color: '#111827', fontSize: '0.9rem' }}>
                       Archivo
                     </th>
-                    <th style={{ padding: "1rem", textAlign: "center", fontWeight: "600" }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '600', color: '#111827', fontSize: '0.9rem' }}>
                       Acciones
                     </th>
                   </tr>
@@ -316,56 +377,68 @@ const GestionarFaltas: React.FC = () => {
                   {justifications.map((justification) => (
                     <tr
                       key={justification.id}
-                      style={{ borderBottom: "1px solid #dee2e6" }}
+                      style={{ borderBottom: '1px solid #e5e7eb' }}
                     >
-                      <td style={{ padding: "1rem" }}>
+                      <td style={{ padding: '14px 16px', color: '#111827', fontSize: '0.9rem' }}>
                         {justification.student_name}
                       </td>
-                      <td style={{ padding: "1rem" }}>
+                      <td style={{ padding: '14px 16px', color: '#6b7280', fontSize: '0.9rem' }}>
                         {getCourseName(justification.course_external_id)}
                       </td>
-                      <td style={{ padding: "1rem" }}>
+                      <td style={{ padding: '14px 16px', color: '#6b7280', fontSize: '0.9rem' }}>
                         {formatDate(justification.date)}
                       </td>
-                      <td style={{ padding: "1rem" }}>
+                      <td style={{ padding: '14px 16px', color: '#6b7280', fontSize: '0.9rem' }}>
                         {justification.justification_reason || "(Sin motivo especificado)"}
                       </td>
-                      <td style={{ padding: "1rem", textAlign: "center" }}>
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                         {justification.justification_file_reference ? (
                           <button
                             onClick={() =>
                               handleDownloadFile(justification.justification_file_reference!)
                             }
                             style={{
-                              backgroundColor: "#3498db",
-                              color: "#fff",
-                              border: "none",
-                              padding: "0.5rem 1rem",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              fontSize: "0.875rem",
+                              background: '#1e4db7',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              transition: 'background 0.2s ease'
                             }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#1a3d8f'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#1e4db7'}
                           >
                             📥 Descargar
                           </button>
                         ) : (
-                          <span style={{ color: "#999" }}>Sin archivo</span>
+                          <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Sin archivo</span>
                         )}
                       </td>
-                      <td style={{ padding: "1rem", textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
                             onClick={() => openCommentModal(justification.id, "accept")}
                             disabled={processingId === justification.id}
                             style={{
-                              backgroundColor: "#27ae60",
-                              color: "#fff",
-                              border: "none",
-                              padding: "0.5rem 1rem",
-                              borderRadius: "4px",
-                              cursor: processingId === justification.id ? "not-allowed" : "pointer",
-                              fontSize: "0.875rem",
+                              background: '#10b981',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: processingId === justification.id ? 'not-allowed' : 'pointer',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
                               opacity: processingId === justification.id ? 0.6 : 1,
+                              transition: 'background 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (processingId !== justification.id) e.currentTarget.style.background = '#059669';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (processingId !== justification.id) e.currentTarget.style.background = '#10b981';
                             }}
                           >
                             ✓ Aceptar
@@ -374,14 +447,22 @@ const GestionarFaltas: React.FC = () => {
                             onClick={() => openCommentModal(justification.id, "reject")}
                             disabled={processingId === justification.id}
                             style={{
-                              backgroundColor: "#e74c3c",
-                              color: "#fff",
-                              border: "none",
-                              padding: "0.5rem 1rem",
-                              borderRadius: "4px",
-                              cursor: processingId === justification.id ? "not-allowed" : "pointer",
-                              fontSize: "0.875rem",
+                              background: '#ef4444',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: processingId === justification.id ? 'not-allowed' : 'pointer',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
                               opacity: processingId === justification.id ? 0.6 : 1,
+                              transition: 'background 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (processingId !== justification.id) e.currentTarget.style.background = '#dc2626';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (processingId !== justification.id) e.currentTarget.style.background = '#ef4444';
                             }}
                           >
                             ✗ Rechazar
@@ -396,19 +477,27 @@ const GestionarFaltas: React.FC = () => {
           )}
         </div>
 
-        {/* Summary */}
+        {/* Resumen */}
         {justifications.length > 0 && (
-          <div
-            style={{
-              marginTop: "1rem",
-              textAlign: "right",
-              color: "#7f8c8d",
-              fontSize: "0.875rem",
-            }}
-          >
+          <div style={{
+            marginTop: '16px',
+            textAlign: 'right',
+            color: '#6b7280',
+            fontSize: '0.9rem'
+          }}>
             Total de justificaciones pendientes: {justifications.length}
           </div>
         )}
+
+        {/* Animación de spinner */}
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
       </div>
 
       {/* Comment Modal */}

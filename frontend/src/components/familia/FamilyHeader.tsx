@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import type { CeiafStudent } from "../../types";
+import { notificationService } from "../../services/notifications";
 type Props = {
   parentName: string;
   students: CeiafStudent[];
@@ -16,7 +17,31 @@ const FamilyHeader: React.FC<Props> = ({
   onChangeStudent,
   onOpenAddChild,
 }) => {
-  const { logout } = useAuth(); // ✅ usamos tu hook de autenticación
+  const { logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Cargar contador de notificaciones no leídas
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      try {
+        const notifications = await notificationService.getNotifications();
+        const unread = notifications.filter((n: any) => !n.is_read).length;
+        setUnreadCount(unread);
+      } catch (error: any) {
+        // Silenciar errores de red
+        setUnreadCount(0);
+      }
+    };
+    
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 30000); // Actualizar cada 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleNotificationClick = () => {
+    setShowNotifications(!showNotifications);
+  };
 
   return (
     <header className="fam-header">
@@ -44,6 +69,29 @@ const FamilyHeader: React.FC<Props> = ({
       </div>
 
       <div className="fam-header-right">
+        <button 
+          className="notification-btn" 
+          onClick={handleNotificationClick}
+          title="Notificaciones"
+          style={{ position: 'relative', marginRight: '10px' }}
+        >
+          🔔
+          {unreadCount > 0 && (
+            <span className="notification-badge" style={{
+              position: 'absolute',
+              top: '-5px',
+              right: '-5px',
+              backgroundColor: '#e74c3c',
+              color: 'white',
+              borderRadius: '50%',
+              padding: '2px 6px',
+              fontSize: '11px',
+              fontWeight: 'bold'
+            }}>
+              {unreadCount}
+            </span>
+          )}
+        </button>
         <button className="logout-btn" onClick={logout}>⏻ Cerrar sesión</button>
       </div>
     </header>

@@ -604,7 +604,7 @@ export const getStudentBehavior = async (req: Request, res: Response) => {
     // ============================
     // 1. Nombre del estudiante (MySQL)
     // ============================
-    const [rows] = await ceiafPool.query<StudentRow[]>(
+    const [rows]: any = await ceiafPool.query(
       `SELECT CONCAT(nombres,' ',apellidos) AS nombre
        FROM estudiantes
        WHERE id_estudiante = ?`,
@@ -677,7 +677,47 @@ export const getStudentBehavior = async (req: Request, res: Response) => {
     }
 
     // ============================
-    // 6. Respuesta final
+    // 6. Datos académicos (tareas y calificaciones)
+    // ============================
+    // Obtener tareas asignadas al estudiante a través de su curso
+    const tasks = await prisma.task.findMany({
+      where: { course_external_id: courseId },
+      select: { id: true }
+    });
+    
+    const taskIds = tasks.map(t => t.id);
+    const totalTasks = taskIds.length;
+
+    // Obtener entregas del estudiante
+    const submissions = await prisma.submissionGrade.findMany({
+      where: { 
+        student_external_id: studentId,
+        task_id: { in: taskIds }
+      },
+      select: { 
+        task_id: true,
+        grade: true
+      }
+    });
+
+    const completedTasks = submissions.length;
+    const completionRate = totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100;
+
+    // Calcular promedio de calificaciones
+    const gradesArray = submissions
+      .filter(s => s.grade !== null)
+      .map(s => parseFloat(s.grade?.toString() || '0'));
+    
+    const totalGrades = gradesArray.length;
+    const averageGrade = totalGrades === 0 
+      ? 0 
+      : gradesArray.reduce((sum, g) => sum + g, 0) / totalGrades;
+
+    // Tasa de asistencia
+    const attendanceRate = totalDays === 0 ? 0 : 100 - absencePct;
+
+    // ============================
+    // 7. Respuesta final
     // ============================
     return res.json({
       student_id: studentId,
@@ -689,6 +729,14 @@ export const getStudentBehavior = async (req: Request, res: Response) => {
       absence_pct: absencePct,
       risk_level: computeRisk(),
       most_common_category: mostCommonCategory,
+
+      // Datos académicos
+      total_tasks: totalTasks,
+      completed_tasks: completedTasks,
+      completion_rate: completionRate,
+      average_grade: averageGrade,
+      total_grades: totalGrades,
+      attendance_rate: attendanceRate,
 
       reports: reports.map((r) => ({
         id: r.id,

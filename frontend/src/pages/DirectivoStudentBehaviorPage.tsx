@@ -179,6 +179,15 @@ const DirectivoStudentBehaviorPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="stats-card">
+                    <div className="stats-k">Asistencia</div>
+                    <div className="stats-v">
+                      {data.attendance_rate?.toFixed(1) ?? 0}%
+                    </div>
+                    <div className="stats-sub">
+                      {data.total_days - data.total_absences} días presente
+                    </div>
+                  </div>
+                  <div className="stats-card">
                     <div className="stats-k">Nivel de riesgo</div>
                     <div className="stats-v">
                       <span className={riskBadgeClass(data.risk_level)}>
@@ -190,6 +199,67 @@ const DirectivoStudentBehaviorPage: React.FC = () => {
                     <div className="stats-k">Tipo de novedad más común</div>
                     <div className="stats-v">
                       {data.most_common_category ?? "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sección académica */}
+                <div className="section-title" style={{ marginTop: 24, marginBottom: 12 }}>
+                  📚 Rendimiento Académico
+                </div>
+                <div className="stats-grid">
+                  <div className="stats-card">
+                    <div className="stats-k">Tareas completadas</div>
+                    <div className="stats-v">
+                      {data.completed_tasks ?? 0}/{data.total_tasks ?? 0}
+                    </div>
+                    <div className="stats-sub">
+                      {data.completion_rate?.toFixed(1) ?? 0}% de tasa de cumplimiento
+                    </div>
+                  </div>
+                  <div className="stats-card">
+                    <div className="stats-k">Promedio de calificaciones</div>
+                    <div className="stats-v">
+                      {data.average_grade?.toFixed(2) ?? "—"}/10
+                    </div>
+                    <div className="stats-sub">
+                      {data.total_grades ?? 0} calificaciones registradas
+                    </div>
+                  </div>
+                  <div className="stats-card">
+                    <div className="stats-k">Estado académico</div>
+                    <div className="stats-v">
+                      <span className={
+                        (data.average_grade ?? 0) >= 7 
+                          ? "badge ok" 
+                          : (data.average_grade ?? 0) >= 5 
+                            ? "badge warn" 
+                            : "badge dang"
+                      }>
+                        {(data.average_grade ?? 0) >= 7 
+                          ? "Bueno" 
+                          : (data.average_grade ?? 0) >= 5 
+                            ? "Regular" 
+                            : "Necesita apoyo"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="stats-card">
+                    <div className="stats-k">Tasa de asistencia</div>
+                    <div className="stats-v">
+                      <span className={
+                        (data.attendance_rate ?? 0) >= 90 
+                          ? "badge ok" 
+                          : (data.attendance_rate ?? 0) >= 75 
+                            ? "badge warn" 
+                            : "badge dang"
+                      }>
+                        {(data.attendance_rate ?? 0) >= 90 
+                          ? "Excelente" 
+                          : (data.attendance_rate ?? 0) >= 75 
+                            ? "Aceptable" 
+                            : "Baja"}
+                      </span>
                     </div>
                   </div>
                 </div>

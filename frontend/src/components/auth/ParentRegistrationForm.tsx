@@ -19,7 +19,7 @@ const ParentRegistrationForm: React.FC = () => {
     work_place: '',
     security_pin: '',
     password: '',
-    confirmPassword: ''
+    confirm_password: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,7 +35,7 @@ const ParentRegistrationForm: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.confirm_password) {
       setError('Las contraseñas no coinciden');
       return;
     }
@@ -153,8 +153,8 @@ const ParentRegistrationForm: React.FC = () => {
         <div className="form-group">
           <input
             type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
+            name="confirm_password"
+            value={formData.confirm_password}
             onChange={handleChange}
             placeholder="Confirmar contraseña"
             required

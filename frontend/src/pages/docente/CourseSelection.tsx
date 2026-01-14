@@ -82,72 +82,95 @@ const CourseSelection: React.FC = () => {
     return (
         <div style={{
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            padding: '2rem'
+            background: '#f7f8fb',
+            display: 'flex',
+            flexDirection: 'column'
         }}>
+            {/* Header estilo familia */}
             <div style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                padding: '1.5rem 2rem',
-                marginBottom: '2rem',
-                borderRadius: '0 0 20px 20px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 24px',
+                background: '#1e4db7',
+                color: '#fff',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
-                <div style={{
-                    maxWidth: '1200px',
-                    margin: '0 auto',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        background: '#fff',
+                        color: '#1e4db7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: '700',
+                        fontSize: '1.1rem'
+                    }}>
+                        {user?.email?.charAt(0).toUpperCase() || 'D'}
+                    </div>
                     <div>
-                        <h1 style={{
-                            color: '#2c3e50',
-                            fontSize: '2rem',
-                            fontWeight: '700',
-                            margin: '0 0 0.5rem 0'
+                        <div style={{
+                            fontWeight: '600',
+                            fontSize: '1.1rem',
+                            color: '#fff'
                         }}>
                             Seleccionar Curso
-                        </h1>
-                        <p style={{
-                            color: '#7f8c8d',
-                            fontSize: '1.1rem',
-                            margin: '0'
+                        </div>
+                        <div style={{
+                            fontSize: '0.9rem',
+                            color: '#d7e3ff',
+                            marginTop: '2px'
                         }}>
                             Bienvenido/a {user?.email}
-                        </p>
+                        </div>
                     </div>
-                    <button
-                        onClick={logout}
-                        style={{
-                            background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
-                            color: 'white',
-                            border: 'none',
-                            padding: '0.75rem 1.5rem',
-                            borderRadius: '25px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 15px rgba(231, 76, 60, 0.3)'
-                        }}
-                    >
-                        Cerrar sesión
-                    </button>
                 </div>
+                <button
+                    onClick={logout}
+                    style={{
+                        background: '#fff',
+                        color: '#1e4db7',
+                        border: '1px solid #d7e3ff',
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#f3f7ff';
+                        e.currentTarget.style.borderColor = '#1e4db7';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#fff';
+                        e.currentTarget.style.borderColor = '#d7e3ff';
+                    }}
+                >
+                    Cerrar sesión
+                </button>
             </div>
 
+            {/* Contenido principal */}
             <div style={{
+                flex: 1,
                 maxWidth: '1200px',
-                margin: '0 auto'
+                width: '100%',
+                margin: '0 auto',
+                padding: '24px'
             }}>
                 {loading && (
                     <div style={{
                         textAlign: 'center',
                         padding: '3rem',
-                        background: 'rgba(255, 255, 255, 0.95)',
-                        borderRadius: '20px',
-                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
+                        background: '#fff',
+                        borderRadius: '12px',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                     }}>
-                        <p style={{ fontSize: '1.2rem', color: '#7f8c8d' }}>Cargando cursos...</p>
+                        <p style={{ fontSize: '1.1rem', color: '#6b7280' }}>Cargando cursos...</p>
                     </div>
                 )}
 
@@ -155,22 +178,26 @@ const CourseSelection: React.FC = () => {
                     <div style={{
                         textAlign: 'center',
                         padding: '3rem',
-                        background: 'rgba(231, 76, 60, 0.1)',
-                        borderRadius: '20px',
-                        border: '1px solid #e74c3c'
+                        background: '#fff',
+                        borderRadius: '12px',
+                        border: '1px solid #ef4444',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                     }}>
-                        <p style={{ fontSize: '1.2rem', color: '#e74c3c', marginBottom: '1rem' }}>{error}</p>
+                        <p style={{ fontSize: '1.1rem', color: '#ef4444', marginBottom: '1rem' }}>{error}</p>
                         <button
                             onClick={loadTeacherCourses}
                             style={{
-                                background: '#e74c3c',
-                                color: 'white',
+                                background: '#1e4db7',
+                                color: '#fff',
                                 border: 'none',
-                                padding: '0.75rem 1.5rem',
-                                borderRadius: '25px',
+                                padding: '10px 24px',
+                                borderRadius: '8px',
                                 cursor: 'pointer',
-                                fontWeight: '600'
+                                fontWeight: '600',
+                                transition: 'background 0.2s ease'
                             }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#1a3d8f'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#1e4db7'}
                         >
                             Reintentar
                         </button>
@@ -181,11 +208,12 @@ const CourseSelection: React.FC = () => {
                     <div style={{
                         textAlign: 'center',
                         padding: '3rem',
-                        background: 'rgba(255, 255, 255, 0.95)',
-                        borderRadius: '20px',
-                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
+                        background: '#fff',
+                        borderRadius: '12px',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                     }}>
-                        <p style={{ fontSize: '1.2rem', color: '#7f8c8d' }}>
+                        <p style={{ fontSize: '1.1rem', color: '#6b7280' }}>
                             No tiene cursos asignados. Contacte al administrador.
                         </p>
                     </div>
@@ -195,7 +223,7 @@ const CourseSelection: React.FC = () => {
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: '2rem'
+                        gap: '16px'
                     }}>
                         {courses.map((course) => {
                             const color = courseColors[course.nombre] || '#3498db';
@@ -204,24 +232,27 @@ const CourseSelection: React.FC = () => {
                                     key={course.id_curso}
                                     onClick={() => handleCourseSelect(course)}
                                     style={{
-                                        background: 'rgba(255, 255, 255, 0.95)',
-                                        borderRadius: '20px',
-                                        padding: '2rem',
+                                        background: '#fff',
+                                        borderRadius: '12px',
+                                        padding: '20px',
                                         cursor: 'pointer',
-                                        transition: 'all 0.3s ease',
-                                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
-                                        backdropFilter: 'blur(10px)',
-                                        border: `1px solid ${color}20`,
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                                        border: `1px solid ${color}40`,
                                         position: 'relative' as const,
                                         overflow: 'hidden'
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(-8px)';
-                                        e.currentTarget.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.15)';
+                                        e.currentTarget.style.transform = 'translateY(-4px)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                                        e.currentTarget.style.borderColor = color;
+                                        e.currentTarget.style.background = '#f3f7ff';
                                     }}
                                     onMouseLeave={(e) => {
                                         e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)';
+                                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                                        e.currentTarget.style.borderColor = `${color}40`;
+                                        e.currentTarget.style.background = '#fff';
                                     }}
                                 >
                                     <div style={{
@@ -236,51 +267,53 @@ const CourseSelection: React.FC = () => {
                                     <div style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        marginBottom: '1rem'
+                                        marginBottom: '14px',
+                                        paddingLeft: '8px'
                                     }}>
                                         <div style={{
-                                            width: '60px',
-                                            height: '60px',
+                                            width: '50px',
+                                            height: '50px',
                                             background: color,
-                                            borderRadius: '15px',
+                                            borderRadius: '8px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            fontSize: '0.9rem',
-                                            marginRight: '1rem',
-                                            boxShadow: `0 4px 15px ${color}30`,
+                                            fontSize: '1.2rem',
+                                            marginRight: '14px',
                                             color: 'white',
                                             fontWeight: 'bold'
                                         }}>
                                             {course.paralelo}
                                         </div>
                                         <h3 style={{
-                                            fontSize: '1.4rem',
+                                            fontSize: '1.25rem',
                                             fontWeight: '700',
-                                            color: '#2c3e50',
+                                            color: '#111827',
                                             margin: '0',
-                                            lineHeight: '1.2'
+                                            lineHeight: '1.3'
                                         }}>
                                             {course.nombre}
                                         </h3>
                                     </div>
                                     
-                                    <p style={{
-                                        color: '#7f8c8d',
-                                        fontSize: '0.95rem',
-                                        lineHeight: '1.5',
-                                        margin: '0 0 0.5rem 0'
-                                    }}>
-                                        {course.nivel} - Paralelo {course.paralelo}
-                                    </p>
-                                    <p style={{
-                                        color: '#3498db',
-                                        fontSize: '0.9rem',
-                                        fontWeight: '600',
-                                        margin: '0'
-                                    }}>
-                                        {course.cantidad_estudiantes} estudiantes
-                                    </p>
+                                    <div style={{ paddingLeft: '8px' }}>
+                                        <p style={{
+                                            color: '#6b7280',
+                                            fontSize: '0.95rem',
+                                            lineHeight: '1.4',
+                                            margin: '0 0 8px 0'
+                                        }}>
+                                            {course.nivel} - Paralelo {course.paralelo}
+                                        </p>
+                                        <p style={{
+                                            color: '#1e4db7',
+                                            fontSize: '0.9rem',
+                                            fontWeight: '600',
+                                            margin: '0'
+                                        }}>
+                                            {course.cantidad_estudiantes} estudiantes
+                                        </p>
+                                    </div>
                                 </div>
                             );
                         })}

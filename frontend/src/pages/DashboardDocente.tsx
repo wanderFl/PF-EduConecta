@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import type { Course } from "../types";
 import { taskService } from "../services/tasks";
 import { listTeacherConversations, type TeacherConversation } from "../services/communications";
-import "./DashboardDocente.css";
+import "./familia.css";
 
 interface TaskSubmission {
     id_estudiante: number;
@@ -21,12 +21,20 @@ interface TaskWithSubmissions {
 }
 
 export const DashboardDocente: React.FC = () => {
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const navigate = useNavigate();
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [recentMessages, setRecentMessages] = useState<TeacherConversation[]>([]);
     const [pendingGrades, setPendingGrades] = useState<TaskSubmission[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Obtener nombre e iniciales del docente
+    const teacherName = user?.email?.split('@')[0] || 'Docente';
+    const teacherInitials = teacherName
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join('');
 
     useEffect(() => {
         const courseData = localStorage.getItem('selectedCourseData');
@@ -163,89 +171,77 @@ export const DashboardDocente: React.FC = () => {
     }
 
     return (
-        <div className="dashboard-container">
-            <div className="header-section">
-                <div className="header-content">
-                    <div className="user-info">
-                        <h1>Carolina Herrera</h1>
-                        <p>{selectedCourse.name}</p>
-                        <button 
-                            onClick={handleChangeCourse}
-                            style={{
-                                background: 'transparent',
-                                border: `2px solid ${selectedCourse.color}`,
-                                color: selectedCourse.color,
-                                padding: '0.5rem 1rem',
-                                borderRadius: '15px',
-                                fontSize: '0.9rem',
-                                cursor: 'pointer',
-                                marginTop: '0.5rem',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = selectedCourse.color;
-                                e.currentTarget.style.color = 'white';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'transparent';
-                                e.currentTarget.style.color = selectedCourse.color;
-                            }}
-                        >
-                            Cambiar Curso
-                        </button>
-                    </div>
-                    <button onClick={logout} className="logout-btn">
-                        Cerrar sesión
+        <div className="fam-layout">
+            {/* Header */}
+            <div className="fam-header">
+                <div className="fam-header-left">
+                    <div className="avatar-initials">{teacherInitials}</div>
+                    <div className="parent-name">{teacherName}</div>
+                </div>
+                <div className="fam-header-center">
+                    <select className="student-select" value={selectedCourse.id} disabled>
+                        <option>{selectedCourse.name}</option>
+                    </select>
+                    <button onClick={handleChangeCourse} className="add-child-btn">
+                        Cambiar Curso
                     </button>
                 </div>
+                <button onClick={logout} className="logout-btn">
+                    Cerrar sesión
+                </button>
             </div>
 
-            <div className="main-content">
-                <div className="dashboard-grid">
-                    {dashboardItems.map((item, index) => (
-                        <div
-                            key={index}
-                            onClick={() => navigate(item.path)}
-                            className="dashboard-card"
-                            style={{
-                                borderLeftColor: selectedCourse.color
-                            }}
-                        >
-                            <div className="card-header">
-                                <div 
-                                    className="card-icon"
-                                    style={{
-                                        background: `linear-gradient(135deg, ${selectedCourse.color}, ${selectedCourse.color}CC)`
-                                    }}
-                                >
-                                    {item.icon}
-                                </div>
-                                <h3 className="card-title">{item.title}</h3>
-                            </div>
-                            <p className="card-description">
-                                {item.description} - {selectedCourse.name}
-                            </p>
+            {/* Contenido */}
+            <div className="fam-body">
+                <div className="fam-main">
+                    {/* Info Card */}
+                    <div className="student-info-card">
+                        <div className="sic-title">{selectedCourse.name} - {selectedCourse.description}</div>
+                        <div className="sic-row">
+                            <span>Rol:</span>
+                            <b>Docente</b>
                         </div>
-                    ))}
-                </div>
+                    </div>
 
-                <div className="events-sidebar">
-                    <h3 className="sidebar-title">Eventos Importantes</h3>
-                    {eventosImportantes.map((evento, index) => (
-                        <div key={index} className="event-item">
-                            <div className="event-title">{evento.title}</div>
-                            <div className="event-description">{evento.description}</div>
-                        </div>
-                    ))}
-                    
-                    <div className="tareas-section">
-                        <h3 className="sidebar-title">Tareas Entregadas</h3>
-                        {tareasEntregadas.map((tarea, index) => (
-                            <div key={index} className="event-item">
-                                <div className="event-title">{tarea.title}</div>
-                                <div className="event-description">{tarea.description}</div>
+                    {/* Acciones (tiles) */}
+                    <div className="action-grid">
+                        {dashboardItems.map((item, index) => (
+                            <div
+                                key={index}
+                                onClick={() => navigate(item.path)}
+                                className="action-tile"
+                            >
+                                <div className="tile-icon">{item.icon}</div>
+                                <div className="tile-label">{item.title}</div>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Sidebar derecho */}
+                <div className="fam-sidebar">
+                    <div className="pending-panel">
+                        <h3>Eventos Importantes</h3>
+                        <ul className="pending-list">
+                            {eventosImportantes.map((evento, index) => (
+                                <li key={index} className="pending-item">
+                                    <div className="pt-title">{evento.title}</div>
+                                    <div className="pt-meta">{evento.description}</div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    
+                    <div className="pending-panel" style={{ marginTop: '16px' }}>
+                        <h3>Tareas Entregadas</h3>
+                        <ul className="pending-list">
+                            {tareasEntregadas.map((tarea, index) => (
+                                <li key={index} className="pending-item">
+                                    <div className="pt-title">{tarea.title}</div>
+                                    <div className="pt-meta">{tarea.description}</div>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
             </div>

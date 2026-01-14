@@ -20,13 +20,55 @@ export const ceiafPool = DATABASE_CEIAF_URL ? mysql.createPool({
   connectTimeout: 15000, // 15 segundos de timeout
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
+  // Manejar reconexiones automáticas
+  maxIdle: 3, // Máximo de conexiones inactivas
+  idleTimeout: 60000, // 60 segundos antes de cerrar conexión inactiva
 }) : null as any;
+
 /**
- * Obtiene el nombre de la materia “principal” de un docente.
+ * Wrapper para queries con reintentos automáticos en caso de pérdida de conexión
+ */
+export async function executeQuery(sql: string, params?: any[]): Promise<any> {
+  if (!ceiafPool) {
+    throw new Error('Conexión a base de datos MySQL no disponible');
+  }
+
+  const maxRetries = 3;
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const [rows] = await ceiafPool.query(sql, params);
+      return rows;
+    } catch (error: any) {
+      lastError = error;
+      
+      // Si es error de conexión perdida, reintentar
+      if (error.code === 'PROTOCOL_CONNECTION_LOST' && attempt < maxRetries) {
+        console.warn(`⚠️ Conexión perdida, reintentando (${attempt}/${maxRetries})...`);
+        // Esperar un poco antes de reintentar
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        continue;
+      }
+      
+      // Si no es error de conexión o ya agotamos reintentos, lanzar error
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Obtiene el nombre de la materia "principal" de un docente.
  * Criterio: la asignación (docente_materia_curso) con ano_lectivo más reciente.
  */
 export async function getTeacherSubjectById(teacherId: number): Promise<string | null> {
-  const [rows] = await ceiafPool.query(
+  if (!ceiafPool) {
+    console.error('❌ ceiafPool is not available in getTeacherSubjectById');
+    return null;
+  }
+  const rows = await executeQuery(
     `
     SELECT m.nombre AS materia, dmc.ano_lectivo
     FROM docente_materia_curso dmc

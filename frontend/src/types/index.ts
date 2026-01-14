@@ -19,7 +19,18 @@ export interface Credentials {
   email: string;
   password: string;
 }
- 
+
+export interface ParentRegistration {
+  full_name: string;
+  email: string;
+  cedula: string;
+  home_address: string;
+  work_place: string;
+  security_pin: string;
+  password: string;
+  confirm_password: string;
+}
+
 export interface ApiError {
   message: string;
 }
@@ -307,6 +318,14 @@ export interface StudentBehaviorPayload {
   absence_pct: number;
   risk_level: "BAJO" | "MEDIO" | "ALTO" | string;
   most_common_category: string | null;
+ 
+  // Datos académicos
+  total_tasks: number;
+  completed_tasks: number;
+  completion_rate: number;
+  average_grade: number;
+  total_grades: number;
+  attendance_rate: number;
  
   reports: StudentBehaviorReportRow[];
   monthly_absences: MonthlyAbsencesPoint[];

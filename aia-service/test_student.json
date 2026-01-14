@@ -1,0 +1,21 @@
+{
+  "student_id": "test-123",
+  "student_name": "María García López",
+  "grades": [
+    {"subject": "Matemáticas", "grade": 9.9, "max_grade": 10.0},
+    {"subject": "Lengua y Literatura", "grade": 9.8, "max_grade": 10.0},
+    {"subject": "Ciencias Naturales", "grade": 9.9, "max_grade": 10.0},
+    {"subject": "Estudios Sociales", "grade": 9.7, "max_grade": 10.0},
+    {"subject": "Inglés", "grade": 9.8, "max_grade": 10.0}
+  ],
+  "attendance": {
+    "total_days": 80,
+    "attended_days": 78,
+    "absences": 2
+  },
+  "behavior": {
+    "incidents": 0,
+    "positive_notes": 5,
+    "behavior_score": 9.8
+  }
+}

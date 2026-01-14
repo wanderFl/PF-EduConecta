@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { taskService } from "../../services/tasks";
 import type { Course, Task, Student } from "../../types";
-import './RegistrarCalificaciones.css';
 
 const RegistrarCalificaciones: React.FC = () => {
     const navigate = useNavigate();
@@ -146,11 +145,26 @@ const RegistrarCalificaciones: React.FC = () => {
 
     if (!selectedCourse) {
         return (
-            <div className="calificaciones-container">
-                <div className="loading-spinner">
-                    <div className="spinner"></div>
-                    <div style={{ fontSize: '1.125rem', color: 'white' }}>Cargando...</div>
+            <div style={{ 
+                minHeight: '100vh', 
+                background: '#f7f8fb', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ 
+                        width: '50px', 
+                        height: '50px', 
+                        border: '3px solid #e5e7eb',
+                        borderTop: '3px solid #1e4db7',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        margin: '0 auto 16px'
+                    }} />
+                    <div style={{ fontSize: '1.125rem', color: '#6b7280' }}>Cargando...</div>
                 </div>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
             </div>
         );
     }
@@ -174,77 +188,180 @@ const RegistrarCalificaciones: React.FC = () => {
     }
 
     return (
-        <div className="calificaciones-container">
-            <div className="calificaciones-content">
-                <div className="calificaciones-card">
-                    <div className="calificaciones-header">
-                        <div className="calificaciones-header-content">
-                            <div className="calificaciones-header-title">
-                                <h1>Registrar Calificaciones</h1>
-                                <p>Curso: {selectedCourse.name}</p>
-                            </div>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <button
-                                    onClick={() => navigate("/docente/tareas")}
-                                    className="btn-calificaciones btn-primary"
-                                    style={{
-                                        backgroundColor: '#667eea',
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '12px 24px',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        fontSize: '1rem',
-                                        fontWeight: '600'
-                                    }}
-                                >
-                                    ✨ Crear Nueva Tarea
-                                </button>
-                                <button
-                                    onClick={() => navigate("/docente/dashboard")}
-                                    className="btn-calificaciones btn-secondary"
-                                >
-                                    ← Volver al Dashboard
-                                </button>
-                            </div>
+        <div style={{
+            minHeight: '100vh',
+            background: '#f7f8fb',
+            display: 'flex',
+            flexDirection: 'column'
+        }}>
+            {/* Header estilo familia */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 24px',
+                background: '#1e4db7',
+                color: '#fff',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        background: '#fff',
+                        color: '#1e4db7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: '700',
+                        fontSize: '1.2rem'
+                    }}>
+                        📝
+                    </div>
+                    <div>
+                        <div style={{
+                            fontWeight: '600',
+                            fontSize: '1.1rem',
+                            color: '#fff'
+                        }}>
+                            Registrar Calificaciones
+                        </div>
+                        <div style={{
+                            fontSize: '0.9rem',
+                            color: '#d7e3ff',
+                            marginTop: '2px'
+                        }}>
+                            Curso: {selectedCourse.name}
                         </div>
                     </div>
-
-                    {error && (
-                        <div className="alert-calificaciones alert-error" style={{ margin: '1.5rem' }}>
-                            <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                            <span>{error}</span>
-                        </div>
-                    )}
-
-                    {loading ? (
-                        <div className="loading-spinner">
-                            <div className="spinner"></div>
-                            <p style={{ fontSize: '1.125rem', color: '#667eea' }}>Cargando tareas...</p>
-                        </div>
-                    ) : (
-                        <>
-                            {!selectedTask ? (
-                                <TaskListView
-                                    tasks={tasks}
-                                    onSelectTask={setSelectedTask}
-                                    onDownloadTaskFile={handleDownloadTaskFile}
-                                    formatDate={formatDate}
-                                    navigate={navigate}
-                                />
-                            ) : (
-                                <TaskStudentListView
-                                    task={selectedTask}
-                                    onBack={() => setSelectedTask(null)}
-                                    onSelectStudent={setSelectedStudent}
-                                    onGradeQuick={handleGradeStudent}
-                                    formatDate={formatDate}
-                                    isGrading={gradingStudent}
-                                />
-                            )}
-                        </>
-                    )}
                 </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button
+                        onClick={() => navigate("/docente/tareas")}
+                        style={{
+                            background: '#fff',
+                            color: '#1e4db7',
+                            border: '1px solid #d7e3ff',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#f3f7ff';
+                            e.currentTarget.style.borderColor = '#1e4db7';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#fff';
+                            e.currentTarget.style.borderColor = '#d7e3ff';
+                        }}
+                    >
+                        ✨ Crear Nueva Tarea
+                    </button>
+                    <button
+                        onClick={() => navigate("/docente/dashboard")}
+                        style={{
+                            background: '#fff',
+                            color: '#1e4db7',
+                            border: '1px solid #d7e3ff',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#f3f7ff';
+                            e.currentTarget.style.borderColor = '#1e4db7';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#fff';
+                            e.currentTarget.style.borderColor = '#d7e3ff';
+                        }}
+                    >
+                        ← Volver al Dashboard
+                    </button>
+                </div>
+            </div>
+
+            {/* Contenedor principal */}
+            <div style={{
+                flex: 1,
+                maxWidth: '1400px',
+                width: '100%',
+                margin: '0 auto',
+                padding: '24px'
+            }}>
+                {error && (
+                    <div style={{
+                        background: '#fff',
+                        border: '1px solid #ef4444',
+                        color: '#ef4444',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                        fontSize: '0.95rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {loading ? (
+                    <div style={{
+                        background: '#fff',
+                        padding: '60px',
+                        borderRadius: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        border: '1px solid #e5e7eb',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ 
+                            width: '50px', 
+                            height: '50px', 
+                            border: '3px solid #e5e7eb',
+                            borderTop: '3px solid #1e4db7',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                            margin: '0 auto 16px'
+                        }} />
+                        <p style={{ fontSize: '1.125rem', color: '#6b7280' }}>Cargando tareas...</p>
+                    </div>
+                ) : (
+                    <>
+                        {!selectedTask ? (
+                            <TaskListView
+                                tasks={tasks}
+                                onSelectTask={setSelectedTask}
+                                onDownloadTaskFile={handleDownloadTaskFile}
+                                formatDate={formatDate}
+                                navigate={navigate}
+                            />
+                        ) : (
+                            <TaskStudentListView
+                                task={selectedTask}
+                                onBack={() => setSelectedTask(null)}
+                                onSelectStudent={setSelectedStudent}
+                                onGradeQuick={handleGradeStudent}
+                                formatDate={formatDate}
+                                isGrading={gradingStudent}
+                            />
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
@@ -266,26 +383,61 @@ const TaskListView: React.FC<TaskListViewProps> = ({
     formatDate,
     navigate
 }) => (
-    <div className="task-list-grid">
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2d3748', marginBottom: '1.5rem' }}>
+    <div>
+        <h2 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: '700', 
+            color: '#1f2937', 
+            marginBottom: '20px' 
+        }}>
             Seleccionar Tarea para Calificar
         </h2>
         {tasks.length === 0 ? (
-            <div className="empty-state">
-                <div className="empty-state-icon">📚</div>
-                <h3 className="empty-state-title">No hay tareas creadas</h3>
-                <p className="empty-state-description">
+            <div style={{
+                background: '#fff',
+                padding: '60px 24px',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                textAlign: 'center'
+            }}>
+                <div style={{ fontSize: '4rem', marginBottom: '16px' }}>📚</div>
+                <h3 style={{
+                    fontSize: '1.25rem',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    marginBottom: '8px'
+                }}>
+                    No hay tareas creadas
+                </h3>
+                <p style={{
+                    fontSize: '1rem',
+                    color: '#6b7280',
+                    marginBottom: '24px'
+                }}>
                     Comienza creando tu primera tarea para este curso
                 </p>
                 <button
                     onClick={() => navigate("/docente/crear-tarea")}
-                    className="btn-calificaciones btn-primary"
+                    style={{
+                        background: '#1e4db7',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: '1rem',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#1a3a8f'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#1e4db7'}
                 >
                     ➕ Crear Primera Tarea
                 </button>
             </div>
         ) : (
-            <div style={{ display: 'grid', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gap: '16px' }}>
                 {tasks.map((task) => {
                     const totalStudents = task.students.length;
                     const submittedCount = task.students.filter(s => s.has_submission).length;
@@ -294,73 +446,168 @@ const TaskListView: React.FC<TaskListViewProps> = ({
                     const gradedPercentage = totalStudents > 0 ? (gradedCount / totalStudents) * 100 : 0;
                     
                     return (
-                        <div key={task.id} className="task-card">
-                            <div className="task-card-header">
-                                <div style={{ flex: 1 }}>
-                                    <h3 className="task-card-title">{task.title}</h3>
-                                    {task.instructions && (
-                                        <p className="task-card-description">{task.instructions}</p>
-                                    )}
-                                    <div className="task-card-meta">
-                                        <div className="task-card-meta-item">
-                                            <span>📅</span>
-                                            <span><strong>Vence:</strong> {formatDate(task.due_date)}</span>
-                                        </div>
-                                        {task.max_points && (
-                                            <div className="task-card-meta-item">
-                                                <span>⭐</span>
-                                                <span><strong>Puntos:</strong> {task.max_points}</span>
-                                            </div>
-                                        )}
-                                        <div className="task-card-meta-item">
-                                            <span>👥</span>
-                                            <span><strong>Estudiantes:</strong> {totalStudents}</span>
-                                        </div>
+                        <div key={task.id} style={{
+                            background: '#fff',
+                            borderRadius: '12px',
+                            border: '1px solid #e5e7eb',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            padding: '20px',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '20px',
+                            transition: 'all 0.2s ease'
+                        }}>
+                            <div style={{ flex: 1 }}>
+                                <h3 style={{
+                                    fontSize: '1.25rem',
+                                    fontWeight: '600',
+                                    color: '#1f2937',
+                                    marginBottom: '8px'
+                                }}>
+                                    {task.title}
+                                </h3>
+                                {task.instructions && (
+                                    <p style={{
+                                        fontSize: '0.95rem',
+                                        color: '#6b7280',
+                                        marginBottom: '16px',
+                                        lineHeight: '1.5'
+                                    }}>
+                                        {task.instructions}
+                                    </p>
+                                )}
+                                <div style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '16px',
+                                    marginBottom: '16px'
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontSize: '0.9rem',
+                                        color: '#4b5563'
+                                    }}>
+                                        <span>📅</span>
+                                        <span><strong>Vence:</strong> {formatDate(task.due_date)}</span>
                                     </div>
-                                    {task.file_reference && (
-                                        <a
-                                            href="#"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                onDownloadTaskFile(task.file_reference!);
-                                            }}
-                                            className="download-link"
-                                        >
-                                            📎 Descargar archivo adjunto
-                                        </a>
+                                    {task.max_points && (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            fontSize: '0.9rem',
+                                            color: '#4b5563'
+                                        }}>
+                                            <span>⭐</span>
+                                            <span><strong>Puntos:</strong> {task.max_points}</span>
+                                        </div>
                                     )}
-                                    <div className="progress-bar-container">
-                                        <div className="progress-bar-label">
-                                            <span><strong>Entregas:</strong> {submittedCount} de {totalStudents}</span>
-                                            <span>{submissionPercentage.toFixed(0)}%</span>
-                                        </div>
-                                        <div className="progress-bar">
-                                            <div 
-                                                className="progress-bar-fill" 
-                                                style={{ width: `${submissionPercentage}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                    <div className="progress-bar-container">
-                                        <div className="progress-bar-label">
-                                            <span><strong>Calificados:</strong> {gradedCount} de {totalStudents}</span>
-                                            <span>{gradedPercentage.toFixed(0)}%</span>
-                                        </div>
-                                        <div className="progress-bar">
-                                            <div 
-                                                className="progress-bar-fill" 
-                                                style={{ width: `${gradedPercentage}%` }}
-                                            ></div>
-                                        </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        fontSize: '0.9rem',
+                                        color: '#4b5563'
+                                    }}>
+                                        <span>👥</span>
+                                        <span><strong>Estudiantes:</strong> {totalStudents}</span>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => onSelectTask(task)}
-                                    className="btn-calificaciones btn-primary"
-                                >
-                                    📝 Calificar
-                                </button>
+                                {task.file_reference && (
+                                    <a
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            onDownloadTaskFile(task.file_reference!);
+                                        }}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            color: '#1e4db7',
+                                            textDecoration: 'none',
+                                            fontSize: '0.9rem',
+                                            fontWeight: '500',
+                                            marginBottom: '16px'
+                                        }}
+                                    >
+                                        📎 Descargar archivo adjunto
+                                    </a>
+                                )}
+                                <div style={{ marginBottom: '12px' }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        marginBottom: '6px',
+                                        fontSize: '0.875rem',
+                                        color: '#4b5563'
+                                    }}>
+                                        <span><strong>Entregas:</strong> {submittedCount} de {totalStudents}</span>
+                                        <span>{submissionPercentage.toFixed(0)}%</span>
+                                    </div>
+                                    <div style={{
+                                        width: '100%',
+                                        height: '8px',
+                                        background: '#e5e7eb',
+                                        borderRadius: '4px',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            width: `${submissionPercentage}%`,
+                                            height: '100%',
+                                            background: '#1e4db7',
+                                            transition: 'width 0.3s ease'
+                                        }}></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        marginBottom: '6px',
+                                        fontSize: '0.875rem',
+                                        color: '#4b5563'
+                                    }}>
+                                        <span><strong>Calificados:</strong> {gradedCount} de {totalStudents}</span>
+                                        <span>{gradedPercentage.toFixed(0)}%</span>
+                                    </div>
+                                    <div style={{
+                                        width: '100%',
+                                        height: '8px',
+                                        background: '#e5e7eb',
+                                        borderRadius: '4px',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            width: `${gradedPercentage}%`,
+                                            height: '100%',
+                                            background: '#10b981',
+                                            transition: 'width 0.3s ease'
+                                        }}></div>
+                                    </div>
+                                </div>
                             </div>
+                            <button
+                                onClick={() => onSelectTask(task)}
+                                style={{
+                                    background: '#1e4db7',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '12px 24px',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    fontSize: '1rem',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = '#1a3a8f'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = '#1e4db7'}
+                            >
+                                📝 Calificar
+                            </button>
                         </div>
                     );
                 })}
@@ -386,114 +633,308 @@ const TaskStudentListView: React.FC<TaskStudentListViewProps> = ({
     formatDate,
     isGrading
 }) => (
-    <div className="students-table-container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <div>
+        <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '20px', 
+            flexWrap: 'wrap', 
+            gap: '16px' 
+        }}>
             <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2d3748', marginBottom: '0.5rem' }}>
+                <h2 style={{ 
+                    fontSize: '1.5rem', 
+                    fontWeight: '700', 
+                    color: '#1f2937', 
+                    marginBottom: '4px' 
+                }}>
                     {task.title}
                 </h2>
-                <p style={{ color: '#718096', fontSize: '1rem' }}>
+                <p style={{ color: '#6b7280', fontSize: '1rem' }}>
                     📅 Vence: {formatDate(task.due_date)}
                 </p>
             </div>
             <button
                 onClick={onBack}
-                className="btn-calificaciones btn-secondary"
+                style={{
+                    background: '#fff',
+                    color: '#1e4db7',
+                    border: '1px solid #e5e7eb',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                    transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#f3f7ff';
+                    e.currentTarget.style.borderColor = '#1e4db7';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#fff';
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                }}
             >
                 ← Volver a Tareas
             </button>
         </div>
 
         {task.students.length === 0 ? (
-            <div className="empty-state">
-                <div className="empty-state-icon">👥</div>
-                <h3 className="empty-state-title">No hay estudiantes</h3>
-                <p className="empty-state-description">
+            <div style={{
+                background: '#fff',
+                padding: '60px 24px',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                textAlign: 'center'
+            }}>
+                <div style={{ fontSize: '4rem', marginBottom: '16px' }}>👥</div>
+                <h3 style={{
+                    fontSize: '1.25rem',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    marginBottom: '8px'
+                }}>
+                    No hay estudiantes
+                </h3>
+                <p style={{
+                    fontSize: '1rem',
+                    color: '#6b7280'
+                }}>
                     No hay estudiantes registrados en este curso
                 </p>
             </div>
         ) : (
-            <div style={{ overflowX: 'auto' }}>
-                <table className="students-table">
-                    <thead>
-                        <tr>
-                            <th>Estudiante</th>
-                            <th>Estado de Entrega</th>
-                            <th>Calificación</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {task.students.map((student) => (
-                            <tr key={student.id}>
-                                <td>
-                                    <div className="student-name">
-                                        {student.nombre_completo}
-                                    </div>
-                                    <div className="student-id">
-                                        ID: {student.id}
-                                    </div>
-                                </td>
-                                <td>
-                                    {student.has_submission ? (
-                                        <div>
-                                            <span className="status-badge status-submitted">
-                                                ✓ Entregado
+            <div style={{
+                background: '#fff',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                overflow: 'hidden'
+            }}>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        fontSize: '0.95rem'
+                    }}>
+                        <thead>
+                            <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                                <th style={{
+                                    padding: '14px 16px',
+                                    textAlign: 'left',
+                                    fontWeight: '600',
+                                    color: '#1f2937',
+                                    fontSize: '0.875rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em'
+                                }}>
+                                    Estudiante
+                                </th>
+                                <th style={{
+                                    padding: '14px 16px',
+                                    textAlign: 'left',
+                                    fontWeight: '600',
+                                    color: '#1f2937',
+                                    fontSize: '0.875rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em'
+                                }}>
+                                    Estado de Entrega
+                                </th>
+                                <th style={{
+                                    padding: '14px 16px',
+                                    textAlign: 'left',
+                                    fontWeight: '600',
+                                    color: '#1f2937',
+                                    fontSize: '0.875rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em'
+                                }}>
+                                    Calificación
+                                </th>
+                                <th style={{
+                                    padding: '14px 16px',
+                                    textAlign: 'left',
+                                    fontWeight: '600',
+                                    color: '#1f2937',
+                                    fontSize: '0.875rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em'
+                                }}>
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {task.students.map((student) => (
+                                <tr key={student.id} style={{
+                                    borderBottom: '1px solid #f3f4f6',
+                                    transition: 'background 0.2s ease'
+                                }}>
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{
+                                            fontWeight: '500',
+                                            color: '#1f2937',
+                                            marginBottom: '4px'
+                                        }}>
+                                            {student.nombre_completo}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '0.875rem',
+                                            color: '#6b7280'
+                                        }}>
+                                            ID: {student.id}
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        {student.has_submission ? (
+                                            <div>
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    padding: '4px 12px',
+                                                    borderRadius: '6px',
+                                                    background: '#d1fae5',
+                                                    color: '#065f46',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: '500'
+                                                }}>
+                                                    ✓ Entregado
+                                                </span>
+                                                {student.submitted_at && (
+                                                    <div style={{ 
+                                                        fontSize: '0.8rem', 
+                                                        color: '#6b7280', 
+                                                        marginTop: '6px' 
+                                                    }}>
+                                                        {formatDate(student.submitted_at)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                padding: '4px 12px',
+                                                borderRadius: '6px',
+                                                background: '#fee2e2',
+                                                color: '#991b1b',
+                                                fontSize: '0.875rem',
+                                                fontWeight: '500'
+                                            }}>
+                                                ✗ No entregado
                                             </span>
-                                            {student.submitted_at && (
-                                                <div style={{ fontSize: '0.875rem', color: '#718096', marginTop: '0.5rem' }}>
-                                                    {formatDate(student.submitted_at)}
-                                                </div>
+                                        )}
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        <div>
+                                            {student.grade !== null && student.grade !== undefined ? (
+                                                <>
+                                                    <span style={{
+                                                        fontSize: '1.125rem',
+                                                        fontWeight: '700',
+                                                        color: student.grade >= 7 ? '#10b981' : '#ef4444'
+                                                    }}>
+                                                        {student.grade}/10
+                                                    </span>
+                                                    {student.grade >= 7 && (
+                                                        <span style={{
+                                                            display: 'inline-flex',
+                                                            marginLeft: '8px',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            background: '#d1fae5',
+                                                            color: '#065f46',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '600'
+                                                        }}>
+                                                            ✓ Aprobado
+                                                        </span>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <span style={{
+                                                    color: '#9ca3af',
+                                                    fontSize: '0.9rem',
+                                                    fontStyle: 'italic'
+                                                }}>
+                                                    Sin calificar
+                                                </span>
                                             )}
                                         </div>
-                                    ) : (
-                                        <span className="status-badge status-not-submitted">
-                                            ✗ No entregado
-                                        </span>
-                                    )}
-                                </td>
-                                <td>
-                                    <div className="grade-display">
-                                        {student.grade !== null && student.grade !== undefined ? (
-                                            <>
-                                                <span className={student.grade >= 7 ? 'grade-high' : 'grade-low'}>
-                                                    {student.grade}/10
-                                                </span>
-                                                {student.grade >= 7 && <span className="status-badge status-graded">✓ Aprobado</span>}
-                                            </>
-                                        ) : (
-                                            <span className="grade-pending">Sin calificar</span>
+                                        {student.graded_at && (
+                                            <div style={{ 
+                                                fontSize: '0.8rem', 
+                                                color: '#6b7280', 
+                                                marginTop: '6px' 
+                                            }}>
+                                                {formatDate(student.graded_at)}
+                                            </div>
                                         )}
-                                    </div>
-                                    {student.graded_at && (
-                                        <div style={{ fontSize: '0.875rem', color: '#718096', marginTop: '0.5rem' }}>
-                                            {formatDate(student.graded_at)}
-                                        </div>
-                                    )}
-                                </td>
-                                <td>
-                                    <div className="action-buttons">
-                                        <button
-                                            onClick={() => onSelectStudent(student)}
-                                            className="btn-action btn-action-primary"
-                                            disabled={isGrading === student.id}
-                                        >
-                                            {isGrading === student.id ? '⏳ Procesando...' : '👁️ Ver Detalles'}
-                                        </button>
-                                        {student.file_reference && (
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                             <button
                                                 onClick={() => onSelectStudent(student)}
-                                                className="btn-action btn-action-success"
+                                                disabled={isGrading === student.id}
+                                                style={{
+                                                    background: isGrading === student.id ? '#e5e7eb' : '#1e4db7',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    padding: '8px 14px',
+                                                    borderRadius: '6px',
+                                                    fontWeight: '500',
+                                                    cursor: isGrading === student.id ? 'not-allowed' : 'pointer',
+                                                    fontSize: '0.875rem',
+                                                    transition: 'all 0.2s ease',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (isGrading !== student.id) {
+                                                        e.currentTarget.style.background = '#1a3a8f';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    if (isGrading !== student.id) {
+                                                        e.currentTarget.style.background = '#1e4db7';
+                                                    }
+                                                }}
                                             >
-                                                📎 Entrega
+                                                {isGrading === student.id ? '⏳ Procesando...' : '👁️ Ver Detalles'}
                                             </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                            {student.file_reference && (
+                                                <button
+                                                    onClick={() => onSelectStudent(student)}
+                                                    style={{
+                                                        background: '#10b981',
+                                                        color: '#fff',
+                                                        border: 'none',
+                                                        padding: '8px 14px',
+                                                        borderRadius: '6px',
+                                                        fontWeight: '500',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.875rem',
+                                                        transition: 'all 0.2s ease',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = '#059669'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = '#10b981'}
+                                                >
+                                                    📎 Entrega
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         )}
     </div>
@@ -551,160 +992,431 @@ const StudentDetailView: React.FC<StudentDetailViewProps> = ({
     };
 
     return (
-        <div className="detail-view-container">
-            <div className="detail-view-content">
-                <div className="detail-view-card">
-                    {/* Header */}
-                    <div className="detail-view-header">
-                        <div className="detail-view-header-content">
-                            <div className="detail-view-info">
-                                <h1>📝 Detalles de la Tarea</h1>
-                                <div className="detail-info-grid">
-                                    <div className="detail-info-item"><strong>Tarea:</strong> {task.title}</div>
-                                    <div className="detail-info-item"><strong>Estudiante:</strong> {student.nombre_completo}</div>
-                                    <div className="detail-info-item"><strong>Curso:</strong> {course.name}</div>
-                                    <div className="detail-info-item"><strong>ID Estudiante:</strong> {student.id}</div>
-                                </div>
-                            </div>
-                            <div className="detail-view-actions">
-                                <button
-                                    onClick={onBack}
-                                    className="btn-calificaciones btn-warning"
-                                >
-                                    💾 Guardar y Cerrar
-                                </button>
-                                <button
-                                    onClick={onBack}
-                                    className="btn-calificaciones btn-danger"
-                                >
-                                    ✗ Cancelar
-                                </button>
-                            </div>
-                        </div>
+        <div style={{
+            minHeight: '100vh',
+            background: '#f7f8fb'
+        }}>
+            {/* Header estilo familia */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 24px',
+                background: '#1e4db7',
+                color: '#fff',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        background: '#fff',
+                        color: '#1e4db7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: '700',
+                        fontSize: '1.2rem'
+                    }}>
+                        📝
                     </div>
-
-                    <div className="detail-view-body">
-                        {error && (
-                            <div className="alert-calificaciones alert-error">
-                                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        {/* Información de la tarea */}
-                        <div className="detail-section">
-                            <h3 className="detail-section-title">📋 Información de la Tarea</h3>
-                            <div className="detail-section-content">
-                                <p><strong>Instrucciones:</strong> {task.instructions || 'No hay instrucciones'}</p>
-                                <p><strong>📅 Fecha de Entrega:</strong> {formatDate(task.due_date)}</p>
-                                <p><strong>📤 Fecha de Envío:</strong> {student.submitted_at ? formatDate(student.submitted_at) : 'No enviado'}</p>
-                                {task.max_points && (
-                                    <p><strong>⭐ Puntuación Máxima:</strong> {task.max_points} puntos</p>
-                                )}
-                            </div>
-                            
-                            {task.file_reference && (
-                                <div style={{ marginTop: '1rem' }}>
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            onDownloadTask(task.file_reference!);
-                                        }}
-                                        className="download-link"
-                                    >
-                                        📎 Descargar archivo de la tarea
-                                    </a>
-                                </div>
-                            )}
+                    <div>
+                        <div style={{
+                            fontWeight: '600',
+                            fontSize: '1.1rem',
+                            color: '#fff'
+                        }}>
+                            Detalles de la Tarea
                         </div>
-
-                        {/* Comentario del estudiante */}
-                        <div className="detail-section">
-                            <h3 className="detail-section-title">💬 Comentario del Estudiante</h3>
-                            <p className="detail-section-content">
-                                {student.comment_student || 'El estudiante no dejó comentarios'}
-                            </p>
+                        <div style={{
+                            fontSize: '0.9rem',
+                            color: '#d7e3ff',
+                            marginTop: '2px'
+                        }}>
+                            {student.nombre_completo}
                         </div>
-
-                        {/* Archivo de entrega */}
-                        {student.file_reference && (
-                            <div className="detail-section">
-                                <h3 className="detail-section-title">📂 Archivo de Entrega</h3>
-                                <button
-                                    onClick={() => onDownloadSubmission(student.file_reference!)}
-                                    className="btn-calificaciones btn-success"
-                                >
-                                    📥 Descargar Entrega del Estudiante
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Calificación */}
-                        <form onSubmit={handleSubmit} className="detail-section">
-                            <h3 className="detail-section-title">✍️ Calificación</h3>
-                            
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                                <div className="form-group">
-                                    <label className="form-label">
-                                        Calificación (0-10)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        max="10"
-                                        step="0.1"
-                                        value={grade}
-                                        onChange={(e) => setGrade(e.target.value)}
-                                        className="form-input"
-                                        placeholder="Ingrese la calificación"
-                                        disabled={isGrading}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label className="form-label">
-                                    💭 Retroalimentación
-                                </label>
-                                <textarea
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    className="form-textarea"
-                                    rows={4}
-                                    placeholder="Escriba sus comentarios sobre la entrega del estudiante..."
-                                    disabled={isGrading}
-                                />
-                            </div>
-
-                            {student.grade !== null && student.grade !== undefined && (
-                                <div className="current-grade-info">
-                                    <span>Calificación actual:</span>
-                                    <strong className={student.grade >= 7 ? 'grade-high' : 'grade-low'}>
-                                        {student.grade}/10
-                                    </strong>
-                                    {student.graded_at && (
-                                        <span style={{ marginLeft: 'auto' }}>
-                                            📅 Calificado el: {formatDate(student.graded_at)}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-
-                            <div style={{ marginTop: '1.5rem' }}>
-                                <button
-                                    type="submit"
-                                    disabled={isGrading}
-                                    className="btn-calificaciones btn-success"
-                                    style={{ width: '100%', justifyContent: 'center' }}
-                                >
-                                    {isGrading ? '⏳ Guardando...' : '💾 Guardar Calificación'}
-                                </button>
-                            </div>
-                        </form>
                     </div>
                 </div>
+                
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                        onClick={onBack}
+                        style={{
+                            background: '#fff',
+                            color: '#1e4db7',
+                            border: '1px solid #d7e3ff',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#f3f7ff';
+                            e.currentTarget.style.borderColor = '#1e4db7';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#fff';
+                            e.currentTarget.style.borderColor = '#d7e3ff';
+                        }}
+                    >
+                        ← Volver
+                    </button>
+                </div>
+            </div>
+
+            {/* Contenido */}
+            <div style={{
+                maxWidth: '1200px',
+                margin: '0 auto',
+                padding: '24px'
+            }}>
+                {error && (
+                    <div style={{
+                        background: '#fff',
+                        border: '1px solid #ef4444',
+                        color: '#ef4444',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                        fontSize: '0.95rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {/* Información general */}
+                <div style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    padding: '20px',
+                    marginBottom: '16px'
+                }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                        gap: '16px'
+                    }}>
+                        <div>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
+                                Tarea
+                            </div>
+                            <div style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
+                                {task.title}
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
+                                Estudiante
+                            </div>
+                            <div style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
+                                {student.nombre_completo}
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
+                                Curso
+                            </div>
+                            <div style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
+                                {course.name}
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
+                                ID Estudiante
+                            </div>
+                            <div style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
+                                {student.id}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Información de la tarea */}
+                <div style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    padding: '20px',
+                    marginBottom: '16px'
+                }}>
+                    <h3 style={{
+                        fontSize: '1.125rem',
+                        fontWeight: '600',
+                        color: '#1f2937',
+                        marginBottom: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        📋 Información de la Tarea
+                    </h3>
+                    <div style={{ fontSize: '0.95rem', color: '#4b5563', lineHeight: '1.8' }}>
+                        <p style={{ marginBottom: '8px' }}>
+                            <strong>Instrucciones:</strong> {task.instructions || 'No hay instrucciones'}
+                        </p>
+                        <p style={{ marginBottom: '8px' }}>
+                            <strong>📅 Fecha de Entrega:</strong> {formatDate(task.due_date)}
+                        </p>
+                        <p style={{ marginBottom: '8px' }}>
+                            <strong>📤 Fecha de Envío:</strong> {student.submitted_at ? formatDate(student.submitted_at) : 'No enviado'}
+                        </p>
+                        {task.max_points && (
+                            <p style={{ marginBottom: '8px' }}>
+                                <strong>⭐ Puntuación Máxima:</strong> {task.max_points} puntos
+                            </p>
+                        )}
+                    </div>
+                    
+                    {task.file_reference && (
+                        <a
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onDownloadTask(task.file_reference!);
+                            }}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: '#1e4db7',
+                                textDecoration: 'none',
+                                fontSize: '0.9rem',
+                                fontWeight: '500',
+                                marginTop: '12px'
+                            }}
+                        >
+                            📎 Descargar archivo de la tarea
+                        </a>
+                    )}
+                </div>
+
+                {/* Comentario del estudiante */}
+                <div style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    padding: '20px',
+                    marginBottom: '16px'
+                }}>
+                    <h3 style={{
+                        fontSize: '1.125rem',
+                        fontWeight: '600',
+                        color: '#1f2937',
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        💬 Comentario del Estudiante
+                    </h3>
+                    <p style={{
+                        fontSize: '0.95rem',
+                        color: '#4b5563',
+                        lineHeight: '1.6',
+                        fontStyle: student.comment_student ? 'normal' : 'italic'
+                    }}>
+                        {student.comment_student || 'El estudiante no dejó comentarios'}
+                    </p>
+                </div>
+
+                {/* Archivo de entrega */}
+                {student.file_reference && (
+                    <div style={{
+                        background: '#fff',
+                        borderRadius: '12px',
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        padding: '20px',
+                        marginBottom: '16px'
+                    }}>
+                        <h3 style={{
+                            fontSize: '1.125rem',
+                            fontWeight: '600',
+                            color: '#1f2937',
+                            marginBottom: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            📂 Archivo de Entrega
+                        </h3>
+                        <button
+                            onClick={() => onDownloadSubmission(student.file_reference!)}
+                            style={{
+                                background: '#10b981',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                fontSize: '0.95rem',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#059669'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#10b981'}
+                        >
+                            📥 Descargar Entrega del Estudiante
+                        </button>
+                    </div>
+                )}
+
+                {/* Formulario de Calificación */}
+                <form onSubmit={handleSubmit} style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    padding: '20px'
+                }}>
+                    <h3 style={{
+                        fontSize: '1.125rem',
+                        fontWeight: '600',
+                        color: '#1f2937',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        ✍️ Calificación
+                    </h3>
+                    
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            color: '#374151',
+                            marginBottom: '8px'
+                        }}>
+                            Calificación (0-10)
+                        </label>
+                        <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            value={grade}
+                            onChange={(e) => setGrade(e.target.value)}
+                            placeholder="Ingrese la calificación"
+                            disabled={isGrading}
+                            required
+                            style={{
+                                width: '100%',
+                                maxWidth: '300px',
+                                padding: '10px 12px',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                                outline: 'none',
+                                transition: 'all 0.2s ease'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            color: '#374151',
+                            marginBottom: '8px'
+                        }}>
+                            💭 Retroalimentación
+                        </label>
+                        <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            rows={4}
+                            placeholder="Escriba sus comentarios sobre la entrega del estudiante..."
+                            disabled={isGrading}
+                            style={{
+                                width: '100%',
+                                padding: '10px 12px',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '8px',
+                                fontSize: '0.95rem',
+                                outline: 'none',
+                                resize: 'vertical',
+                                fontFamily: 'inherit',
+                                transition: 'all 0.2s ease'
+                            }}
+                        />
+                    </div>
+
+                    {student.grade !== null && student.grade !== undefined && (
+                        <div style={{
+                            background: '#f9fafb',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            marginBottom: '20px',
+                            border: '1px solid #e5e7eb'
+                        }}>
+                            <span style={{ fontSize: '0.95rem', color: '#6b7280' }}>
+                                Calificación actual:
+                            </span>
+                            <strong style={{
+                                fontSize: '1.125rem',
+                                fontWeight: '700',
+                                color: student.grade >= 7 ? '#10b981' : '#ef4444'
+                            }}>
+                                {student.grade}/10
+                            </strong>
+                            {student.graded_at && (
+                                <span style={{ 
+                                    marginLeft: 'auto',
+                                    fontSize: '0.875rem',
+                                    color: '#6b7280'
+                                }}>
+                                    📅 Calificado el: {formatDate(student.graded_at)}
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={isGrading}
+                        style={{
+                            width: '100%',
+                            background: isGrading ? '#9ca3af' : '#1e4db7',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '12px 24px',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: isGrading ? 'not-allowed' : 'pointer',
+                            fontSize: '1rem',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isGrading) e.currentTarget.style.background = '#1a3a8f';
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isGrading) e.currentTarget.style.background = '#1e4db7';
+                        }}
+                    >
+                        {isGrading ? '⏳ Guardando...' : '💾 Guardar Calificación'}
+                    </button>
+                </form>
             </div>
         </div>
     );

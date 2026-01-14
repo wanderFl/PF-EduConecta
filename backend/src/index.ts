@@ -17,6 +17,8 @@ import disciplinaryReportsRoutes from "./routes/disciplinaryReports";
 import communicationsRoutes from "./routes/communications";
 import teachersRoutes from "./routes/teachers";
 import uploadsRoutes from "./routes/uploads";
+import aiRoutes from "./routes/aiRoutes";
+import notificationsRoutes from "./routes/notifications";
 
 // Rutas / utilidades que venían de dev
 import { verifySmtpConnection } from "./utils/email";
@@ -94,6 +96,8 @@ app.use("/api/disciplinary-reports", disciplinaryReportsRoutes);
 app.use("/api/communications", communicationsRoutes); // base docente
 app.use("/api/teachers", teachersRoutes);
 app.use("/api/uploads", uploadsRoutes);
+app.use("/api/ai", aiRoutes); // Rutas de IA
+app.use("/api/notifications", notificationsRoutes); // Rutas de notificaciones
 
 // Rutas familia / padres / CEIAF / directivo
 app.use("/api/familia", familiaRoutes);

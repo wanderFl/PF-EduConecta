@@ -1,0 +1,21 @@
+{
+  "student_id": "test-789",
+  "student_name": "Ana Rodríguez Silva",
+  "grades": [
+    {"subject": "Matemáticas", "grade": 7.3, "max_grade": 10.0},
+    {"subject": "Lengua y Literatura", "grade": 7.5, "max_grade": 10.0},
+    {"subject": "Ciencias Naturales", "grade": 7.2, "max_grade": 10.0},
+    {"subject": "Estudios Sociales", "grade": 7.4, "max_grade": 10.0},
+    {"subject": "Inglés", "grade": 7.1, "max_grade": 10.0}
+  ],
+  "attendance": {
+    "total_days": 80,
+    "attended_days": 72,
+    "absences": 8
+  },
+  "behavior": {
+    "incidents": 1,
+    "positive_notes": 2,
+    "behavior_score": 7.5
+  }
+}

@@ -247,61 +247,78 @@ const AsistenciaInspector: React.FC = () => {
     return (
         <div style={{
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            padding: '2rem'
+            background: '#f7f8fb',
+            display: 'flex',
+            flexDirection: 'column'
         }}>
+            {/* Header estilo familia */}
             <div style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                padding: '1rem 2rem',
-                marginBottom: '2rem',
-                borderRadius: '15px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                padding: '12px 24px',
+                background: '#1e4db7',
+                color: '#fff',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
                         width: '40px',
                         height: '40px',
-                        background: '#10b981',
-                        borderRadius: '10px',
+                        borderRadius: '8px',
+                        background: '#fff',
+                        color: '#1e4db7',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        marginRight: '1rem'
+                        fontWeight: '700',
+                        fontSize: '1.2rem'
                     }}>
                         ✅
                     </div>
                     <div>
-                        <h1 style={{ margin: '0', color: '#333', fontSize: '1.8rem' }}>
+                        <div style={{
+                            fontWeight: '600',
+                            fontSize: '1.1rem',
+                            color: '#fff'
+                        }}>
                             Control de Asistencia - Inspector
-                        </h1>
+                        </div>
                         {selectedCourse && (
-                            <p style={{ margin: '0.5rem 0 0 0', color: '#666' }}>
+                            <div style={{
+                                fontSize: '0.9rem',
+                                color: '#d7e3ff',
+                                marginTop: '2px'
+                            }}>
                                 {selectedCourse.nombre} - Paralelo {selectedCourse.paralelo}
-                            </p>
+                            </div>
                         )}
                     </div>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <button
                         onClick={handleGoBack}
                         style={{
-                            padding: '0.5rem 1rem',
-                            border: '2px solid #10b981',
+                            background: '#fff',
+                            color: '#1e4db7',
+                            border: '1px solid #d7e3ff',
+                            padding: '8px 16px',
                             borderRadius: '8px',
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            fontSize: '1rem',
+                            fontWeight: '700',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.5rem'
+                            gap: '6px',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#f3f7ff';
+                            e.currentTarget.style.borderColor = '#1e4db7';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#fff';
+                            e.currentTarget.style.borderColor = '#d7e3ff';
                         }}
                     >
                         ← Volver
@@ -311,316 +328,347 @@ const AsistenciaInspector: React.FC = () => {
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         style={{
-                            padding: '0.5rem',
-                            border: '2px solid #e9ecef',
+                            padding: '8px 12px',
+                            border: '1px solid #d7e3ff',
                             borderRadius: '8px',
-                            fontSize: '1rem'
+                            fontSize: '0.95rem',
+                            background: '#fff',
+                            color: '#111827'
                         }}
                     />
                 </div>
             </div>
 
+            {/* Contenedor principal */}
             <div style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                padding: '1.5rem',
-                marginBottom: '2rem',
-                borderRadius: '15px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+                flex: 1,
+                maxWidth: '1200px',
+                width: '100%',
+                margin: '0 auto',
+                padding: '24px'
             }}>
-                <h3 style={{ marginTop: '0', color: '#333' }}>Seleccionar Curso y Paralelo</h3>
-                <select
-                    value={selectedCourse?.id_curso || ''}
-                    onChange={(e) => handleCourseChange(e.target.value)}
-                    style={{
-                        width: '100%',
-                        padding: '0.8rem',
-                        border: '2px solid #e9ecef',
+                {/* Selector de curso */}
+                <div style={{
+                    background: '#fff',
+                    padding: '20px',
+                    marginBottom: '20px',
+                    borderRadius: '12px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    border: '1px solid #e5e7eb'
+                }}>
+                    <h3 style={{ marginTop: '0', color: '#111827', fontSize: '1.1rem', fontWeight: '600', marginBottom: '12px' }}>
+                        Seleccionar Curso y Paralelo
+                    </h3>
+                    <select
+                        value={selectedCourse?.id_curso || ''}
+                        onChange={(e) => handleCourseChange(e.target.value)}
+                        style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            border: '1px solid #d7e3ff',
+                            borderRadius: '8px',
+                            fontSize: '0.95rem',
+                            background: 'white',
+                            color: '#111827'
+                        }}
+                    >
+                        <option value="">Seleccione un curso...</option>
+                        {courses.map(course => (
+                            <option key={course.id_curso} value={course.id_curso}>
+                                {course.nombre} - Paralelo {course.paralelo} ({course.nivel})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Mensajes */}
+                {error && (
+                    <div style={{
+                        background: '#fff',
+                        border: '1px solid #ef4444',
+                        color: '#ef4444',
+                        padding: '12px 16px',
                         borderRadius: '8px',
-                        fontSize: '1rem',
-                        background: 'white'
-                    }}
-                >
-                    <option value="">Seleccione un curso...</option>
-                    {courses.map(course => (
-                        <option key={course.id_curso} value={course.id_curso}>
-                            {course.nombre} - Paralelo {course.paralelo} ({course.nivel})
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {error && (
-                <div style={{
-                    background: 'rgba(220, 53, 69, 0.1)',
-                    border: '1px solid #dc3545',
-                    color: '#dc3545',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    marginBottom: '1rem'
-                }}>
-                    {error}
-                </div>
-            )}
-
-            {success && (
-                <div style={{
-                    background: 'rgba(40, 167, 69, 0.1)',
-                    border: '1px solid #28a745',
-                    color: '#28a745',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    marginBottom: '1rem'
-                }}>
-                    {success}
-                </div>
-            )}
-
-            {selectedCourse && students.length > 0 && (
-                <div style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(10px)',
-                    padding: '1.5rem',
-                    marginBottom: '2rem',
-                    borderRadius: '15px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
-                }}>
-                    <h3 style={{ marginTop: '0', color: '#333' }}>Estadísticas del Día</h3>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                        gap: '1rem'
+                        marginBottom: '16px',
+                        fontSize: '0.95rem'
                     }}>
-                        <div style={{
-                            background: '#28a745',
-                            color: 'white',
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.presente}
-                            </div>
-                            <div style={{ fontSize: '0.9rem' }}>Presentes</div>
-                        </div>
-                        <div style={{
-                            background: '#dc3545',
-                            color: 'white',
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.ausente}
-                            </div>
-                            <div style={{ fontSize: '0.9rem' }}>Ausentes</div>
-                        </div>
-                        <div style={{
-                            background: '#dc3545',
-                            color: 'white',
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.ausenteInjustificado}
-                            </div>
-                            <div style={{ fontSize: '0.9rem' }}>Injustificados</div>
-                        </div>
-                        <div style={{
-                            background: '#ffc107',
-                            color: 'white',
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.ausentePendiente}
-                            </div>
-                            <div style={{ fontSize: '0.9rem' }}>Pendientes</div>
-                        </div>
-                        <div style={{
-                            background: '#17a2b8',
-                            color: 'white',
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.ausenteJustificado}
-                            </div>
-                            <div style={{ fontSize: '0.9rem' }}>Justificados</div>
-                        </div>
-                        <div style={{
-                            background: '#6c757d',
-                            color: 'white',
-                            padding: '1rem',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-                                {stats.total}
-                            </div>
-                            <div style={{ fontSize: '0.9rem' }}>Total</div>
-                        </div>
+                        {error}
                     </div>
-                </div>
-            )}
+                )}
 
-            {selectedCourse && students.length > 0 && (
-                <div style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(10px)',
-                    padding: '1.5rem',
-                    borderRadius: '15px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
-                }}>
+                {success && (
                     <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '1.5rem'
+                        background: '#fff',
+                        border: '1px solid #10b981',
+                        color: '#10b981',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                        fontSize: '0.95rem'
                     }}>
-                        <h3 style={{ margin: '0', color: '#333' }}>
-                            Lista de Estudiantes ({students.length})
+                        {success}
+                    </div>
+                )}
+
+                {/* Estadísticas */}
+                {selectedCourse && students.length > 0 && (
+                    <div style={{
+                        background: '#fff',
+                        padding: '20px',
+                        marginBottom: '20px',
+                        borderRadius: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        border: '1px solid #e5e7eb'
+                    }}>
+                        <h3 style={{ marginTop: '0', color: '#111827', fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px' }}>
+                            Estadísticas del Día
                         </h3>
-                        <button
-                            onClick={saveAttendance}
-                            disabled={saving}
-                            style={{
-                                background: saving ? '#6c757d' : '#10b981',
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                            gap: '12px'
+                        }}>
+                            <div style={{
+                                background: '#10b981',
                                 color: 'white',
-                                border: 'none',
-                                padding: '0.8rem 1.5rem',
+                                padding: '16px',
                                 borderRadius: '8px',
-                                fontSize: '1rem',
-                                fontWeight: 'bold',
-                                cursor: saving ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.3s ease'
-                            }}
-                        >
-                            {saving ? 'Guardando...' : 'Guardar Asistencia'}
-                        </button>
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                    {stats.presente}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Presentes</div>
+                            </div>
+                            <div style={{
+                                background: '#ef4444',
+                                color: 'white',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                    {stats.ausente}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Ausentes</div>
+                            </div>
+                            <div style={{
+                                background: '#dc2626',
+                                color: 'white',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                    {stats.ausenteInjustificado}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Injustificados</div>
+                            </div>
+                            <div style={{
+                                background: '#f59e0b',
+                                color: 'white',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                    {stats.ausentePendiente}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Pendientes</div>
+                            </div>
+                            <div style={{
+                                background: '#0ea5e9',
+                                color: 'white',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                    {stats.ausenteJustificado}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Justificados</div>
+                            </div>
+                            <div style={{
+                                background: '#6b7280',
+                                color: 'white',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                                    {stats.total}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Total</div>
+                            </div>
+                        </div>
                     </div>
+                )}
 
+                {/* Lista de estudiantes */}
+                {selectedCourse && students.length > 0 && (
                     <div style={{
-                        display: 'grid',
-                        gap: '1rem'
+                        background: '#fff',
+                        padding: '20px',
+                        borderRadius: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        border: '1px solid #e5e7eb'
                     }}>
-                        {attendanceData.map((item) => (
-                            <div
-                                key={item.student.id}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '20px'
+                        }}>
+                            <h3 style={{ margin: '0', color: '#111827', fontSize: '1.1rem', fontWeight: '600' }}>
+                                Lista de Estudiantes ({students.length})
+                            </h3>
+                            <button
+                                onClick={saveAttendance}
+                                disabled={saving}
                                 style={{
-                                    background: 'white',
-                                    border: '2px solid #e9ecef',
-                                    borderRadius: '10px',
-                                    padding: '1rem',
-                                    display: 'grid',
-                                    gridTemplateColumns: '1fr auto',
-                                    alignItems: 'center',
-                                    gap: '1rem'
+                                    background: saving ? '#9ca3af' : '#1e4db7',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.95rem',
+                                    fontWeight: '600',
+                                    cursor: saving ? 'not-allowed' : 'pointer',
+                                    transition: 'background 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    if (!saving) e.currentTarget.style.background = '#1a3d8f';
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!saving) e.currentTarget.style.background = '#1e4db7';
                                 }}
                             >
-                                <div>
-                                    <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>
-                                        {item.student.nombre_completo}
-                                    </h4>
-                                    <p style={{ margin: '0', color: '#666', fontSize: '0.9rem' }}>
-                                        Cédula: {item.student.cedula || 'No disponible'}
-                                    </p>
-                                </div>
+                                {saving ? 'Guardando...' : 'Guardar Asistencia'}
+                            </button>
+                        </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                        {Object.entries(ATTENDANCE_STATUS).map(([key, value]) => (
-                                            <button
-                                                key={key}
-                                                onClick={() => handleStatusChange(item.student.id, value)}
-                                                style={{
-                                                    background: item.status === value ? getStatusColor(value) : 'white',
-                                                    color: item.status === value ? 'white' : getStatusColor(value),
-                                                    border: `2px solid ${getStatusColor(value)}`,
-                                                    padding: '0.5rem 0.8rem',
-                                                    borderRadius: '6px',
-                                                    fontSize: '0.8rem',
-                                                    fontWeight: 'bold',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s ease'
-                                                }}
-                                            >
-                                                {getStatusLabel(value)}
-                                            </button>
-                                        ))}
+                        <div style={{
+                            display: 'grid',
+                            gap: '12px'
+                        }}>
+                            {attendanceData.map((item) => (
+                                <div
+                                    key={item.student.id}
+                                    style={{
+                                        background: '#f9fafb',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        padding: '16px',
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr auto',
+                                        alignItems: 'center',
+                                        gap: '16px'
+                                    }}
+                                >
+                                    <div>
+                                        <h4 style={{ margin: '0 0 6px 0', color: '#111827', fontSize: '1rem', fontWeight: '600' }}>
+                                            {item.student.nombre_completo}
+                                        </h4>
+                                        <p style={{ margin: '0', color: '#6b7280', fontSize: '0.85rem' }}>
+                                            Cédula: {item.student.cedula || 'No disponible'}
+                                        </p>
                                     </div>
 
-                                    {showJustification[item.student.id] && (
-                                        <textarea
-                                            placeholder="Ingrese la justificación..."
-                                            value={item.justification || ''}
-                                            onChange={(e) => handleJustificationChange(item.student.id, e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                minHeight: '60px',
-                                                padding: '0.5rem',
-                                                border: '2px solid #e9ecef',
-                                                borderRadius: '6px',
-                                                fontSize: '0.9rem',
-                                                resize: 'vertical'
-                                            }}
-                                        />
-                                    )}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                            {Object.entries(ATTENDANCE_STATUS).map(([key, value]) => (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => handleStatusChange(item.student.id, value)}
+                                                    style={{
+                                                        background: item.status === value ? getStatusColor(value) : 'white',
+                                                        color: item.status === value ? 'white' : getStatusColor(value),
+                                                        border: `1px solid ${getStatusColor(value)}`,
+                                                        padding: '6px 12px',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                >
+                                                    {getStatusLabel(value)}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {showJustification[item.student.id] && (
+                                            <textarea
+                                                placeholder="Ingrese la justificación..."
+                                                value={item.justification || ''}
+                                                onChange={(e) => handleJustificationChange(item.student.id, e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    minHeight: '60px',
+                                                    padding: '8px',
+                                                    border: '1px solid #d1d5db',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.85rem',
+                                                    resize: 'vertical',
+                                                    fontFamily: 'inherit'
+                                                }}
+                                            />
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {loading && selectedCourse && (
-                <div style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(10px)',
-                    padding: '2rem',
-                    borderRadius: '15px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                    textAlign: 'center'
-                }}>
-                    <div style={{ 
-                        width: '50px', 
-                        height: '50px', 
-                        border: '3px solid #f3f3f3',
-                        borderTop: '3px solid #10b981',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite',
-                        margin: '0 auto 1rem'
-                    }} />
-                    <p>Cargando estudiantes...</p>
-                </div>
-            )}
-
-            {!selectedCourse && !loading && (
-                <div style={{
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(10px)',
-                    padding: '3rem',
-                    borderRadius: '15px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-                    textAlign: 'center'
-                }}>
+                {/* Estado de carga */}
+                {loading && selectedCourse && (
                     <div style={{
-                        fontSize: '4rem',
-                        marginBottom: '1rem'
+                        background: '#fff',
+                        padding: '40px',
+                        borderRadius: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        border: '1px solid #e5e7eb',
+                        textAlign: 'center'
                     }}>
-                        📚
+                        <div style={{ 
+                            width: '50px', 
+                            height: '50px', 
+                            border: '3px solid #e5e7eb',
+                            borderTop: '3px solid #1e4db7',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                            margin: '0 auto 16px'
+                        }} />
+                        <p style={{ color: '#6b7280', margin: 0 }}>Cargando estudiantes...</p>
                     </div>
-                    <h3 style={{ color: '#333', marginBottom: '1rem' }}>
-                        Selecciona un curso para comenzar
-                    </h3>
-                    <p style={{ color: '#666' }}>
-                        Elige un curso y paralelo de la lista para ver los estudiantes y tomar asistencia
-                    </p>
-                </div>
-            )}
+                )}
+
+                {/* Estado sin selección */}
+                {!selectedCourse && !loading && (
+                    <div style={{
+                        background: '#fff',
+                        padding: '60px 40px',
+                        borderRadius: '12px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        border: '1px solid #e5e7eb',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{
+                            fontSize: '4rem',
+                            marginBottom: '16px'
+                        }}>
+                            📚
+                        </div>
+                        <h3 style={{ color: '#111827', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>
+                            Selecciona un curso para comenzar
+                        </h3>
+                        <p style={{ color: '#6b7280', margin: 0, fontSize: '0.95rem' }}>
+                            Elige un curso y paralelo de la lista para ver los estudiantes y tomar asistencia
+                        </p>
+                    </div>
+                )}
+            </div>
 
             <style>
                 {`

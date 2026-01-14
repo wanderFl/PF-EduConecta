@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -15,7 +16,7 @@ import {
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { taskService } from "../../services/tasks";
 import type { Course, Task } from "../../types";
-import './AgendaEscolar.css';
+import '../familia.css';
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -32,10 +33,13 @@ ChartJS.register(
 
 const AgendaEscolar: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    const teacherName = user?.email?.split('@')[0] || 'Docente';
 
     useEffect(() => {
         const courseData = localStorage.getItem('selectedCourseData');
@@ -305,10 +309,26 @@ const AgendaEscolar: React.FC = () => {
 
     if (!selectedCourse) {
         return (
-            <div className="agenda-container">
-                <div className="loading-agenda">
-                    <div className="spinner-agenda"></div>
-                    <div style={{ fontSize: '1.125rem', color: 'white' }}>Cargando...</div>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                background: '#f7f8fb'
+            }}>
+                <div style={{
+                    textAlign: 'center'
+                }}>
+                    <div style={{
+                        width: '50px',
+                        height: '50px',
+                        border: '4px solid #f3f3f3',
+                        borderTop: '4px solid #1e4db7',
+                        borderRadius: '50%',
+                        margin: '0 auto 1rem',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <div style={{ fontSize: '1.125rem', color: '#666' }}>Cargando...</div>
                 </div>
             </div>
         );
@@ -318,136 +338,388 @@ const AgendaEscolar: React.FC = () => {
     const urgentTasks = getUrgentTasks();
 
     return (
-        <div className="agenda-container">
-            <div className="agenda-content">
-                {/* Header */}
-                <div className="agenda-header">
-                    <div className="agenda-header-content">
-                        <div className="header-text">
-                            <h1>📅 Agenda Escolar Digital</h1>
-                            <p>Curso: {selectedCourse.name}</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="fam-layout">
+            {/* Header */}
+            <div className="fam-header">
+                <div className="fam-header-content">
+                    <button
+                        onClick={() => navigate("/docente/dashboard")}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+                    >
+                        ← Volver al Dashboard
+                    </button>
+                    <div className="fam-user-info">
+                        <h1 className="fam-user-name">{teacherName}</h1>
+                        <p className="fam-user-subtitle">
+                            Dashboard de Agenda Escolar
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="fam-body">
+                <div className="fam-main">
+                    {/* Título y Breadcrumb */}
+                    <div style={{
+                        background: 'white',
+                        padding: '1.5rem',
+                        borderRadius: '15px',
+                        marginBottom: '1.5rem',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        border: '1px solid #e5e7eb'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '1rem'
+                        }}>
+                            <div>
+                                <h1 style={{
+                                    color: '#1e4db7',
+                                    fontSize: '2rem',
+                                    fontWeight: '700',
+                                    margin: '0 0 0.5rem 0'
+                                }}>
+                                    📅 Dashboard de Agenda Escolar
+                                </h1>
+                                <p style={{
+                                    color: '#666',
+                                    fontSize: '1rem',
+                                    margin: 0
+                                }}>
+                                    DESDE: <input type="date" style={{
+                                        padding: '0.5rem',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '6px',
+                                        marginRight: '1rem'
+                                    }} />
+                                    HASTA: <input type="date" style={{
+                                        padding: '0.5rem',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '6px'
+                                    }} />
+                                </p>
+                            </div>
                             <button
                                 onClick={() => navigate("/docente/tareas")}
-                                className="btn-agenda btn-primary"
-                                style={{ 
-                                    backgroundColor: '#667eea',
+                                style={{
+                                    background: '#1e4db7',
                                     color: 'white',
                                     border: 'none',
-                                    padding: '12px 24px',
+                                    padding: '0.75rem 1.5rem',
                                     borderRadius: '8px',
                                     cursor: 'pointer',
                                     fontSize: '1rem',
                                     fontWeight: '600',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '8px'
+                                    gap: '0.5rem',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 4px 15px rgba(30, 77, 183, 0.3)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(30, 77, 183, 0.4)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(30, 77, 183, 0.3)';
                                 }}
                             >
                                 ✨ Crear Nueva Tarea
                             </button>
-                            <button
-                                onClick={() => navigate("/docente/dashboard")}
-                                className="btn-agenda btn-secondary"
-                            >
-                                ← Volver al Dashboard
-                            </button>
                         </div>
                     </div>
-                </div>
 
+                    {/* Mensajes */}
                 {error && (
-                    <div className="alert-agenda alert-warning">
-                        <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                    <div style={{
+                        background: '#fee',
+                        border: '2px solid #fcc',
+                        padding: '1rem',
+                        borderRadius: '10px',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        color: '#c00'
+                    }}>
+                        <span style={{ fontSize: '1.2rem' }}>⚠️</span>
                         <span>{error}</span>
                     </div>
                 )}
 
                 {loading ? (
-                    <div className="loading-agenda">
-                        <div className="spinner-agenda"></div>
-                        <p style={{ fontSize: '1.125rem', color: '#667eea' }}>Cargando estadísticas...</p>
+                    <div style={{
+                        background: 'white',
+                        padding: '3rem',
+                        borderRadius: '15px',
+                        textAlign: 'center',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        border: '1px solid #e5e7eb'
+                    }}>
+                        <div style={{
+                            width: '50px',
+                            height: '50px',
+                            border: '4px solid #f3f3f3',
+                            borderTop: '4px solid #1e4db7',
+                            borderRadius: '50%',
+                            margin: '0 auto 1rem',
+                            animation: 'spin 1s linear infinite'
+                        }} />
+                        <p style={{ color: '#666', margin: 0 }}>Cargando estadísticas...</p>
                     </div>
                 ) : (
                     <>
                         {/* Estadísticas rápidas */}
-                        <div className="stats-grid">
-                            <div className="stat-card">
-                                <div className="stat-card-header">
-                                    <div className="stat-icon">📚</div>
-                                    <div className="stat-info">
-                                        <h3>Total Tareas</h3>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                            gap: '1.5rem',
+                            marginBottom: '2rem'
+                        }}>
+                            {/* Total de Tareas */}
+                            <div style={{
+                                background: 'white',
+                                padding: '1.5rem',
+                                borderRadius: '15px',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                                border: '1px solid #e5e7eb',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        background: 'rgba(30, 77, 183, 0.1)',
+                                        borderRadius: '10px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '1.5rem',
+                                        marginRight: '1rem'
+                                    }}>
+                                        📚
                                     </div>
+                                    <h3 style={{ color: '#666', fontSize: '0.9rem', margin: 0, textTransform: 'uppercase' }}>
+                                        TOTAL DE TAREAS
+                                    </h3>
                                 </div>
-                                <p className="stat-value">{stats.totalTasks}</p>
-                                <div className="stat-trend positive">
-                                    <span>Tareas creadas</span>
-                                </div>
+                                <p style={{ color: '#1e4db7', fontSize: '2.5rem', fontWeight: '700', margin: '0.5rem 0' }}>
+                                    {stats.totalTasks}
+                                </p>
+                                <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0 }}>
+                                    Tareas creadas
+                                </p>
                             </div>
 
-                            <div className="stat-card">
-                                <div className="stat-card-header">
-                                    <div className="stat-icon">👥</div>
-                                    <div className="stat-info">
-                                        <h3>Estudiantes</h3>
+                            {/* Vencidas */}
+                            <div style={{
+                                background: 'white',
+                                padding: '1.5rem',
+                                borderRadius: '15px',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                                border: '1px solid #e5e7eb',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        borderRadius: '10px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '1.5rem',
+                                        marginRight: '1rem'
+                                    }}>
+                                        ⏰
                                     </div>
+                                    <h3 style={{ color: '#666', fontSize: '0.9rem', margin: 0, textTransform: 'uppercase' }}>
+                                        VENCIDAS
+                                    </h3>
                                 </div>
-                                <p className="stat-value">{stats.totalStudents}</p>
-                                <div className="stat-trend">
-                                    <span>Promedio por tarea</span>
-                                </div>
+                                <p style={{ color: '#ef4444', fontSize: '2.5rem', fontWeight: '700', margin: '0.5rem 0' }}>
+                                    {getTasksStatusData().datasets[0].data[1]}
+                                </p>
+                                <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>
+                                    Tareas vencidas
+                                </p>
                             </div>
 
-                            <div className="stat-card">
-                                <div className="stat-card-header">
-                                    <div className="stat-icon">📤</div>
-                                    <div className="stat-info">
-                                        <h3>Entregas</h3>
+                            {/* Próximas */}
+                            <div style={{
+                                background: 'white',
+                                padding: '1.5rem',
+                                borderRadius: '15px',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                                border: '1px solid #e5e7eb',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        background: 'rgba(245, 158, 11, 0.1)',
+                                        borderRadius: '10px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '1.5rem',
+                                        marginRight: '1rem'
+                                    }}>
+                                        📅
                                     </div>
+                                    <h3 style={{ color: '#666', fontSize: '0.9rem', margin: 0, textTransform: 'uppercase' }}>
+                                        PRÓXIMAS (7 DÍAS)
+                                    </h3>
                                 </div>
-                                <p className="stat-value">{stats.totalSubmissions}</p>
-                                <div className="stat-trend positive">
-                                    <span>{stats.avgSubmissionRate}% tasa de entrega</span>
-                                </div>
+                                <p style={{ color: '#f59e0b', fontSize: '2.5rem', fontWeight: '700', margin: '0.5rem 0' }}>
+                                    {urgentTasks.length}
+                                </p>
+                                <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>
+                                    Tareas próximas
+                                </p>
                             </div>
 
-                            <div className="stat-card">
-                                <div className="stat-card-header">
-                                    <div className="stat-icon">✅</div>
-                                    <div className="stat-info">
-                                        <h3>Calificadas</h3>
+                            {/* Pendientes de calificar */}
+                            <div style={{
+                                background: 'white',
+                                padding: '1.5rem',
+                                borderRadius: '15px',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                                border: '1px solid #e5e7eb',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        background: 'rgba(16, 185, 129, 0.1)',
+                                        borderRadius: '10px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '1.5rem',
+                                        marginRight: '1rem'
+                                    }}>
+                                        ✅
                                     </div>
+                                    <h3 style={{ color: '#666', fontSize: '0.9rem', margin: 0, textTransform: 'uppercase' }}>
+                                        PENDIENTES DE CALIFICAR
+                                    </h3>
                                 </div>
-                                <p className="stat-value">{stats.totalGraded}</p>
-                                <div className="stat-trend">
-                                    <span>Trabajos evaluados</span>
-                                </div>
+                                <p style={{ color: '#10b981', fontSize: '2.5rem', fontWeight: '700', margin: '0.5rem 0' }}>
+                                    {stats.totalSubmissions - stats.totalGraded}
+                                </p>
+                                <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>
+                                    Entregas sin calificar
+                                </p>
                             </div>
                         </div>
 
                         {/* Gráficos */}
-                        <div className="charts-grid">
-                            <div className="chart-card">
-                                <div className="chart-card-header">
-                                    <h2>
-                                        <span className="chart-icon">📊</span>
-                                        Estado de Tareas
-                                    </h2>
-                                </div>
-                                <div className="chart-wrapper">
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                            gap: '1.5rem',
+                            marginBottom: '2rem'
+                        }}>
+                            {/* Gráfico de estado de tareas */}
+                            <div style={{
+                                background: 'white',
+                                padding: '1.5rem',
+                                borderRadius: '15px',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                                border: '1px solid #e5e7eb'
+                            }}>
+                                <h2 style={{
+                                    color: '#1e4db7',
+                                    fontSize: '1.25rem',
+                                    fontWeight: '700',
+                                    marginBottom: '1.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem'
+                                }}>
+                                    <span>📊</span>
+                                    Estado de Tareas
+                                </h2>
+                                <div style={{ height: '300px' }}>
                                     <Bar data={getTasksStatusData()} options={chartOptions} />
                                 </div>
                             </div>
 
-                            <div className="chart-card">
-                                <div className="chart-card-header">
-                                    <h2>
-                                        <span className="chart-icon">🎯</span>
-                                        Estado de Entregas
-                                    </h2>
-                                </div>
-                                <div className="chart-wrapper">
+                            {/* Gráfico de estado de entregas */}
+                            <div style={{
+                                background: 'white',
+                                padding: '1.5rem',
+                                borderRadius: '15px',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                                border: '1px solid #e5e7eb'
+                            }}>
+                                <h2 style={{
+                                    color: '#1e4db7',
+                                    fontSize: '1.25rem',
+                                    fontWeight: '700',
+                                    marginBottom: '1.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem'
+                                }}>
+                                    <span>🎯</span>
+                                    Estado de Entregas
+                                </h2>
+                                <div style={{ height: '300px' }}>
                                     <Doughnut 
                                         data={getSubmissionsData()} 
                                         options={{
@@ -460,14 +732,27 @@ const AgendaEscolar: React.FC = () => {
                         </div>
 
                         {/* Gráfico de rendimiento - ancho completo */}
-                        <div className="chart-card" style={{ marginBottom: '2rem' }}>
-                            <div className="chart-card-header">
-                                <h2>
-                                    <span className="chart-icon">📈</span>
-                                    Rendimiento Promedio por Tarea
-                                </h2>
-                            </div>
-                            <div className="chart-wrapper">
+                        <div style={{
+                            background: 'white',
+                            padding: '1.5rem',
+                            borderRadius: '15px',
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                            border: '1px solid #e5e7eb',
+                            marginBottom: '2rem'
+                        }}>
+                            <h2 style={{
+                                color: '#1e4db7',
+                                fontSize: '1.25rem',
+                                fontWeight: '700',
+                                marginBottom: '1.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <span>📈</span>
+                                Rendimiento Promedio por Tarea
+                            </h2>
+                            <div style={{ height: '300px' }}>
                                 <Line 
                                     data={getPerformanceData()} 
                                     options={{
@@ -487,54 +772,122 @@ const AgendaEscolar: React.FC = () => {
                         </div>
 
                         {/* Tareas urgentes */}
-                        <div className="pending-tasks-section">
-                            <div className="pending-tasks-header">
-                                <h2>
-                                    <span className="chart-icon">⚡</span>
-                                    Tareas Próximas a Vencer
-                                </h2>
-                            </div>
+                        <div style={{
+                            background: 'white',
+                            padding: '1.5rem',
+                            borderRadius: '15px',
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                            border: '1px solid #e5e7eb',
+                            marginBottom: '2rem'
+                        }}>
+                            <h2 style={{
+                                color: '#1e4db7',
+                                fontSize: '1.25rem',
+                                fontWeight: '700',
+                                marginBottom: '1.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <span>⚡</span>
+                                Tareas Próximas a Vencer
+                            </h2>
                             
                             {urgentTasks.length > 0 ? (
-                                <div className="tasks-list">
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '1rem'
+                                }}>
                                     {urgentTasks.map(task => {
                                         const submittedCount = task.students.filter(s => s.has_submission).length;
                                         const totalStudents = task.students.length;
+                                        const daysRemaining = formatDate(task.due_date);
                                         
                                         return (
-                                            <div key={task.id} className="task-item">
-                                                <div className="task-item-content">
-                                                    <div className="task-item-title">{task.title}</div>
-                                                    <div className="task-item-meta">
+                                            <div 
+                                                key={task.id}
+                                                style={{
+                                                    padding: '1rem',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: '10px',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    transition: 'all 0.3s ease',
+                                                    background: daysRemaining === 'Hoy' ? '#fef3c7' : daysRemaining === 'Mañana' ? '#fed7aa' : '#fff'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = 'translateX(5px)';
+                                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = 'translateX(0)';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }}
+                                            >
+                                                <div>
+                                                    <div style={{
+                                                        color: '#1e4db7',
+                                                        fontWeight: '600',
+                                                        marginBottom: '0.25rem'
+                                                    }}>
+                                                        {task.title}
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: '0.85rem',
+                                                        color: '#666'
+                                                    }}>
                                                         Vence: {new Date(task.due_date).toLocaleDateString('es-ES')} • 
                                                         Entregas: {submittedCount}/{totalStudents}
                                                     </div>
                                                 </div>
-                                                <span className={`task-item-badge ${getTaskBadge(task.due_date)}`}>
-                                                    {formatDate(task.due_date)}
+                                                <span style={{
+                                                    padding: '0.5rem 1rem',
+                                                    borderRadius: '20px',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: '600',
+                                                    background: daysRemaining === 'Hoy' || daysRemaining === 'Mañana' ? '#ef4444' : '#f59e0b',
+                                                    color: 'white'
+                                                }}>
+                                                    {daysRemaining}
                                                 </span>
                                             </div>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <div className="empty-state-agenda">
-                                    <div className="empty-state-agenda-icon">✨</div>
-                                    <h3>No hay tareas urgentes</h3>
-                                    <p>Todas las tareas están bajo control</p>
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '3rem',
+                                    color: '#666'
+                                }}>
+                                    <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>✨</div>
+                                    <h3 style={{ color: '#2c3e50', marginBottom: '0.5rem' }}>No hay tareas urgentes</h3>
+                                    <p style={{ margin: 0 }}>Todas las tareas están bajo control</p>
                                 </div>
                             )}
                         </div>
 
                         {tasks.length === 0 && (
-                            <div className="alert-agenda alert-info">
-                                <span style={{ fontSize: '1.25rem' }}>ℹ️</span>
+                            <div style={{
+                                background: '#dbeafe',
+                                border: '2px solid #93c5fd',
+                                padding: '1rem',
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                color: '#1e40af'
+                            }}>
+                                <span style={{ fontSize: '1.2rem' }}>ℹ️</span>
                                 <span>No hay tareas creadas para este curso. Las estadísticas aparecerán cuando crees tareas.</span>
                             </div>
                         )}
                     </>
                 )}
             </div>
+        </div>
         </div>
     );
 };

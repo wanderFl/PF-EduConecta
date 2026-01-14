@@ -8,7 +8,7 @@ export const loginRequest = async (payload: Credentials): Promise<AuthResponse> 
 };
 
 export const registerRequest = async (payload: ParentRegistration): Promise<AuthResponse> => {
-  const { data } = await api.post("/auth/register", payload);
+  const { data } = await api.post("/auth/register/parent", payload);
   if (data?.token) setAuthToken(data.token);
   return data;
 };

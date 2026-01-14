@@ -297,3 +297,25 @@ model DisciplinaryReport {
   @@index([status])
   @@map("disciplinary_reports")
 }
+
+/// Reportes de IA para análisis de rendimiento y recomendaciones
+model AIReport {
+  id          String   @id @default(uuid())
+  student_external_id Int    // ID del estudiante en sistema externo
+  parent_id   String   // ID del padre que solicitó el reporte
+  report_type String   // "performance" o "task_order"
+  
+  // Contenido del análisis de IA (JSON)
+  content     Json     // Respuesta completa de la IA
+  metrics     Json?    // Métricas calculadas (promedio, asistencia, etc.)
+  
+  // Metadatos
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([student_external_id])
+  @@index([parent_id])
+  @@index([report_type])
+  @@index([created_at])
+  @@map("ai_reports")
+}
