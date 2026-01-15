@@ -1,11 +1,11 @@
-/* backend/scripts/seedAttendanceNov2025.ts
-   Genera asistencia para NOVIEMBRE 2025 (solo lunes-viernes):
+/* backend/scripts/seedAttendanceJan2026.ts
+   Genera asistencia para ENERO 2026 (solo lunes-viernes):
    - 80% PRESENT
    - 20% ABSENT_UNJUSTIFIED
 
    Uso:
-     npx ts-node backend/scripts/seedAttendanceNov2025.ts --students=101,202
-     npx ts-node backend/scripts/seedAttendanceNov2025.ts --student=101
+     npx ts-node backend/scripts/seedAttendanceJan2026.ts --students=101,202
+     npx ts-node backend/scripts/seedAttendanceJan2026.ts --student=101
 */
 
 import { PrismaClient } from "@prisma/client";
@@ -51,13 +51,13 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 async function seedForStudent(studentId: number) {
-  const YEAR = 2025;
-  const NOV_INDEX = 10; // 0-based → 10 = noviembre
+  const YEAR = 2026;
+  const MONTH_INDEX = 0; // 0-based → 0 = enero
 
-  const monthStart = new Date(Date.UTC(YEAR, NOV_INDEX, 1));
-  const monthEnd = new Date(Date.UTC(YEAR, NOV_INDEX + 1, 1));
+  const monthStart = new Date(Date.UTC(YEAR, MONTH_INDEX, 1));
+  const monthEnd = new Date(Date.UTC(YEAR, MONTH_INDEX + 1, 1));
 
-  const weekdays = getWeekdaysUTC(YEAR, NOV_INDEX);
+  const weekdays = getWeekdaysUTC(YEAR, MONTH_INDEX);
 
   const total = weekdays.length;
   const absentCount = Math.round(total * 0.20);
@@ -75,21 +75,21 @@ async function seedForStudent(studentId: number) {
     },
   });
 
-  // 🔥 Inserción con year = 2025 y month = 11
+  // 🔥 Inserción con year = 2026 y month = 1
   const data = [
     ...presentDays.map(d => ({
       student_external_id: studentId,
       date: d,
       status: "PRESENT" as const,
       year: YEAR,
-      month: 11, // <── noviembre en formato 1-based
+      month: MONTH_INDEX + 1, // <── Enero (1) en formato 1-based
     })),
     ...Array.from(absentDays).map(ymd => ({
       student_external_id: studentId,
       date: new Date(ymd + "T00:00:00.000Z"),
       status: "ABSENT_UNJUSTIFIED" as const,
       year: YEAR,
-      month: 11, // <── también aquí
+      month: MONTH_INDEX + 1, // <── también aquí
     })),
   ];
 

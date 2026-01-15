@@ -18,7 +18,9 @@ const AbsenceJustificationModal: React.FC<Props> = ({ open, dateISO, onClose, on
 
   const dateLabel = useMemo(() => {
     if (!dateISO) return "";
-    const d = new Date(dateISO + "T00:00:00.000Z");
+    // dateISO viene como "YYYY-MM-DD"
+    // Al agregar "T00:00:00" sin la "Z", se interpreta como medianoche local
+    const d = new Date(dateISO + "T00:00:00");
     return d.toLocaleDateString(undefined, { dateStyle: "long" });
   }, [dateISO]);
 

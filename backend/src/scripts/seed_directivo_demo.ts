@@ -46,7 +46,7 @@ const SUBJECT_TASK_TITLES: Record<number, string[]> = {
   9: ["Canvas de modelo de negocio", "Idea de emprendimiento", "Costos fijos y variables", "Pitch de negocio (borrador)"],
 };
 
-const BASE_DATE = new Date(Date.UTC(2025, 9, 1)); // 2025-10-01 UTC
+const BASE_DATE = new Date(Date.UTC(2026, 0, 15)); // 2026-01-15 UTC
 const SEED_TAG = "[SEED:directivo-demo]";
 
 function addDays(date: Date, d: number) {

@@ -102,6 +102,40 @@ def health_check():
 async def analyze_performance(data: StudentPerformance):
     """Genera reporte y recomendaciones de rendimiento estudiantil"""
     try:
+        # --- VALIDACIÓN 1: Sin datos o datos insuficientes ---
+        # Si tiene menos de 2 materias registradas, consideramos que es insuficiente para un análisis integral de IA
+        if not data.grades or len(data.grades) < 2:
+            avg_temp = 0
+            if data.grades:
+                avg_temp = sum(g.grade for g in data.grades) / len(data.grades)
+            
+            return {
+                "student_id": data.student_id,
+                "analysis": {
+                    "resumen_general": "El estudiante cuenta con muy pocos registros académicos (menos de 2 materias). La IA requiere un mínimo de información para generar un diagnóstico pedagógico preciso y evitar sesgos.",
+                    "promedios": {
+                        "promedio_general": round(avg_temp, 2), 
+                        "materias": [{"nombre": g.subject, "promedio": g.grade, "estado": "N/A"} for g in data.grades]
+                    },
+                    "fortalezas_identificadas": ["Se requiere más información académica."],
+                    "areas_requieren_atencion": ["Se sugiere completar el registro de calificaciones."],
+                    "consejos_estudiante": [
+                        "💡 Mantente al día con tus clases mientras se actualizan tus notas.",
+                        "💡 Revisa tu plataforma periódicamente para ver nuevas calificaciones."
+                    ],
+                    "recomendaciones_padres": [
+                        "El sistema necesita más evaluaciones registradas para ofrecer un análisis detallado.",
+                        "Por favor consulte con los docentes si faltan notas por subir."
+                    ],
+                    "plan_accion": "Análisis pendiente por falta de datos suficientes."
+                },
+                "metrics": {
+                    "average_grade": round(avg_temp, 2),
+                    "attendance_rate": 0, # Placeholder
+                    "behavior_score": data.behavior.behavior_score
+                }
+            }
+
         # Calcular métricas
         avg_grade = (
             sum(g.grade for g in data.grades) / len(data.grades)
@@ -300,6 +334,48 @@ Responde SOLO con el JSON válido, sin texto adicional.
 async def recommend_task_order(data: TaskRecommendationRequest):
     """Recomienda orden óptimo de tareas basado en múltiples factores"""
     try:
+        # --- VALIDACIÓN 1: Sin tareas ---
+        if not data.tasks:
+            return {
+                "student_id": data.student_id,
+                "recommendation": {
+                    "recommended_order": [],
+                    "reasoning": "¡Felicidades! No tienes tareas pendientes registradas en el sistema. Aprovecha tu tiempo libre.",
+                    "daily_plan": {},
+                    "tips": [
+                        "💡 Revisa si tienes lecturas adelantadas.",
+                        "💡 Descansa y recarga energías.",
+                        "💡 Organiza tus materiales para la próxima semana."
+                    ]
+                }
+            }
+            
+        # --- VALIDACIÓN 2: Una sola tarea ---
+        if len(data.tasks) == 1:
+            task = data.tasks[0]
+            return {
+                "student_id": data.student_id,
+                "recommendation": {
+                    "recommended_order": [
+                        {
+                            "task_id": task.task_id, # Mantenemos el ID original (string)
+                            "title": task.title,
+                            "priority": 1,
+                            "reason": "Es tu única tarea pendiente. ¡Empieza por esta y quedarás libre!"
+                        }
+                    ],
+                    "reasoning": "Al tener solo una tarea pendiente, el enfoque debe ser completarla lo antes posible para liberar tu agenda.",
+                    "daily_plan": {
+                        "Hoy": [task.title]
+                    },
+                    "tips": [
+                        "💡 Termina esto ahora y disfruta tu tiempo libre.",
+                        "💡 Revisa bien las instrucciones antes de enviar.",
+                        "💡 Verifica la fecha de vencimiento."
+                    ]
+                }
+            }
+
         tasks_info = "\n".join([
             (
                 f"- ID: {t.task_id} | {t.title} | "
