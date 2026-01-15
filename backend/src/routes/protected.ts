@@ -639,6 +639,59 @@ router.put(
         data: taskData
       });
 
+      // NOTIFICACIÓN: Tarea Modificada
+      (async () => {
+        try {
+          const changes: string[] = [];
+          
+          if (title !== undefined && task.title !== title) {
+            changes.push(`Título: ${title}`);
+          }
+          if (due_date !== undefined) {
+             const d = new Date(due_date);
+             if (task.due_date.getTime() !== d.getTime()) {
+               changes.push(`Fecha: ${d.toLocaleDateString()}`);
+             }
+          }
+          if (max_points !== undefined && task.max_points !== parseFloat(max_points)) {
+             changes.push(`Puntos: ${max_points}`);
+          }
+          if (instructions !== undefined && task.instructions !== instructions) {
+             changes.push("Instrucciones actualizadas");
+          }
+
+          if (changes.length > 0) {
+            // Obtener estudiantes del curso
+            const [rows] = await ceiafPool.query(
+              'SELECT id_estudiante FROM estudiantes WHERE id_curso = ?',
+              [task.course_external_id]
+            ) as any;
+
+            if (Array.isArray(rows) && rows.length > 0) {
+              const studentIds = rows.map((r: any) => String(r.id_estudiante));
+              const links = await prisma.parentStudentLink.findMany({
+                where: { student_external_id: { in: studentIds } },
+                include: { parent: { include: { user: true } } }
+              });
+
+              for (const link of links) {
+                if (link.parent?.user?.id) {
+                  sendNotification(
+                    link.parent.user.id,
+                    "Tarea Modificada",
+                    `La tarea "${updatedTask.title}" ha sido actualizada. Cambios: ${changes.join(", ")}`,
+                    "TASK_UPDATED",
+                    { taskId: updatedTask.id, courseId: updatedTask.course_external_id }
+                  );
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error sending task update notification:", err);
+        }
+      })();
+
       res.json({
         success: true,
         data: updatedTask,

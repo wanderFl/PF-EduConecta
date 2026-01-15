@@ -60,6 +60,53 @@ export const createSignedUploadUrl = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * POST /api/comm/teacher/upload-url
+ * body: { conversationId, filename, contentType }
+ */
+export const createSignedTeacherConversationUploadUrl = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { conversationId, filename, contentType } = req.body;
+
+    if (!userId || !conversationId || !filename || !contentType) {
+      return res.status(400).json({ message: "Datos incompletos" });
+    }
+
+    // 1. Verificar usuario docente
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { external_id: true, role: true },
+    });
+
+    if (!user || user.role !== "DOCENTE" || !user.external_id) {
+      return res.status(403).json({ message: "No autorizado como docente" });
+    }
+    const teacherId = parseInt(user.external_id);
+
+    // 2. Verificar conversación
+    const conv = await prisma.communication.findUnique({ where: { id: conversationId } });
+    if (!conv) {
+      return res.status(404).json({ message: "Conversación no encontrada" });
+    }
+
+    if (conv.teacher_external_id !== teacherId) {
+      return res.status(403).json({ message: "Esta conversación no te pertenece" });
+    }
+
+    // 3. Generar URL
+    // Usamos el student_external_id de la conversación para mantener la estructura de carpetas
+    // (conversations/studentId/convId/...)
+    const objectKey = buildConversationObjectKey(conv.student_external_id, conversationId, filename);
+    const { uploadUrl, fileUrl } = await getPresignedPutUrl(objectKey, contentType);
+
+    return res.json({ uploadUrl, fileUrl, objectKey });
+  } catch (e) {
+    console.error("createSignedTeacherConversationUploadUrl error:", e);
+    return res.status(500).json({ message: "Error generando URL de subida" });
+  }
+};
+
 
 /**
  * GET /api/uploads/download-url?fileRef=...

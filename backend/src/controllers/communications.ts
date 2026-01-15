@@ -231,10 +231,10 @@ export const sendMessage = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
     const { conversationId } = req.params;
-    const { body } = req.body;
+    const { body, attachments } = req.body;
 
-    if (!body) {
-      return res.status(400).json({ message: "body es requerido" });
+    if (!body && (!attachments || attachments.length === 0)) {
+      return res.status(400).json({ message: "body o attachments es requerido" });
     }
 
     const user = await prisma.user.findUnique({
@@ -252,18 +252,68 @@ export const sendMessage = async (req: Request, res: Response) => {
     const message = await prisma.message.create({
       data: {
         communication_id: conversationId,
-        body,
+        body: body || "",
         sender_role: "TEACHER",
         sender_teacher_external_id: teacherExternalId,
         sender_parent_id: null, // Explícitamente null porque es el docente quien envía
+        attachments: attachments && attachments.length > 0 ? {
+          create: attachments.map((att: any) => ({
+            url: att.url,
+            file_name: att.file_name,
+            mime_type: att.mime_type,
+            size_bytes: att.size_bytes
+          }))
+        } : undefined
       },
       include: { attachments: true },
     });
 
-    await prisma.communication.update({
+    const updatedConv = await prisma.communication.update({
       where: { id: conversationId },
       data: { lastMessageAt: new Date() },
     });
+
+    // Notificar al padre
+    if (updatedConv.parent_id) {
+      (async () => {
+        try {
+          const parentUser = await prisma.user.findUnique({
+            where: { parent_id: updatedConv.parent_id },
+          });
+
+          if (parentUser) {
+            // Obtener nombre del docente
+            let teacherName = "Docente";
+            try {
+              const [rows] = await ceiafPool.execute(
+                "SELECT nombres, apellidos FROM docentes WHERE id_docente = ?",
+                [teacherExternalId]
+              ) as any;
+              if (rows.length > 0) {
+                const t = rows[0];
+                // Formato simple: Apellido Nombre
+                teacherName = `${t.nombres} ${t.apellidos}`; 
+              }
+            } catch (dbErr) {
+              console.error("Error fetching teacher name for notification", dbErr);
+            }
+
+            // Truncar mensaje si es muy largo
+            const preview = body.length > 50 ? body.substring(0, 50) + "..." : body;
+
+            sendNotification(
+              parentUser.id,
+              `Mensaje de ${teacherName}`,
+              preview,
+              "NEW_MESSAGE",
+              { communicationId: conversationId, studentId: updatedConv.student_external_id }
+            );
+          }
+        } catch (e) {
+          console.error("Error sending notification to parent:", e);
+        }
+      })();
+    }
 
     res.status(201).json(message);
   } catch (error) {
@@ -617,6 +667,29 @@ export const postMessage = async (req: Request, res: Response) => {
 
       return created;
     });
+
+    // Notificar al docente que recibió respuesta
+    (async () => {
+      try {
+        const teacherUser = await prisma.user.findFirst({
+          where: {
+            role: Role.DOCENTE,
+            external_id: String(conv.teacher_external_id),
+          },
+        });
+        if (teacherUser) {
+          sendNotification(
+            teacherUser.id,
+            "Nuevo mensaje de Familia",
+            `Nueva respuesta del representante en la conversación (Estudiante ID: ${conv.student_external_id})`,
+            "NEW_MESSAGE",
+            { communicationId: convId, studentId: conv.student_external_id }
+          );
+        }
+      } catch (err) {
+        console.error("Error enviando notificación al docente:", err);
+      }
+    })();
 
     return res.status(201).json({ message: "Mensaje enviado", id: msg.id });
   } catch (e) {

@@ -149,11 +149,14 @@ const GestionarFaltas: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
+    // Usar UTC (porque en DB se guarda ISO UTC con hora 00:00)
+    // Para que coincida con el día seleccionado
     const date = new Date(dateString);
     return date.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+      timeZone: "UTC" // <-- Forzar UTC para evitar cambio de día por zona horaria
     });
   };
 

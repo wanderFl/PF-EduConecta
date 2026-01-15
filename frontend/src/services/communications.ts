@@ -24,7 +24,13 @@ export interface ConversationMessage {
   sender_role: string;
   sender_id: string;
   body: string;
-  created_at: string;
+  createdAt: string;
+  attachments?: {
+    url: string;
+    file_name: string;
+    mime_type: string;
+    size_bytes: number;
+  }[];
 }
 
 export interface StudentSearchResult {
@@ -44,6 +50,12 @@ export interface CreateConversationData {
 
 export interface SendMessageData {
   body: string;
+  attachments?: {
+    url: string;
+    file_name: string;
+    mime_type: string;
+    size_bytes: number;
+  }[];
 }
 
 // Servicios
@@ -142,6 +154,58 @@ export const archiveConversation = async (conversationId: string): Promise<void>
     throw error;
   }
 };
+
+/* --- ADJUNTOS DOCENTE --- */
+
+export interface PresignedUploadResponse {
+  uploadUrl: string;
+  fileUrl: string;
+  objectKey: string;
+}
+
+export async function getPresignedTeacherUploadUrl(
+  conversationId: string,
+  file: File
+): Promise<PresignedUploadResponse> {
+  const { data } = await api.post("/communications/teacher/upload-url", {
+    conversationId,
+    filename: file.name,
+    contentType: file.type,
+  });
+  return data;
+}
+
+export async function uploadTeacherFileToS3(uploadUrl: string, file: File): Promise<void> {
+  await fetch(uploadUrl, {
+    method: "PUT",
+    body: file,
+    headers: {
+      "Content-Type": file.type,
+    },
+  });
+}
+
+export async function uploadTeacherAttachment(
+  conversationId: string,
+  file: File
+): Promise<{ url: string; file_name: string; mime_type: string; size_bytes: number }> {
+  const { uploadUrl, fileUrl } = await getPresignedTeacherUploadUrl(conversationId, file);
+  await uploadTeacherFileToS3(uploadUrl, file);
+  
+  return {
+    url: fileUrl,
+    file_name: file.name,
+    mime_type: file.type,
+    size_bytes: file.size
+  };
+}
+
+export async function getFileDownloadUrl(fileRef: string): Promise<string> {
+  const { data } = await api.get("/uploads/submission-download-url", {
+    params: { fileRef },
+  });
+  return data.url;
+}
 
 export default {
   listTeacherConversations,

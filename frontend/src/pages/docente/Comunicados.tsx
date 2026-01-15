@@ -213,7 +213,7 @@ const Comunicados: React.FC = () => {
       </div>
 
       <nav className="fam-breadcrumb" style={{ margin: "8px" }}>
-        <span className="crumb-link" onClick={() => navigate('/docente')}>Inicio</span>
+        <span className="crumb-link" onClick={() => navigate('/docente/dashboard')}>Inicio</span>
         <span className="crumb-sep">›</span>
         <span className="crumb-current">Comunicados</span>
       </nav>

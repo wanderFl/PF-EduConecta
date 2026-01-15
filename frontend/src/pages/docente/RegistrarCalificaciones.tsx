@@ -418,7 +418,7 @@ const TaskListView: React.FC<TaskListViewProps> = ({
                     Comienza creando tu primera tarea para este curso
                 </p>
                 <button
-                    onClick={() => navigate("/docente/crear-tarea")}
+                    onClick={() => navigate("/docente/tareas")}
                     style={{
                         background: '#1e4db7',
                         color: '#fff',

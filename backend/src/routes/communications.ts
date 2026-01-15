@@ -18,6 +18,7 @@ import {
   postMessage,
   searchTeachersForStudent,
 } from "../controllers/communications";
+import { createSignedTeacherConversationUploadUrl } from "../controllers/uploads";
 
 const router = Router();
 
@@ -36,6 +37,9 @@ router.post("/teacher", createTeacherConversation);
 
 // Buscar estudiantes del docente
 router.get("/teacher/students", searchTeacherStudents);
+
+// Subir adjunto (obtener URL firmada)
+router.post("/teacher/upload-url", createSignedTeacherConversationUploadUrl);
 
 // Obtener mensajes de una conversación
 router.get("/conversation/:conversationId/messages", authenticate,authorize(Role.DOCENTE),getConversationMessages);

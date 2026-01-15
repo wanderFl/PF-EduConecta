@@ -123,9 +123,9 @@ export const createDisciplinaryReport = async (req: Request, res: Response) => {
             sendNotification(
               link.parent.user.id,
               "Novedad de Disciplina",
-              `Se ha registrado una novedad: ${title} (${severity})`,
+              `Nuevo reporte disciplinario. Categoría: ${category} - Severidad: ${severity}. Título: ${title}`,
               "DISCIPLINARY_REPORT",
-              { reportId: report.id, severity }
+              { reportId: report.id, severity, category }
             );
           }
         }

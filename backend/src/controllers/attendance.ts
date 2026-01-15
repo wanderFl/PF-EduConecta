@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { ceiafPool } from "../ext/ceiafDb";
 import { getPresignedPutUrl, buildJustificationKey } from "../utils/s3";
 
 import { sendNotification } from "../services/notificationSender";
@@ -162,6 +163,20 @@ export const submitJustification = async (req: Request, res: Response) => {
     // NOTIFICACIÓN: Nueva Solicitud de Justificación (a Inspectores)
     (async () => {
       try {
+        // Obtener nombre del estudiante
+        let studentName = `ID ${sid}`;
+        try {
+          const [rows] = await ceiafPool.query(
+            "SELECT nombres, apellidos FROM estudiantes WHERE id_estudiante = ?",
+            [sid]
+          ) as any;
+          if (rows.length > 0) {
+            studentName = `${rows[0].nombres} ${rows[0].apellidos}`;
+          }
+        } catch (dbErr) {
+          console.error("Error fetching student name for notification:", dbErr);
+        }
+
         // Buscar usuarios con rol INSPECTOR
         const inspectors = await prisma.user.findMany({
           where: { role: "INSPECTOR" },
@@ -171,7 +186,7 @@ export const submitJustification = async (req: Request, res: Response) => {
           sendNotification(
             inspector.id,
             "Nueva Solicitud de Justificación",
-            `Se ha recibido una justificación para el estudiante ID ${sid}.`,
+            `Justificación recibida para ${studentName}. Razón: ${reason}`,
             "JUSTIFICATION_REQUEST",
             { studentId: sid, date }
           );

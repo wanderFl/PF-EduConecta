@@ -21,7 +21,16 @@ const AsistenciaInspector: React.FC = () => {
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
     const [attendanceData, setAttendanceData] = useState<StudentAttendance[]>([]);
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    
+    // Fix: Inicializar fecha usando hora local, no UTC
+    const [selectedDate, setSelectedDate] = useState<string>(() => {
+        const d = new Date();
+        // Ajustar a zona horaria local restando el offset (en minutos)
+        return new Date(d.getTime() - (d.getTimezoneOffset() * 60000))
+          .toISOString()
+          .split('T')[0];
+    });
+
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
     const [error, setError] = useState<string>('');

@@ -275,6 +275,53 @@ router.post('/bulk', async (req, res) => {
       }
     }
 
+    // NOTIFICACIÓN MASIVA: Informar a cada padre el estado de su hijo
+    (async () => {
+      try {
+        const studentIds = records.map((r: any) => String(r.student_external_id));
+        const links = await prisma.parentStudentLink.findMany({
+          where: { student_external_id: { in: studentIds } },
+          include: { parent: { include: { user: true } } }
+        });
+
+        const linkMap = new Map<string, string>();
+        links.forEach((l) => {
+          if (l.parent?.user?.id) {
+            linkMap.set(l.student_external_id, l.parent.user.id);
+          }
+        });
+
+        const STATUS_MAP: Record<string, string> = {
+          PRESENT: "Presente",
+          ABSENT_UNJUSTIFIED: "Falta Injustificada",
+          LATE: "Atraso",
+          ABSENT_JUSTIFIED_PENDING: "Falta (Pendiente)",
+          ABSENT_JUSTIFIED_ACCEPTED: "Falta (Justificada)"
+        };
+
+        for (const r of records) {
+          const userId = linkMap.get(String(r.student_external_id));
+          if (userId && r.status) {
+            const statusText = STATUS_MAP[r.status] || r.status;
+            // No notificar "Presente" para evitar spam diario (opcional, descomentar si se requiere)
+            // if (r.status === 'PRESENT') continue; 
+
+            const isAlert = r.status === 'ABSENT_UNJUSTIFIED' || r.status === 'LATE';
+            
+            sendNotification(
+              userId,
+              isAlert ? "Alerta de Asistencia" : "Registro de Asistencia",
+              `Se ha registrado la asistencia del día. Estado: ${statusText}`,
+              isAlert ? "ATTENDANCE_ALERT" : "ATTENDANCE_INFO",
+              { date, status: r.status, studentId: r.student_external_id }
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Error sending bulk attendance notifications:", e);
+      }
+    })();
+
     res.json({
       success: true,
       data: [...createdRecords, ...updatedRecords],
@@ -629,10 +676,12 @@ router.put('/:id/justify-status', async (req, res) => {
         });
         if (link?.parent?.user?.id) {
           const resolution = action === 'accept' ? 'Aceptada' : 'Rechazada';
+          const commentText = inspectorComment ? `Comentario: ${inspectorComment}` : "Sin comentarios del inspector.";
+          
           sendNotification(
             link.parent.user.id,
             "Resolución de Justificación",
-            `La justificación ha sido ${resolution}.`,
+            `La justificación ha sido ${resolution}. ${commentText}`,
             "JUSTIFICATION_RESOLUTION",
             { recordId: id, status: newStatus }
           );
